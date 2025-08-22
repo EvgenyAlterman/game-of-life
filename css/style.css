@@ -590,6 +590,22 @@ body {
     color: var(--text-sidebar-secondary);
 }
 
+/* Grid Control */
+.grid-control {
+    margin-top: 15px;
+}
+
+.grid-control .tool-btn {
+    width: 100%;
+    justify-content: center;
+    gap: 8px;
+}
+
+.grid-control .tool-btn .tool-icon {
+    width: 16px;
+    height: 16px;
+}
+
 /* Game Container */
 .game-container {
     flex: 1;

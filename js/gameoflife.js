@@ -23,6 +23,7 @@ class GameOfLife {
         this.clearBtn = document.getElementById('clearBtn');
         this.speedSlider = document.getElementById('speedSlider');
         this.speedValue = document.getElementById('speedValue');
+        this.gridToggle = document.getElementById('gridToggle');
         this.generationDisplay = document.getElementById('generation');
         this.populationDisplay = document.getElementById('population');
         
@@ -65,6 +66,9 @@ class GameOfLife {
         this.previewPosition = null; // {row, col} or null
         this.showPreview = false;
         this.patternRotation = 0; // 0, 90, 180, 270 degrees
+        
+        // Grid display settings
+        this.showGrid = false;
         
         this.initializeGrid();
         this.setupEventListeners();
@@ -111,6 +115,11 @@ class GameOfLife {
             this.speed = parseInt(e.target.value);
             this.speedValue.textContent = this.speed;
             this.saveSettings();
+        });
+        
+        // Grid toggle
+        this.gridToggle.addEventListener('click', () => {
+            this.toggleGrid();
         });
         
         // Speed max value
@@ -490,6 +499,11 @@ class GameOfLife {
                     );
                 }
             }
+        }
+        
+        // Draw grid overlay (every 5 cells with thicker lines)
+        if (this.showGrid) {
+            this.drawGridOverlay();
         }
         
         // Draw pattern preview
@@ -924,6 +938,74 @@ class GameOfLife {
         }
     }
     
+    // Grid overlay methods
+    toggleGrid() {
+        this.showGrid = !this.showGrid;
+        this.updateGridUI();
+        this.draw(); // Redraw to show/hide grid
+        this.saveSettings();
+    }
+    
+    updateGridUI() {
+        const gridText = this.gridToggle.querySelector('span');
+        if (this.showGrid) {
+            this.gridToggle.classList.add('selected');
+            gridText.textContent = 'Hide Grid';
+        } else {
+            this.gridToggle.classList.remove('selected');
+            gridText.textContent = 'Show Grid';
+        }
+    }
+    
+    drawGridOverlay() {
+        // Get theme-appropriate grid color
+        const rootStyles = getComputedStyle(document.documentElement);
+        const gridColor = rootStyles.getPropertyValue('--canvas-grid').trim();
+        
+        // Create a darker/more visible grid color
+        let overlayColor;
+        if (gridColor.includes('rgb')) {
+            // For RGB colors, make them more opaque
+            overlayColor = gridColor.replace(/rgba?\(([^)]*)\)/, (match, values) => {
+                const parts = values.split(',').map(v => v.trim());
+                if (parts.length === 3) {
+                    return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, 0.6)`;
+                } else if (parts.length === 4) {
+                    return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, 0.6)`;
+                }
+                return gridColor;
+            });
+        } else if (gridColor.includes('#')) {
+            // Convert hex to rgba with more opacity
+            overlayColor = this.hexToRgba(gridColor, 0.6);
+        } else {
+            // Fallback
+            overlayColor = 'rgba(128, 128, 128, 0.6)';
+        }
+        
+        this.ctx.strokeStyle = overlayColor;
+        this.ctx.lineWidth = 2;
+        
+        // Draw thicker vertical lines every 5 cells
+        for (let col = 0; col <= this.cols; col += 5) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(col * this.cellSize, 0);
+            this.ctx.lineTo(col * this.cellSize, this.canvas.height);
+            this.ctx.stroke();
+        }
+        
+        // Draw thicker horizontal lines every 5 cells
+        for (let row = 0; row <= this.rows; row += 5) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, row * this.cellSize);
+            this.ctx.lineTo(this.canvas.width, row * this.cellSize);
+            this.ctx.stroke();
+        }
+        
+        // Reset line width
+        this.ctx.lineWidth = 1;
+    }
+    
     getPatternData(patternName) {
         return GameOfLifePatterns.getPattern(patternName);
     }
@@ -1006,6 +1088,7 @@ class GameOfLife {
             // UI settings
             gridWidth: this.gridWidthSlider.value,
             gridHeight: this.gridHeightSlider.value,
+            showGrid: this.showGrid,
             
             // Slider max values
             speedMax: this.speedMax.value,
@@ -1138,6 +1221,12 @@ class GameOfLife {
                 }
             }
             
+            // Load grid display state
+            if (settings.showGrid !== undefined) {
+                this.showGrid = settings.showGrid;
+                this.updateGridUI();
+            }
+            
             // Load sidebar state
             if (settings.sidebarCollapsed) {
                 this.sidebar.classList.add('collapsed');
@@ -1212,6 +1301,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize pattern hints
     game.updatePatternHints();
+    
+    // Initialize grid UI
+    game.updateGridUI();
     
     // Add a glider pattern in the middle for demo (only if no saved settings exist)
     const hasSavedSettings = localStorage.getItem('gameoflife-settings');
