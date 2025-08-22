@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conway's Game of Life</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Conway's Game of Life</h1>
+        
+        <div class="navigation">
+            <a href="explanation.html" class="nav-link">📖 Learn About the Game of Life</a>
+        </div>
+        
+        <div class="controls">
+            <button id="startStopBtn">Start</button>
+            <button id="resetBtn">Reset</button>
+            <button id="randomBtn">Random</button>
+            <label for="speedSlider">Speed:</label>
+            <input type="range" id="speedSlider" min="1" max="20" value="5">
+            <span id="speedValue">5</span>
+        </div>
+        
+        <div class="game-container">
+            <canvas id="gameCanvas" width="600" height="400"></canvas>
+        </div>
+        
+        <div class="info">
+            <p>Generation: <span id="generation">0</span></p>
+            <p>Population: <span id="population">0</span></p>
+        </div>
+        
+        <div class="instructions">
+            <h3>Instructions:</h3>
+            <ul>
+                <li>Click on cells to toggle them alive/dead</li>
+                <li>Press "Start" to begin the simulation</li>
+                <li>Press "Random" to generate a random pattern</li>
+                <li>Use the speed slider to control simulation speed</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script src="js/gameoflife.js"></script>
+</body>
+</html>
