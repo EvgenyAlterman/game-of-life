@@ -8,11 +8,26 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- Mobile Sidebar Overlay -->
-        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <!-- App Header -->
+        <div class="app-header">
+            <div class="header-left">
+                <button id="mobileMenuBtn" class="mobile-menu-btn">☰</button>
+                <h1>Conway's Game of Life</h1>
+            </div>
+            <div class="header-controls">
+                <button id="darkModeToggle" class="dark-mode-toggle" title="Toggle Dark Mode">
+                    <span class="toggle-icon">🌙</span>
+                </button>
+                <a href="explanation.html" class="help-btn" title="Learn About the Game of Life">?</a>
+            </div>
+        </div>
         
-        <!-- Left Sidebar -->
-        <div class="sidebar">
+        <div class="app-body">
+            <!-- Mobile Sidebar Overlay -->
+            <div class="sidebar-overlay" id="sidebarOverlay"></div>
+            
+            <!-- Left Sidebar -->
+            <div class="sidebar">
             <div class="sidebar-header">
                 <h2>🔧 Controls</h2>
                 <button id="sidebarToggle" class="sidebar-toggle">‹</button>
@@ -137,40 +152,18 @@
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Main Content Area -->
-        <div class="main-content">
-            <div class="header">
-                <div class="header-top">
-                    <button id="mobileMenuBtn" class="mobile-menu-btn">☰</button>
-                    <h1>Conway's Game of Life</h1>
-                    <div class="header-controls">
-                        <button id="darkModeToggle" class="dark-mode-toggle" title="Toggle Dark Mode">
-                            <span class="toggle-icon">🌙</span>
-                        </button>
-                        <a href="explanation.html" class="help-btn" title="Learn About the Game of Life">?</a>
-                    </div>
+            </div>
+            
+            <!-- Main Content Area -->
+            <div class="main-content">
+                <div class="game-container">
+                    <canvas id="gameCanvas" width="600" height="400"></canvas>
                 </div>
-            </div>
-            
-            <div class="game-container">
-                <canvas id="gameCanvas" width="600" height="400"></canvas>
-            </div>
-            
-            <div class="info">
-                <p>Generation: <span id="generation">0</span></p>
-                <p>Population: <span id="population">0</span></p>
-            </div>
-            
-            <div class="instructions">
-                <h3>Quick Start:</h3>
-                <ul>
-                    <li><strong>Select a tool</strong> from the left sidebar</li>
-                    <li><strong>Click on the grid</strong> to draw patterns</li>
-                    <li><strong>Press "Start"</strong> to begin the simulation</li>
-                    <li><strong>Adjust settings</strong> in the sidebar for advanced options</li>
-                </ul>
+                
+                <div class="info">
+                    <p>Generation: <span id="generation">0</span></p>
+                    <p>Population: <span id="population">0</span></p>
+                </div>
             </div>
         </div>
     </div>

@@ -233,38 +233,65 @@ class GameOfLife {
             this.invertAll();
         });
         
-        // Canvas click to place patterns or toggle cells
+        // Canvas interactions
+        let isDrawing = false;
+        let hasDragged = false;
+        let drawingState = true; // true = drawing (making alive), false = erasing (making dead)
+        
+        // Canvas click for patterns (only when not in cell drawing mode)
         this.canvas.addEventListener('click', (e) => {
-            if (!this.isRunning) {
-                if (this.drawingMode === 'cell') {
-                    this.toggleCell(e);
-                } else {
-                    this.placePatternAtClick(e);
-                }
+            if (!this.isRunning && !hasDragged && this.drawingMode !== 'cell') {
+                this.placePatternAtClick(e);
             }
         });
         
-        // Canvas mouse drag to draw (only in cell mode)
-        let isDrawing = false;
+        // Canvas mouse interactions for cell drawing
         this.canvas.addEventListener('mousedown', (e) => {
-            if (!this.isRunning && this.drawingMode === 'cell') {
-                isDrawing = true;
-                this.toggleCell(e);
+            if (!this.isRunning) {
+                if (this.drawingMode === 'cell') {
+                    isDrawing = true;
+                    hasDragged = false;
+                    
+                    // Determine what we're doing based on the current cell state
+                    const rect = this.canvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const col = Math.floor(x / this.cellSize);
+                    const row = Math.floor(y / this.cellSize);
+                    
+                    if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
+                        // If cell is currently dead, we'll be drawing (making alive)
+                        // If cell is currently alive, we'll be erasing (making dead)
+                        drawingState = !this.grid[row][col];
+                    }
+                    
+                    this.toggleCell(e);
+                } else {
+                    // For patterns, we'll handle on click to avoid interference
+                    hasDragged = false;
+                }
             }
         });
         
         this.canvas.addEventListener('mousemove', (e) => {
             if (isDrawing && !this.isRunning && this.drawingMode === 'cell') {
-                this.setCellAlive(e);
+                hasDragged = true;
+                this.setCellToState(e, drawingState);
+            } else if (!isDrawing && !this.isRunning && this.drawingMode !== 'cell') {
+                // Track if mouse moved for pattern placement
+                hasDragged = true;
             }
         });
         
         this.canvas.addEventListener('mouseup', () => {
             isDrawing = false;
+            // Reset hasDragged after a short delay to allow click event to fire
+            setTimeout(() => { hasDragged = false; }, 10);
         });
         
         this.canvas.addEventListener('mouseleave', () => {
             isDrawing = false;
+            hasDragged = false;
         });
     }
     
@@ -294,6 +321,22 @@ class GameOfLife {
         
         if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
             this.grid[row][col] = true;
+            this.draw();
+            this.updateInfo();
+            this.saveSettings();
+        }
+    }
+    
+    setCellToState(e, state) {
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const col = Math.floor(x / this.cellSize);
+        const row = Math.floor(y / this.cellSize);
+        
+        if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
+            this.grid[row][col] = state;
             this.draw();
             this.updateInfo();
             this.saveSettings();

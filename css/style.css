@@ -90,8 +90,47 @@ body {
 /* App Container - Main Layout */
 .app-container {
     display: flex;
+    flex-direction: column;
     height: 100vh;
     width: 100vw;
+}
+
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: var(--bg-header);
+    border-bottom: 1px solid var(--border-primary);
+    transition: background 0.3s ease, border-color 0.3s ease;
+    z-index: 1001;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.app-header h1 {
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+    text-shadow: 0 1px 2px var(--shadow-light);
+    transition: color 0.3s ease;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.app-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
 }
 
 /* Left Sidebar */
@@ -109,6 +148,30 @@ body {
 .sidebar.collapsed {
     transform: translateX(-280px);
     width: 40px;
+}
+
+.sidebar.collapsed .sidebar-header {
+    transform: translateX(280px);
+    width: 40px;
+    padding: 15px 5px;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border-sidebar);
+    position: relative;
+    z-index: 10;
+}
+
+.sidebar.collapsed .sidebar-content {
+    display: none;
+}
+
+.sidebar.collapsed .sidebar-header h2 {
+    display: none;
+}
+
+.sidebar.collapsed .sidebar-toggle {
+    transform: rotate(180deg);
+    margin: 0 auto;
+    display: block;
 }
 
 .sidebar-header {
@@ -142,9 +205,7 @@ body {
     background: var(--border-sidebar);
 }
 
-.sidebar.collapsed .sidebar-toggle {
-    transform: rotate(180deg);
-}
+
 
 .sidebar-content {
     flex: 1;
@@ -432,25 +493,7 @@ body {
     display: flex;
     flex-direction: column;
     background: var(--bg-secondary);
-    margin: 20px 20px 20px 0;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px var(--shadow-light);
-    overflow: hidden;
-    transition: background 0.3s ease, box-shadow 0.3s ease;
-}
-
-.header {
-    padding: 15px 20px;
-    background: var(--bg-header);
-    border-bottom: 1px solid var(--border-primary);
-    transition: background 0.3s ease, border-color 0.3s ease;
-}
-
-.header-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 15px;
+    transition: background 0.3s ease;
 }
 
 .mobile-menu-btn {
@@ -467,22 +510,6 @@ body {
 
 .mobile-menu-btn:hover {
     background: var(--bg-tertiary);
-}
-
-.header h1 {
-    color: var(--text-primary);
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin: 0;
-    text-shadow: 0 1px 2px var(--shadow-light);
-    transition: color 0.3s ease;
-    flex: 1;
-}
-
-.header-controls {
-    display: flex;
-    align-items: center;
-    gap: 10px;
 }
 
 
@@ -639,46 +666,7 @@ body {
     font-size: 1.2rem;
 }
 
-/* Instructions */
-.instructions {
-    padding: 30px 40px;
-    background: var(--bg-secondary);
-    border-top: 1px solid var(--border-primary);
-    transition: background 0.3s ease, border-color 0.3s ease;
-}
 
-.instructions h3 {
-    color: var(--text-primary);
-    margin-bottom: 15px;
-    font-size: 1.2rem;
-    font-weight: 600;
-    transition: color 0.3s ease;
-}
-
-.instructions ul {
-    list-style: none;
-    color: var(--text-secondary);
-}
-
-.instructions li {
-    padding: 8px 0;
-    padding-left: 20px;
-    position: relative;
-    transition: color 0.3s ease;
-}
-
-.instructions li::before {
-    content: '→';
-    position: absolute;
-    left: 0;
-    color: var(--accent-primary);
-    font-weight: bold;
-}
-
-.instructions strong {
-    color: var(--text-primary);
-    transition: color 0.3s ease;
-}
 
 /* Responsive Design */
 @media (max-width: 1200px) {
@@ -695,8 +683,8 @@ body {
     .sidebar {
         position: fixed;
         left: 0;
-        top: 0;
-        height: 100vh;
+        top: 60px; /* Start below the app header */
+        height: calc(100vh - 60px);
         z-index: 2000;
         transform: translateX(-100%);
     }
@@ -714,11 +702,7 @@ body {
         border-radius: 0;
     }
     
-    .app-container {
-        flex-direction: column;
-    }
-    
-    .header h1 {
+    .app-header h1 {
         font-size: 1.3rem;
     }
     
@@ -730,11 +714,11 @@ body {
 }
 
 @media (max-width: 768px) {
-    .header {
+    .app-header {
         padding: 10px 15px;
     }
     
-    .header h1 {
+    .app-header h1 {
         font-size: 1.2rem;
     }
     
@@ -745,10 +729,6 @@ body {
     #gameCanvas {
         max-width: calc(100vw - 30px);
         height: auto;
-    }
-    
-    .instructions {
-        padding: 20px;
     }
     
     .dark-mode-toggle {
