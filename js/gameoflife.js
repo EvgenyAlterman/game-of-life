@@ -50,6 +50,9 @@ class GameOfLife {
         this.mobileMenuBtn = document.getElementById('mobileMenuBtn');
         this.sidebarOverlay = document.getElementById('sidebarOverlay');
         
+        // UI elements - dark mode
+        this.darkModeToggle = document.getElementById('darkModeToggle');
+        
         // Random generation settings
         this.randomDensity = 30; // percentage
         this.randomSeed = null;
@@ -60,6 +63,7 @@ class GameOfLife {
         
         this.initializeGrid();
         this.setupEventListeners();
+        this.initializeDarkMode();
         this.draw();
         this.updateInfo();
         this.updateDrawingModeUI();
@@ -120,6 +124,11 @@ class GameOfLife {
         // Sidebar overlay (for mobile)
         this.sidebarOverlay.addEventListener('click', () => {
             this.closeMobileSidebar();
+        });
+        
+        // Dark mode toggle
+        this.darkModeToggle.addEventListener('click', () => {
+            this.toggleDarkMode();
         });
         
         // Advanced controls - Grid settings
@@ -357,8 +366,13 @@ class GameOfLife {
         // Clear canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
+        // Get computed CSS custom properties for current theme
+        const rootStyles = getComputedStyle(document.documentElement);
+        const gridColor = rootStyles.getPropertyValue('--canvas-grid').trim();
+        const cellColor = rootStyles.getPropertyValue('--canvas-cell').trim();
+        
         // Draw grid
-        this.ctx.strokeStyle = '#e2e8f0';
+        this.ctx.strokeStyle = gridColor;
         this.ctx.lineWidth = 1;
         
         // Vertical lines
@@ -378,7 +392,7 @@ class GameOfLife {
         }
         
         // Draw living cells
-        this.ctx.fillStyle = '#4299e1';
+        this.ctx.fillStyle = cellColor;
         for (let row = 0; row < this.rows; row++) {
             for (let col = 0; col < this.cols; col++) {
                 if (this.grid[row][col]) {
@@ -803,6 +817,57 @@ class GameOfLife {
             
             // Trigger input event to update display
             slider.dispatchEvent(new Event('input'));
+        }
+    }
+    
+    // Dark mode methods
+    initializeDarkMode() {
+        // Check localStorage for saved theme preference
+        const savedTheme = localStorage.getItem('gameoflife-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        // Set initial theme
+        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+            this.setDarkMode(true);
+        } else {
+            this.setDarkMode(false);
+        }
+        
+        // Listen for system theme changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            if (!localStorage.getItem('gameoflife-theme')) {
+                this.setDarkMode(e.matches);
+            }
+        });
+    }
+    
+    toggleDarkMode() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        this.setDarkMode(!isDark);
+    }
+    
+    setDarkMode(isDark) {
+        if (isDark) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('gameoflife-theme', 'dark');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('gameoflife-theme', 'light');
+        }
+        
+        // Update toggle icon
+        this.updateDarkModeIcon(isDark);
+        
+        // Redraw canvas with new colors
+        this.draw();
+    }
+    
+    updateDarkModeIcon(isDark) {
+        const icon = this.darkModeToggle.querySelector('.toggle-icon');
+        if (isDark) {
+            icon.textContent = '☀️';
+        } else {
+            icon.textContent = '🌙';
         }
     }
 }
