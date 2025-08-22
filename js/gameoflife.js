@@ -64,6 +64,7 @@ class GameOfLife {
         this.initializeGrid();
         this.setupEventListeners();
         this.initializeDarkMode();
+        this.loadSettings();
         this.draw();
         this.updateInfo();
         this.updateDrawingModeUI();
@@ -104,16 +105,19 @@ class GameOfLife {
         this.speedSlider.addEventListener('input', (e) => {
             this.speed = parseInt(e.target.value);
             this.speedValue.textContent = this.speed;
+            this.saveSettings();
         });
         
         // Speed max value
         this.speedMax.addEventListener('input', (e) => {
             this.updateSliderMax(this.speedSlider, e.target.value);
+            this.saveSettings();
         });
         
         // Sidebar toggle
         this.sidebarToggle.addEventListener('click', () => {
             this.toggleSidebar();
+            this.saveSettings();
         });
         
         // Mobile menu button
@@ -134,26 +138,32 @@ class GameOfLife {
         // Advanced controls - Grid settings
         this.gridWidthSlider.addEventListener('input', (e) => {
             this.gridWidthValue.textContent = e.target.value;
+            this.saveSettings();
         });
         
         this.gridWidthMax.addEventListener('input', (e) => {
             this.updateSliderMax(this.gridWidthSlider, e.target.value);
+            this.saveSettings();
         });
         
         this.gridHeightSlider.addEventListener('input', (e) => {
             this.gridHeightValue.textContent = e.target.value;
+            this.saveSettings();
         });
         
         this.gridHeightMax.addEventListener('input', (e) => {
             this.updateSliderMax(this.gridHeightSlider, e.target.value);
+            this.saveSettings();
         });
         
         this.cellSizeSlider.addEventListener('input', (e) => {
             this.cellSizeValue.textContent = e.target.value + 'px';
+            this.saveSettings();
         });
         
         this.cellSizeMax.addEventListener('input', (e) => {
             this.updateSliderMax(this.cellSizeSlider, e.target.value);
+            this.saveSettings();
         });
         
         this.applyGridBtn.addEventListener('click', () => {
@@ -164,10 +174,12 @@ class GameOfLife {
         this.randomDensitySlider.addEventListener('input', (e) => {
             this.randomDensity = parseInt(e.target.value);
             this.randomDensityValue.textContent = this.randomDensity + '%';
+            this.saveSettings();
         });
         
         this.randomDensityMax.addEventListener('input', (e) => {
             this.updateSliderMax(this.randomDensitySlider, e.target.value);
+            this.saveSettings();
         });
         
         this.generateSeedBtn.addEventListener('click', () => {
@@ -176,6 +188,7 @@ class GameOfLife {
         
         this.randomSeedInput.addEventListener('input', (e) => {
             this.randomSeed = e.target.value ? parseInt(e.target.value) : null;
+            this.saveSettings();
         });
         
         // Cell drawing button
@@ -267,6 +280,7 @@ class GameOfLife {
             this.grid[row][col] = !this.grid[row][col];
             this.draw();
             this.updateInfo();
+            this.saveSettings();
         }
     }
     
@@ -282,6 +296,7 @@ class GameOfLife {
             this.grid[row][col] = true;
             this.draw();
             this.updateInfo();
+            this.saveSettings();
         }
     }
     
@@ -431,6 +446,7 @@ class GameOfLife {
         this.initializeGrid();
         this.draw();
         this.updateInfo();
+        this.saveSettings();
     }
     
     randomize() {
@@ -451,6 +467,7 @@ class GameOfLife {
         this.generation = 0;
         this.draw();
         this.updateInfo();
+        this.saveSettings();
     }
     
     // Seeded random number generator for reproducible patterns
@@ -497,6 +514,7 @@ class GameOfLife {
         this.generation = 0;
         this.draw();
         this.updateInfo();
+        this.saveSettings();
     }
     
     applyGridSettings() {
@@ -523,12 +541,14 @@ class GameOfLife {
         this.generation = 0;
         this.draw();
         this.updateInfo();
+        this.saveSettings();
     }
     
     generateRandomSeed() {
         const seed = Math.floor(Math.random() * 1000000);
         this.randomSeedInput.value = seed;
         this.randomSeed = seed;
+        this.saveSettings();
     }
     
     fillRandom() {
@@ -549,6 +569,7 @@ class GameOfLife {
         }
         this.draw();
         this.updateInfo();
+        this.saveSettings();
     }
     
     fillCenter() {
@@ -570,6 +591,7 @@ class GameOfLife {
         }
         this.draw();
         this.updateInfo();
+        this.saveSettings();
     }
     
     invertAll() {
@@ -582,6 +604,7 @@ class GameOfLife {
         }
         this.draw();
         this.updateInfo();
+        this.saveSettings();
     }
     
     loadPreset(patternName) {
@@ -610,6 +633,7 @@ class GameOfLife {
         
         this.draw();
         this.updateInfo();
+        this.saveSettings();
     }
     
     // Drawing tool methods
@@ -617,12 +641,14 @@ class GameOfLife {
         this.drawingMode = patternName;
         this.selectedPattern = this.getPatternData(patternName);
         this.updateDrawingModeUI();
+        this.saveSettings();
     }
     
     selectCellDrawingMode() {
         this.drawingMode = 'cell';
         this.selectedPattern = null;
         this.updateDrawingModeUI();
+        this.saveSettings();
     }
     
     placePatternAtClick(e) {
@@ -653,6 +679,7 @@ class GameOfLife {
         
         this.draw();
         this.updateInfo();
+        this.saveSettings();
     }
     
     getPatternData(patternName) {
@@ -721,6 +748,166 @@ class GameOfLife {
         }
     }
     
+    // Settings persistence methods
+    saveSettings() {
+        const settings = {
+            // Game settings
+            cellSize: this.cellSize,
+            rows: this.rows,
+            cols: this.cols,
+            speed: this.speed,
+            randomDensity: this.randomDensity,
+            randomSeed: this.randomSeed,
+            drawingMode: this.drawingMode,
+            generation: this.generation,
+            
+            // UI settings
+            gridWidth: this.gridWidthSlider.value,
+            gridHeight: this.gridHeightSlider.value,
+            
+            // Slider max values
+            speedMax: this.speedMax.value,
+            gridWidthMax: this.gridWidthMax.value,
+            gridHeightMax: this.gridHeightMax.value,
+            cellSizeMax: this.cellSizeMax.value,
+            randomDensityMax: this.randomDensityMax.value,
+            
+            // Grid state
+            grid: this.grid.map(row => [...row]), // Deep copy
+            
+            // Sidebar state
+            sidebarCollapsed: this.sidebar.classList.contains('collapsed'),
+            
+            // Timestamp for data validation
+            timestamp: Date.now()
+        };
+        
+        localStorage.setItem('gameoflife-settings', JSON.stringify(settings));
+    }
+    
+    loadSettings() {
+        try {
+            const saved = localStorage.getItem('gameoflife-settings');
+            if (!saved) return;
+            
+            const settings = JSON.parse(saved);
+            
+            // Validate settings age (don't load if older than 30 days)
+            const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+            if (settings.timestamp && (Date.now() - settings.timestamp > maxAge)) {
+                localStorage.removeItem('gameoflife-settings');
+                return;
+            }
+            
+            // Load game settings
+            if (settings.speed !== undefined) {
+                this.speed = settings.speed;
+                this.speedSlider.value = settings.speed;
+                this.speedValue.textContent = settings.speed;
+            }
+            
+            if (settings.randomDensity !== undefined) {
+                this.randomDensity = settings.randomDensity;
+                this.randomDensitySlider.value = settings.randomDensity;
+                this.randomDensityValue.textContent = settings.randomDensity + '%';
+            }
+            
+            if (settings.randomSeed !== undefined) {
+                this.randomSeed = settings.randomSeed;
+                if (settings.randomSeed !== null) {
+                    this.randomSeedInput.value = settings.randomSeed;
+                }
+            }
+            
+            // Load UI slider settings
+            if (settings.gridWidth !== undefined) {
+                this.gridWidthSlider.value = settings.gridWidth;
+                this.gridWidthValue.textContent = settings.gridWidth;
+            }
+            
+            if (settings.gridHeight !== undefined) {
+                this.gridHeightSlider.value = settings.gridHeight;
+                this.gridHeightValue.textContent = settings.gridHeight;
+            }
+            
+            if (settings.cellSize !== undefined) {
+                this.cellSizeSlider.value = settings.cellSize;
+                this.cellSizeValue.textContent = settings.cellSize + 'px';
+            }
+            
+            // Load slider max values
+            if (settings.speedMax !== undefined) {
+                this.speedMax.value = settings.speedMax;
+                this.speedSlider.max = settings.speedMax;
+            }
+            
+            if (settings.gridWidthMax !== undefined) {
+                this.gridWidthMax.value = settings.gridWidthMax;
+                this.gridWidthSlider.max = settings.gridWidthMax;
+            }
+            
+            if (settings.gridHeightMax !== undefined) {
+                this.gridHeightMax.value = settings.gridHeightMax;
+                this.gridHeightSlider.max = settings.gridHeightMax;
+            }
+            
+            if (settings.cellSizeMax !== undefined) {
+                this.cellSizeMax.value = settings.cellSizeMax;
+                this.cellSizeSlider.max = settings.cellSizeMax;
+            }
+            
+            if (settings.randomDensityMax !== undefined) {
+                this.randomDensityMax.value = settings.randomDensityMax;
+                this.randomDensitySlider.max = settings.randomDensityMax;
+            }
+            
+            // Load grid settings (if they're different from defaults)
+            if (settings.cellSize !== undefined && 
+                (settings.cellSize !== this.cellSize || 
+                 settings.rows !== this.rows || 
+                 settings.cols !== this.cols)) {
+                
+                // Update canvas size
+                this.canvas.width = settings.cols * settings.cellSize;
+                this.canvas.height = settings.rows * settings.cellSize;
+                
+                // Update grid properties
+                this.cellSize = settings.cellSize;
+                this.rows = settings.rows;
+                this.cols = settings.cols;
+                
+                // Initialize grid with new dimensions
+                this.initializeGrid();
+            }
+            
+            // Load grid state
+            if (settings.grid && Array.isArray(settings.grid) && 
+                settings.grid.length === this.rows) {
+                this.grid = settings.grid.map(row => [...row]); // Deep copy
+                this.generation = settings.generation || 0;
+            }
+            
+            // Load drawing mode
+            if (settings.drawingMode !== undefined) {
+                if (settings.drawingMode === 'cell') {
+                    this.selectCellDrawingMode();
+                } else {
+                    this.selectDrawingPattern(settings.drawingMode);
+                }
+            }
+            
+            // Load sidebar state
+            if (settings.sidebarCollapsed) {
+                this.sidebar.classList.add('collapsed');
+            }
+            
+        } catch (error) {
+            console.warn('Failed to load saved settings:', error);
+            // Clear corrupted data
+            localStorage.removeItem('gameoflife-settings');
+        }
+    }
+    
     // Dark mode methods
     initializeDarkMode() {
         // Check localStorage for saved theme preference
@@ -777,23 +964,27 @@ class GameOfLife {
 document.addEventListener('DOMContentLoaded', () => {
     const game = new GameOfLife('gameCanvas');
     
-    // Add a glider pattern in the middle for demo
-    setTimeout(() => {
-        const startRow = Math.floor(game.rows / 2);
-        const startCol = Math.floor(game.cols / 2);
-        
-        const pattern = GameOfLifePatterns.getPattern('glider');
-        if (pattern) {
-            for (let i = 0; i < pattern.length; i++) {
-                for (let j = 0; j < pattern[i].length; j++) {
-                    if (startRow + i < game.rows && startCol + j < game.cols) {
-                        game.grid[startRow + i][startCol + j] = pattern[i][j] === 1;
+    // Add a glider pattern in the middle for demo (only if no saved settings exist)
+    const hasSavedSettings = localStorage.getItem('gameoflife-settings');
+    if (!hasSavedSettings) {
+        setTimeout(() => {
+            const startRow = Math.floor(game.rows / 2);
+            const startCol = Math.floor(game.cols / 2);
+            
+            const pattern = GameOfLifePatterns.getPattern('glider');
+            if (pattern) {
+                for (let i = 0; i < pattern.length; i++) {
+                    for (let j = 0; j < pattern[i].length; j++) {
+                        if (startRow + i < game.rows && startCol + j < game.cols) {
+                            game.grid[startRow + i][startCol + j] = pattern[i][j] === 1;
+                        }
                     }
                 }
+                
+                game.draw();
+                game.updateInfo();
+                game.saveSettings(); // Save initial demo state
             }
-            
-            game.draw();
-            game.updateInfo();
-        }
-    }, 100);
+        }, 100);
+    }
 });
