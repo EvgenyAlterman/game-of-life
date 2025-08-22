@@ -38,11 +38,7 @@
                 <!-- Main Controls Section -->
                 <div class="tool-section">
                     <h3>Simulation</h3>
-                    <div class="main-controls">
-                        <button id="resetBtn" class="main-btn">Reset</button>
-                        <button id="randomBtn" class="main-btn">Random</button>
-                        <button id="clearBtn" class="main-btn">Clear All</button>
-                    </div>
+
                     <div class="speed-control">
                         <label for="speedSlider">Speed:</label>
                         <div class="slider-group">
@@ -162,9 +158,20 @@
                 
                 <div class="info">
                     <div class="info-left">
-                        <button id="startStopBtn" class="play-pause-btn" title="Start/Stop Simulation">
-                            <i data-lucide="play" class="play-icon"></i>
-                        </button>
+                        <div class="control-buttons">
+                            <button id="startStopBtn" class="control-btn play-pause-btn" title="Start/Stop Simulation">
+                                <i data-lucide="play" class="btn-icon"></i>
+                            </button>
+                            <button id="resetBtn" class="control-btn" title="Reset Simulation">
+                                <i data-lucide="refresh-cw" class="btn-icon"></i>
+                            </button>
+                            <button id="randomBtn" class="control-btn" title="Generate Random Pattern">
+                                <i data-lucide="shuffle" class="btn-icon"></i>
+                            </button>
+                            <button id="clearBtn" class="control-btn" title="Clear All Cells">
+                                <i data-lucide="trash-2" class="btn-icon"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="info-right">
                         <p>Generation: <span id="generation">0</span></p>

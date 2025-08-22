@@ -61,6 +61,10 @@ class GameOfLife {
         this.drawingMode = 'cell'; // 'cell' or pattern name
         this.selectedPattern = null;
         
+        // Pattern preview settings
+        this.previewPosition = null; // {row, col} or null
+        this.showPreview = false;
+        
         this.initializeGrid();
         this.setupEventListeners();
         this.initializeDarkMode();
@@ -240,36 +244,31 @@ class GameOfLife {
         
         // Canvas click for patterns (only when not in cell drawing mode)
         this.canvas.addEventListener('click', (e) => {
-            if (!this.isRunning && !hasDragged && this.drawingMode !== 'cell') {
+            if (!this.isRunning && this.drawingMode !== 'cell') {
                 this.placePatternAtClick(e);
             }
         });
         
         // Canvas mouse interactions for cell drawing
         this.canvas.addEventListener('mousedown', (e) => {
-            if (!this.isRunning) {
-                if (this.drawingMode === 'cell') {
-                    isDrawing = true;
-                    hasDragged = false;
-                    
-                    // Determine what we're doing based on the current cell state
-                    const rect = this.canvas.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-                    const col = Math.floor(x / this.cellSize);
-                    const row = Math.floor(y / this.cellSize);
-                    
-                    if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
-                        // If cell is currently dead, we'll be drawing (making alive)
-                        // If cell is currently alive, we'll be erasing (making dead)
-                        drawingState = !this.grid[row][col];
-                    }
-                    
-                    this.toggleCell(e);
-                } else {
-                    // For patterns, we'll handle on click to avoid interference
-                    hasDragged = false;
+            if (!this.isRunning && this.drawingMode === 'cell') {
+                isDrawing = true;
+                hasDragged = false;
+                
+                // Determine what we're doing based on the current cell state
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const col = Math.floor(x / this.cellSize);
+                const row = Math.floor(y / this.cellSize);
+                
+                if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
+                    // If cell is currently dead, we'll be drawing (making alive)
+                    // If cell is currently alive, we'll be erasing (making dead)
+                    drawingState = !this.grid[row][col];
                 }
+                
+                this.toggleCell(e);
             }
         });
         
@@ -277,21 +276,19 @@ class GameOfLife {
             if (isDrawing && !this.isRunning && this.drawingMode === 'cell') {
                 hasDragged = true;
                 this.setCellToState(e, drawingState);
-            } else if (!isDrawing && !this.isRunning && this.drawingMode !== 'cell') {
-                // Track if mouse moved for pattern placement
-                hasDragged = true;
+            } else if (!this.isRunning && this.drawingMode !== 'cell' && this.selectedPattern) {
+                // Show pattern preview
+                this.updatePatternPreview(e);
             }
         });
         
         this.canvas.addEventListener('mouseup', () => {
             isDrawing = false;
-            // Reset hasDragged after a short delay to allow click event to fire
-            setTimeout(() => { hasDragged = false; }, 10);
         });
         
         this.canvas.addEventListener('mouseleave', () => {
             isDrawing = false;
-            hasDragged = false;
+            this.clearPatternPreview();
         });
     }
     
@@ -346,7 +343,7 @@ class GameOfLife {
     toggleSimulation() {
         this.isRunning = !this.isRunning;
         
-        const playIcon = this.startStopBtn.querySelector('.play-icon');
+        const playIcon = this.startStopBtn.querySelector('.btn-icon');
         
         if (this.isRunning) {
             playIcon.setAttribute('data-lucide', 'pause');
@@ -480,13 +477,16 @@ class GameOfLife {
                 }
             }
         }
+        
+        // Draw pattern preview
+        this.drawPatternPreview();
     }
     
     reset() {
         this.isRunning = false;
         this.generation = 0;
         
-        const playIcon = this.startStopBtn.querySelector('.play-icon');
+        const playIcon = this.startStopBtn.querySelector('.btn-icon');
         playIcon.setAttribute('data-lucide', 'play');
         this.startStopBtn.title = 'Start Simulation';
         lucide.createIcons();
@@ -692,12 +692,14 @@ class GameOfLife {
         this.drawingMode = patternName;
         this.selectedPattern = this.getPatternData(patternName);
         this.updateDrawingModeUI();
+        this.clearPatternPreview(); // Clear any existing preview
         this.saveSettings();
     }
     
     selectCellDrawingMode() {
         this.drawingMode = 'cell';
         this.selectedPattern = null;
+        this.clearPatternPreview(); // Clear any existing preview
         this.updateDrawingModeUI();
         this.saveSettings();
     }
@@ -728,9 +730,100 @@ class GameOfLife {
             }
         }
         
+        this.clearPatternPreview(); // Clear preview after placing
         this.draw();
         this.updateInfo();
         this.saveSettings();
+    }
+    
+    // Pattern preview methods
+    updatePatternPreview(e) {
+        if (!this.selectedPattern) return;
+        
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const col = Math.floor(x / this.cellSize);
+        const row = Math.floor(y / this.cellSize);
+        
+        // Only update if position has changed
+        if (!this.previewPosition || 
+            this.previewPosition.row !== row || 
+            this.previewPosition.col !== col) {
+            
+            this.previewPosition = { row, col };
+            this.showPreview = true;
+            
+            // Redraw to show the preview
+            this.draw();
+        }
+    }
+    
+    clearPatternPreview() {
+        if (this.showPreview) {
+            this.showPreview = false;
+            this.previewPosition = null;
+            this.draw(); // Redraw to clear the preview
+        }
+    }
+    
+    drawPatternPreview() {
+        if (!this.showPreview || !this.previewPosition || !this.selectedPattern) return;
+        
+        // Get preview colors (semi-transparent version of cell color)
+        const rootStyles = getComputedStyle(document.documentElement);
+        const cellColor = rootStyles.getPropertyValue('--canvas-cell').trim();
+        
+        // Create semi-transparent color
+        this.ctx.fillStyle = this.hexToRgba(cellColor, 0.3); // 30% opacity
+        
+        const centerRow = this.previewPosition.row;
+        const centerCol = this.previewPosition.col;
+        
+        // Calculate pattern placement (same logic as placePatternAtClick)
+        const startRow = centerRow - Math.floor(this.selectedPattern.length / 2);
+        const startCol = centerCol - Math.floor(this.selectedPattern[0].length / 2);
+        
+        // Draw preview pattern
+        for (let i = 0; i < this.selectedPattern.length; i++) {
+            for (let j = 0; j < this.selectedPattern[i].length; j++) {
+                const row = startRow + i;
+                const col = startCol + j;
+                
+                if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
+                    if (this.selectedPattern[i][j] === 1) {
+                        this.ctx.fillRect(
+                            col * this.cellSize + 1,
+                            row * this.cellSize + 1,
+                            this.cellSize - 2,
+                            this.cellSize - 2
+                        );
+                    }
+                }
+            }
+        }
+    }
+    
+    // Helper method to convert hex color to rgba
+    hexToRgba(hex, alpha) {
+        // Handle CSS color variables and hex colors
+        if (hex.includes('rgb')) {
+            // If it's already rgb, just add alpha
+            return hex.replace('rgb', 'rgba').replace(')', `, ${alpha})`);
+        }
+        
+        // Convert hex to rgba
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        if (result) {
+            const r = parseInt(result[1], 16);
+            const g = parseInt(result[2], 16);
+            const b = parseInt(result[3], 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+        
+        // Fallback for unknown formats
+        return `rgba(66, 153, 225, ${alpha})`; // Default blue with alpha
     }
     
     getPatternData(patternName) {
@@ -761,7 +854,7 @@ class GameOfLife {
         if (this.drawingMode === 'cell') {
             this.canvas.style.cursor = 'crosshair';
         } else {
-            this.canvas.style.cursor = 'copy';
+            this.canvas.style.cursor = 'crosshair'; // Changed from 'copy' to 'crosshair' for better precision
         }
     }
     
