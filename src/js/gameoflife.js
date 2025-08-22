@@ -26,6 +26,11 @@ class GameOfLife {
         this.speedSlider = document.getElementById('speedSlider');
         this.speedValue = document.getElementById('speedValue');
         this.gridToggle = document.getElementById('gridToggle');
+        this.fadeToggle = document.getElementById('fadeToggle');
+        this.fadeSettings = document.getElementById('fadeSettings');
+        this.fadeSlider = document.getElementById('fadeSlider');
+        this.fadeValue = document.getElementById('fadeValue');
+        this.fadeMax = document.getElementById('fadeMax');
         this.recordBtn = document.getElementById('recordBtn');
         this.finishBtn = document.getElementById('finishBtn');
         this.generationDisplay = document.getElementById('generation');
@@ -55,6 +60,11 @@ class GameOfLife {
         this.recordingDuration = document.getElementById('recordingDuration');
         this.cancelSave = document.getElementById('cancelSave');
         this.confirmSave = document.getElementById('confirmSave');
+        
+        // Pattern tree elements
+        this.patternSearch = document.getElementById('patternSearch');
+        this.patternTree = document.getElementById('patternTree');
+        this.searchResults = document.getElementById('searchResults');
         
         // UI elements - advanced controls
         this.gridWidthSlider = document.getElementById('gridWidth');
@@ -99,6 +109,11 @@ class GameOfLife {
         // Grid display settings
         this.showGrid = false;
         
+        // Fade/ghost trail settings
+        this.fadeMode = false;
+        this.fadeDuration = 1;
+        this.fadeGrid = []; // Tracks fade levels for each cell
+        
         // Recording settings
         this.isRecording = false;
         this.recordedGenerations = [];
@@ -111,6 +126,10 @@ class GameOfLife {
         this.replaySpeed = 5;
         this.replayInterval = null;
         
+        // Initial state for reset functionality
+        this.initialState = null;
+        this.initialGeneration = 0;
+        
         this.initializeGrid();
         this.setupEventListeners();
         this.initializeDarkMode();
@@ -122,10 +141,13 @@ class GameOfLife {
     
     initializeGrid() {
         this.grid = [];
+        this.fadeGrid = [];
         for (let row = 0; row < this.rows; row++) {
             this.grid[row] = [];
+            this.fadeGrid[row] = [];
             for (let col = 0; col < this.cols; col++) {
                 this.grid[row][col] = false; // false = dead, true = alive
+                this.fadeGrid[row][col] = 0; // 0 = no fade, > 0 = fade level
             }
         }
     }
@@ -161,6 +183,24 @@ class GameOfLife {
         // Grid toggle
         this.gridToggle.addEventListener('click', () => {
             this.toggleGrid();
+        });
+        
+        // Fade toggle
+        this.fadeToggle.addEventListener('click', () => {
+            this.toggleFadeMode();
+        });
+        
+        // Fade duration slider
+        this.fadeSlider.addEventListener('input', (e) => {
+            this.fadeDuration = parseInt(e.target.value);
+            this.fadeValue.textContent = this.fadeDuration;
+            this.saveSettings();
+        });
+        
+        // Fade max value
+        this.fadeMax.addEventListener('input', (e) => {
+            this.updateSliderMax(this.fadeSlider, e.target.value);
+            this.saveSettings();
         });
         
         // Speed max value
@@ -410,6 +450,18 @@ class GameOfLife {
                 this.closeModal();
             }
         });
+        
+        // Pattern search
+        this.patternSearch.addEventListener('input', (e) => {
+            this.handlePatternSearch(e.target.value);
+        });
+        
+        // Clear search on ESC
+        this.patternSearch.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.clearPatternSearch();
+            }
+        });
     }
     
     toggleCell(e) {
@@ -466,6 +518,9 @@ class GameOfLife {
         const playIcon = this.startStopBtn.querySelector('.btn-icon');
         
         if (this.isRunning) {
+            // Capture initial state when starting simulation
+            this.captureInitialState();
+            
             playIcon.setAttribute('data-lucide', 'pause');
             this.startStopBtn.title = 'Pause Simulation';
             lucide.createIcons();
@@ -524,6 +579,11 @@ class GameOfLife {
                     }
                 }
             }
+        }
+        
+        // Update fade effects if fade mode is enabled
+        if (this.fadeMode) {
+            this.updateFadeGrid(newGrid);
         }
         
         this.grid = newGrid;
@@ -604,6 +664,11 @@ class GameOfLife {
             }
         }
         
+        // Draw fading cells if fade mode is enabled
+        if (this.fadeMode) {
+            this.drawFadingCells(cellColor);
+        }
+        
         // Draw grid overlay (every 5 cells with thicker lines)
         if (this.showGrid) {
             this.drawGridOverlay();
@@ -615,7 +680,6 @@ class GameOfLife {
     
     reset() {
         this.isRunning = false;
-        this.generation = 0;
         
         const playIcon = this.startStopBtn.querySelector('.btn-icon');
         playIcon.setAttribute('data-lucide', 'play');
@@ -625,10 +689,33 @@ class GameOfLife {
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
         }
-        this.initializeGrid();
+        
+        // Restore to initial state if available, otherwise clear grid
+        if (this.initialState) {
+            this.restoreInitialState();
+        } else {
+            this.generation = 0;
+            this.initializeGrid();
+        }
+        
         this.draw();
         this.updateInfo();
         this.saveSettings();
+    }
+    
+    // Initial state management for reset functionality
+    captureInitialState() {
+        // Deep copy the current grid state
+        this.initialState = this.grid.map(row => [...row]);
+        this.initialGeneration = this.generation;
+    }
+    
+    restoreInitialState() {
+        if (!this.initialState) return;
+        
+        // Deep copy the initial state back to current grid
+        this.grid = this.initialState.map(row => [...row]);
+        this.generation = this.initialGeneration;
     }
     
     randomize() {
@@ -647,6 +734,16 @@ class GameOfLife {
             }
         }
         this.generation = 0;
+        
+        // Clear initial state since user is generating a new random pattern
+        this.initialState = null;
+        this.initialGeneration = 0;
+        
+        // Clear fade grid
+        if (this.fadeGrid && this.fadeGrid.length > 0) {
+            this.clearFadeGrid();
+        }
+        
         this.draw();
         this.updateInfo();
         this.saveSettings();
@@ -694,6 +791,16 @@ class GameOfLife {
             }
         }
         this.generation = 0;
+        
+        // Clear initial state since user is starting fresh
+        this.initialState = null;
+        this.initialGeneration = 0;
+        
+        // Clear fade grid
+        if (this.fadeGrid && this.fadeGrid.length > 0) {
+            this.clearFadeGrid();
+        }
+        
         this.draw();
         this.updateInfo();
         this.saveSettings();
@@ -721,6 +828,11 @@ class GameOfLife {
         // Reinitialize grid
         this.initializeGrid();
         this.generation = 0;
+        
+        // Clear initial state since grid dimensions changed
+        this.initialState = null;
+        this.initialGeneration = 0;
+        
         this.draw();
         this.updateInfo();
         this.saveSettings();
@@ -1107,6 +1219,92 @@ class GameOfLife {
         
         // Reset line width
         this.ctx.lineWidth = 1;
+    }
+    
+    // Fade mode methods
+    toggleFadeMode() {
+        this.fadeMode = !this.fadeMode;
+        this.updateFadeUI();
+        
+        // Clear existing fade grid when toggling mode
+        if (!this.fadeMode) {
+            this.clearFadeGrid();
+        }
+        
+        this.draw(); // Redraw to show/hide fade effects
+        this.saveSettings();
+    }
+    
+    updateFadeUI() {
+        if (this.fadeMode) {
+            this.fadeToggle.classList.add('active');
+            this.fadeToggle.querySelector('span').textContent = 'Ghost Trail ON';
+            this.fadeSettings.style.display = 'block';
+        } else {
+            this.fadeToggle.classList.remove('active');
+            this.fadeToggle.querySelector('span').textContent = 'Ghost Trail';
+            this.fadeSettings.style.display = 'none';
+        }
+    }
+    
+    clearFadeGrid() {
+        for (let row = 0; row < this.rows; row++) {
+            for (let col = 0; col < this.cols; col++) {
+                this.fadeGrid[row][col] = 0;
+            }
+        }
+    }
+    
+    updateFadeGrid(newGrid) {
+        // First, decrease all existing fade levels
+        for (let row = 0; row < this.rows; row++) {
+            for (let col = 0; col < this.cols; col++) {
+                if (this.fadeGrid[row][col] > 0) {
+                    this.fadeGrid[row][col]--;
+                }
+            }
+        }
+        
+        // Then, set fade level for cells that just died
+        for (let row = 0; row < this.rows; row++) {
+            for (let col = 0; col < this.cols; col++) {
+                const wasAlive = this.grid[row][col];
+                const isAlive = newGrid[row][col];
+                
+                if (wasAlive && !isAlive) {
+                    // Cell just died - start fade effect
+                    this.fadeGrid[row][col] = this.fadeDuration;
+                } else if (isAlive) {
+                    // Cell is alive - no fade
+                    this.fadeGrid[row][col] = 0;
+                }
+            }
+        }
+    }
+    
+    drawFadingCells(baseCellColor) {
+        // Convert cell color to rgba for transparency
+        const baseColor = this.hexToRgba(baseCellColor, 1.0);
+        
+        for (let row = 0; row < this.rows; row++) {
+            for (let col = 0; col < this.cols; col++) {
+                const fadeLevel = this.fadeGrid[row][col];
+                
+                if (fadeLevel > 0 && !this.grid[row][col]) {
+                    // Calculate opacity based on fade level (higher = more opaque)
+                    const opacity = fadeLevel / this.fadeDuration * 0.8; // Max 80% opacity
+                    const fadeColor = this.hexToRgba(baseCellColor, opacity);
+                    
+                    this.ctx.fillStyle = fadeColor;
+                    this.ctx.fillRect(
+                        col * this.cellSize + 1,
+                        row * this.cellSize + 1,
+                        this.cellSize - 2,
+                        this.cellSize - 2
+                    );
+                }
+            }
+        }
     }
     
     getPatternData(patternName) {
@@ -1524,6 +1722,8 @@ class GameOfLife {
             gridWidth: this.gridWidthSlider.value,
             gridHeight: this.gridHeightSlider.value,
             showGrid: this.showGrid,
+            fadeMode: this.fadeMode,
+            fadeDuration: this.fadeDuration,
             
             // Slider max values
             speedMax: this.speedMax.value,
@@ -1662,6 +1862,18 @@ class GameOfLife {
                 this.updateGridUI();
             }
             
+            // Load fade mode settings
+            if (settings.fadeMode !== undefined) {
+                this.fadeMode = settings.fadeMode;
+                this.updateFadeUI();
+            }
+            
+            if (settings.fadeDuration !== undefined) {
+                this.fadeDuration = settings.fadeDuration;
+                this.fadeSlider.value = settings.fadeDuration;
+                this.fadeValue.textContent = settings.fadeDuration;
+            }
+            
             // Load sidebar state
             if (settings.sidebarCollapsed) {
                 this.sidebar.classList.add('collapsed');
@@ -1725,6 +1937,254 @@ class GameOfLife {
         }
         lucide.createIcons();
     }
+    
+    // Pattern Tree Management
+    initializePatternTree() {
+        this.buildPatternTree();
+    }
+    
+    buildPatternTree() {
+        const categories = GameOfLifePatterns.categories;
+        const treeHTML = Object.keys(categories).map(categoryKey => {
+            const category = categories[categoryKey];
+            const subcategories = category.subcategories || {};
+            const patterns = GameOfLifePatterns.getByCategory(categoryKey);
+            
+            const subcategoryHTML = Object.keys(subcategories).map(subKey => {
+                const subcategory = subcategories[subKey];
+                const subPatterns = patterns.filter(p => p.subcategory === subKey);
+                
+                if (subPatterns.length === 0) return '';
+                
+                const patternItemsHTML = subPatterns.map(pattern => `
+                    <div class="pattern-item" data-pattern="${pattern.key}" 
+                         title="${pattern.description}${pattern.discoverer ? ' • ' + pattern.discoverer : ''}${pattern.year ? ' (' + pattern.year + ')' : ''}">
+                        <span class="pattern-icon">${this.getPatternIcon(pattern)}</span>
+                        <span class="pattern-name">${pattern.name}</span>
+                        ${pattern.period ? `<span class="pattern-info">P${pattern.period}</span>` : ''}
+                    </div>
+                `).join('');
+                
+                return `
+                    <div class="subcategory">
+                        <div class="subcategory-header" data-subcategory="${subKey}">
+                            <span class="category-toggle">▶</span>
+                            <span class="subcategory-icon">${subcategory.icon}</span>
+                            <span class="subcategory-name">${subcategory.name}</span>
+                            <span class="category-count">(${subPatterns.length})</span>
+                        </div>
+                        <div class="subcategory-content">
+                            ${patternItemsHTML}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            const totalPatterns = patterns.length;
+            
+            return `
+                <div class="tree-category">
+                    <div class="category-header" data-category="${categoryKey}">
+                        <span class="category-toggle">▶</span>
+                        <span class="category-icon">${category.icon}</span>
+                        <span class="category-name">${category.name}</span>
+                        <span class="category-count">(${totalPatterns})</span>
+                    </div>
+                    <div class="category-content">
+                        ${subcategoryHTML}
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        this.patternTree.innerHTML = treeHTML;
+        
+        // Add event listeners
+        this.setupPatternTreeListeners();
+    }
+    
+    getPatternIcon(pattern) {
+        // Return appropriate emoji based on pattern type/name
+        const iconMap = {
+            'block': '⬛',
+            'beehive': '🔶', 
+            'loaf': '🍞',
+            'boat': '⛵',
+            'ship': '🚢',
+            'tub': '🛁',
+            'pond': '🏊',
+            'eater1': '👹',
+            'blinker': '⚡',
+            'beacon': '🔵',
+            'toad': '🐸',
+            'clock': '🕐',
+            'pulsar': '⭐',
+            'pentadecathlon': '📏',
+            'mazing': '🌀',
+            'galaxy': '🌌',
+            'glider': '✈️',
+            'lwss': '🚀',
+            'mwss': '🛸',
+            'hwss': '🚁',
+            'rpentomino': '🌱',
+            'diehard': '💀',
+            'acorn': '🌰',
+            'gosperglidergun': '🔫',
+            'switchengine': '🚂',
+            'reflector': '🪞',
+            'infinitegrowth1': '📈'
+        };
+        
+        return iconMap[pattern.key || pattern.name] || '🔹';
+    }
+    
+    setupPatternTreeListeners() {
+        // Category headers
+        this.patternTree.querySelectorAll('.category-header').forEach(header => {
+            header.addEventListener('click', () => {
+                this.toggleCategory(header);
+            });
+        });
+        
+        // Subcategory headers
+        this.patternTree.querySelectorAll('.subcategory-header').forEach(header => {
+            header.addEventListener('click', () => {
+                this.toggleSubcategory(header);
+            });
+        });
+        
+        // Pattern items
+        this.patternTree.querySelectorAll('.pattern-item').forEach(item => {
+            item.addEventListener('click', () => {
+                this.selectPatternFromTree(item);
+            });
+        });
+    }
+    
+    toggleCategory(header) {
+        const content = header.nextElementSibling;
+        const toggle = header.querySelector('.category-toggle');
+        const isExpanded = content.classList.contains('expanded');
+        
+        if (isExpanded) {
+            content.classList.remove('expanded');
+            header.classList.remove('expanded');
+            toggle.classList.remove('expanded');
+        } else {
+            content.classList.add('expanded');
+            header.classList.add('expanded');
+            toggle.classList.add('expanded');
+        }
+    }
+    
+    toggleSubcategory(header) {
+        const content = header.nextElementSibling;
+        const toggle = header.querySelector('.category-toggle');
+        const isExpanded = content.classList.contains('expanded');
+        
+        if (isExpanded) {
+            content.classList.remove('expanded');
+            header.classList.remove('expanded');
+            toggle.classList.remove('expanded');
+        } else {
+            content.classList.add('expanded');
+            header.classList.add('expanded');
+            toggle.classList.add('expanded');
+        }
+    }
+    
+    selectPatternFromTree(item) {
+        const patternName = item.dataset.pattern;
+        
+        // Clear previous selections
+        this.patternTree.querySelectorAll('.pattern-item').forEach(p => {
+            p.classList.remove('selected');
+        });
+        this.searchResults.querySelectorAll('.search-result-item').forEach(p => {
+            p.classList.remove('selected');
+        });
+        
+        // Select this pattern
+        item.classList.add('selected');
+        
+        // Switch to pattern drawing mode
+        this.selectDrawingPattern(patternName);
+    }
+    
+    handlePatternSearch(query) {
+        if (!query.trim()) {
+            this.clearPatternSearch();
+            return;
+        }
+        
+        const results = GameOfLifePatterns.searchPatterns(query);
+        this.displaySearchResults(results);
+    }
+    
+    displaySearchResults(results) {
+        if (results.length === 0) {
+            this.searchResults.innerHTML = `
+                <h4>Search Results</h4>
+                <div class="no-results">No patterns found matching your search.</div>
+            `;
+        } else {
+            const resultsHTML = results.map(pattern => `
+                <div class="search-result-item" data-pattern="${pattern.key || pattern.name}" 
+                     title="${pattern.description}${pattern.discoverer ? ' • ' + pattern.discoverer : ''}${pattern.year ? ' (' + pattern.year + ')' : ''}">
+                    <div class="search-result-header">
+                        <span class="pattern-icon">${this.getPatternIcon(pattern)}</span>
+                        <span class="search-result-name">${pattern.name}</span>
+                        <span class="search-result-category">${GameOfLifePatterns.categories[pattern.category]?.name || pattern.category}</span>
+                    </div>
+                    <div class="search-result-description">${pattern.description}</div>
+                </div>
+            `).join('');
+            
+            this.searchResults.innerHTML = `
+                <h4>Search Results (${results.length})</h4>
+                <div class="search-results-list">${resultsHTML}</div>
+            `;
+            
+            // Add event listeners to search results
+            this.searchResults.querySelectorAll('.search-result-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    this.selectPatternFromSearch(item);
+                });
+            });
+        }
+        
+        this.searchResults.style.display = 'block';
+        this.patternTree.style.display = 'none';
+    }
+    
+    selectPatternFromSearch(item) {
+        const patternName = item.dataset.pattern;
+        
+        // Clear previous selections
+        this.patternTree.querySelectorAll('.pattern-item').forEach(p => {
+            p.classList.remove('selected');
+        });
+        this.searchResults.querySelectorAll('.search-result-item').forEach(p => {
+            p.classList.remove('selected');
+        });
+        
+        // Select this pattern
+        item.classList.add('selected');
+        
+        // Switch to pattern drawing mode
+        this.selectDrawingPattern(patternName);
+    }
+    
+    clearPatternSearch() {
+        this.patternSearch.value = '';
+        this.searchResults.style.display = 'none';
+        this.patternTree.style.display = 'block';
+        
+        // Clear search result selections
+        this.searchResults.querySelectorAll('.search-result-item').forEach(p => {
+            p.classList.remove('selected');
+        });
+    }
 }
 
 // Initialize the game when the page loads
@@ -1741,8 +2201,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize grid UI
     window.game.updateGridUI();
     
+    // Initialize fade UI
+    window.game.updateFadeUI();
+    
     // Load existing recordings
     window.game.loadRecordings();
+    
+    // Initialize pattern tree
+    window.game.initializePatternTree();
     
     // Add a glider pattern in the middle for demo (only if no saved settings exist)
     const hasSavedSettings = localStorage.getItem('gameoflife-settings');

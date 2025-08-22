@@ -54,6 +54,22 @@
                             <span>Show Grid</span>
                         </button>
                     </div>
+                    
+                    <div class="fade-control">
+                        <button id="fadeToggle" class="tool-btn" title="Toggle Ghost Trail Mode">
+                            <i data-lucide="ghost" class="tool-icon"></i>
+                            <span>Ghost Trail</span>
+                        </button>
+                        
+                        <div class="fade-settings" id="fadeSettings" style="display: none;">
+                            <label for="fadeSlider">Trail Duration:</label>
+                            <div class="slider-group">
+                                <input type="range" id="fadeSlider" min="1" max="10" value="1">
+                                <span id="fadeValue">1</span>
+                                <input type="number" id="fadeMax" class="max-input" value="10" min="5" placeholder="Max">
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Drawing Tools Section -->
@@ -61,38 +77,28 @@
                     <h3>Drawing Tools</h3>
                     <p class="section-desc">Select a tool, then click on the grid</p>
                     <div class="drawing-tools">
-                        <button id="cellDrawingBtn" class="tool-btn selected">🖊️ Single Cell</button>
+                        <!-- Single Cell Drawing -->
+                        <button id="cellDrawingBtn" class="tool-btn selected">
+                            <i data-lucide="pen-tool" class="tool-icon"></i>
+                            <span>Single Cell</span>
+                        </button>
                         
-                        <!-- Still Lifes -->
-                        <button class="preset-btn" data-pattern="block">⬛ Block</button>
-                        <button class="preset-btn" data-pattern="beehive">🔶 Beehive</button>
-                        <button class="preset-btn" data-pattern="loaf">🍞 Loaf</button>
-                        <button class="preset-btn" data-pattern="boat">⛵ Boat</button>
-                        <button class="preset-btn" data-pattern="tub">🛁 Tub</button>
+                        <!-- Search Box -->
+                        <div class="pattern-search">
+                            <input type="text" id="patternSearch" placeholder="Search patterns..." class="search-input">
+                            <i data-lucide="search" class="search-icon"></i>
+                        </div>
                         
-                        <!-- Oscillators -->
-                        <button class="preset-btn" data-pattern="blinker">⚡ Blinker</button>
-                        <button class="preset-btn" data-pattern="toad">🐸 Toad</button>
-                        <button class="preset-btn" data-pattern="beacon">🔵 Beacon</button>
-                        <button class="preset-btn" data-pattern="pulsar">⭐ Pulsar</button>
-                        <button class="preset-btn" data-pattern="pentadecathlon">📏 Pentadecathlon</button>
-                        <button class="preset-btn" data-pattern="galaxy">🌌 Galaxy</button>
+                        <!-- Pattern Tree -->
+                        <div class="pattern-tree" id="patternTree">
+                            <!-- Tree will be dynamically populated by JavaScript -->
+                        </div>
                         
-                        <!-- Spaceships -->
-                        <button class="preset-btn" data-pattern="glider">✈️ Glider</button>
-                        <button class="preset-btn" data-pattern="lwss">🚀 LWSS</button>
-                        <button class="preset-btn" data-pattern="mwss">🛸 MWSS</button>
-                        <button class="preset-btn" data-pattern="hwss">🚁 HWSS</button>
-                        
-                        <!-- Methuselahs -->
-                        <button class="preset-btn" data-pattern="rpentomino">🌱 R-Pentomino</button>
-                        <button class="preset-btn" data-pattern="diehard">💀 Die Hard</button>
-                        <button class="preset-btn" data-pattern="acorn">🌰 Acorn</button>
-                        
-                        <!-- Guns & Special -->
-                        <button class="preset-btn" data-pattern="glidergun">🔫 Glider Gun</button>
-                        <button class="preset-btn" data-pattern="copperhead">🐍 Copperhead</button>
-                        <button class="preset-btn" data-pattern="pi">π Pi</button>
+                        <!-- Search Results -->
+                        <div class="search-results" id="searchResults" style="display: none;">
+                            <h4>Search Results</h4>
+                            <div class="search-results-list"></div>
+                        </div>
                     </div>
                 </div>
                 
@@ -169,7 +175,7 @@
                                 <button id="startStopBtn" class="control-btn play-pause-btn" title="Start/Stop Simulation">
                                     <i data-lucide="play" class="btn-icon"></i>
                                 </button>
-                                <button id="resetBtn" class="control-btn" title="Reset Simulation">
+                                <button id="resetBtn" class="control-btn" title="Reset to Initial State">
                                     <i data-lucide="refresh-cw" class="btn-icon"></i>
                                 </button>
                                 <button id="randomBtn" class="control-btn" title="Generate Random Pattern">
