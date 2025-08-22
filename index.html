@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conway's Game of Life</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="/src/css/style.css">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 </head>
 <body>
@@ -164,32 +164,107 @@
                 </div>
                 
                 <div class="info">
-                    <div class="info-left">
-                        <div class="control-buttons">
-                            <button id="startStopBtn" class="control-btn play-pause-btn" title="Start/Stop Simulation">
-                                <i data-lucide="play" class="btn-icon"></i>
-                            </button>
-                            <button id="resetBtn" class="control-btn" title="Reset Simulation">
-                                <i data-lucide="refresh-cw" class="btn-icon"></i>
-                            </button>
-                            <button id="randomBtn" class="control-btn" title="Generate Random Pattern">
-                                <i data-lucide="shuffle" class="btn-icon"></i>
-                            </button>
-                            <button id="clearBtn" class="control-btn" title="Clear All Cells">
-                                <i data-lucide="trash-2" class="btn-icon"></i>
-                            </button>
+                                            <div class="info-left">
+                            <div class="control-buttons">
+                                <button id="startStopBtn" class="control-btn play-pause-btn" title="Start/Stop Simulation">
+                                    <i data-lucide="play" class="btn-icon"></i>
+                                </button>
+                                <button id="resetBtn" class="control-btn" title="Reset Simulation">
+                                    <i data-lucide="refresh-cw" class="btn-icon"></i>
+                                </button>
+                                <button id="randomBtn" class="control-btn" title="Generate Random Pattern">
+                                    <i data-lucide="shuffle" class="btn-icon"></i>
+                                </button>
+                                <button id="clearBtn" class="control-btn" title="Clear All Cells">
+                                    <i data-lucide="trash-2" class="btn-icon"></i>
+                                </button>
+                                <button id="recordBtn" class="control-btn record-btn" title="Start/Stop Recording">
+                                    <i data-lucide="circle" class="btn-icon"></i>
+                                </button>
+                                <button id="finishBtn" class="control-btn finish-btn" title="Finish & Save Recording" style="display: none;">
+                                    <i data-lucide="save" class="btn-icon"></i>
+                                </button>
+                            </div>
                         </div>
-                    </div>
                     <div class="info-right">
                         <p>Generation: <span id="generation">0</span></p>
                         <p>Population: <span id="population">0</span></p>
+                    </div>
+                </div>
+                
+                <!-- Timeline Section -->
+                <div class="timeline-section" id="timelineSection" style="display: none;">
+                    <div class="timeline-header">
+                        <h3>🎬 Recording Timeline</h3>
+                        <div class="timeline-controls">
+                            <button id="playTimelineBtn" class="timeline-btn" title="Play Timeline">
+                                <i data-lucide="play" class="timeline-icon"></i>
+                            </button>
+                            <button id="pauseTimelineBtn" class="timeline-btn" title="Pause Timeline" style="display: none;">
+                                <i data-lucide="pause" class="timeline-icon"></i>
+                            </button>
+                            <button id="stopTimelineBtn" class="timeline-btn" title="Stop Timeline">
+                                <i data-lucide="stop" class="timeline-icon"></i>
+                            </button>
+                            <span class="timeline-info">
+                                <span id="currentFrame">0</span> / <span id="totalFrames">0</span>
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-bar">
+                        <input type="range" id="timelineSlider" min="0" max="0" value="0" class="timeline-slider">
+                    </div>
+                    
+                    <div class="timeline-settings">
+                        <label for="playbackSpeed">Playback Speed:</label>
+                        <input type="range" id="playbackSpeed" min="1" max="10" value="5" class="speed-slider">
+                        <span id="speedValue">5x</span>
+                    </div>
+                </div>
+                
+                <!-- Recording Management -->
+                <div class="recordings-section" id="recordingsSection">
+                    <div class="recordings-header">
+                        <h3>💾 Saved Recordings</h3>
+                        <button id="loadRecordingsBtn" class="load-btn" title="Load Recordings">
+                            <i data-lucide="folder-open" class="btn-icon"></i>
+                            Load
+                        </button>
+                    </div>
+                    <div class="recordings-list" id="recordingsList">
+                        <p class="no-recordings">No recordings available. Start recording to save your simulations!</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <script src="js/patterns.js"></script>
-    <script src="js/gameoflife.js"></script>
+    <!-- Save Recording Modal -->
+    <div class="modal-overlay" id="saveModal" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>💾 Save Recording</h3>
+                <button class="modal-close" id="modalClose">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <label for="recordingName">Recording Name:</label>
+                <input type="text" id="recordingName" placeholder="Enter recording name..." maxlength="50">
+                <div class="recording-stats">
+                    <p>Generations recorded: <span id="recordedGenerations">0</span></p>
+                    <p>Duration: <span id="recordingDuration">0s</span></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelSave" class="cancel-btn">Cancel</button>
+                <button id="confirmSave" class="save-btn">Save Recording</button>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="/src/js/patterns.js"></script>
+    <script type="module" src="/src/js/gameoflife.js"></script>
 </body>
 </html>

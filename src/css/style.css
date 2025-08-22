@@ -758,6 +758,357 @@ body {
     box-shadow: 0 1px 2px var(--shadow-light);
 }
 
+/* Recording Controls */
+.record-btn {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+}
+
+.record-btn.recording {
+    animation: recordPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes recordPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.finish-btn {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+}
+
+/* Timeline Section */
+.timeline-section {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-primary);
+    padding: 20px;
+    transition: background 0.3s ease;
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.timeline-header h3 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+}
+
+.timeline-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.timeline-btn {
+    padding: 8px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.timeline-btn:hover {
+    background: var(--bg-button-hover);
+}
+
+.timeline-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--text-primary);
+}
+
+.timeline-info {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.timeline-bar {
+    margin: 15px 0;
+}
+
+.timeline-slider {
+    width: 100%;
+    height: 6px;
+    background: var(--bg-tertiary);
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+}
+
+.timeline-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.timeline-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+
+.timeline-settings {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 0.9rem;
+}
+
+.speed-slider {
+    width: 100px;
+    height: 4px;
+}
+
+/* Recordings Section */
+.recordings-section {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-primary);
+    padding: 20px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.recordings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.recordings-header h3 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+}
+
+.load-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--accent-primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s ease;
+}
+
+.load-btn:hover {
+    background: var(--accent-secondary);
+}
+
+.recordings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.no-recordings {
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin: 20px 0;
+}
+
+.recording-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.recording-item:hover {
+    background: var(--bg-button-hover);
+    border-color: var(--accent-primary);
+}
+
+.recording-info {
+    flex: 1;
+}
+
+.recording-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.recording-details {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.recording-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.play-recording-btn, .delete-recording-btn {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+}
+
+.play-recording-btn {
+    background: var(--accent-primary);
+    color: white;
+}
+
+.play-recording-btn:hover {
+    background: var(--accent-secondary);
+}
+
+.delete-recording-btn {
+    background: #ef4444;
+    color: white;
+}
+
+.delete-recording-btn:hover {
+    background: #dc2626;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.modal {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 20px 0;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--text-secondary);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.modal-close:hover {
+    background: var(--bg-tertiary);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-body label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.modal-body input[type="text"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    box-sizing: border-box;
+}
+
+.recording-stats {
+    margin-top: 15px;
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+}
+
+.recording-stats p {
+    margin: 4px 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.modal-footer {
+    display: flex;
+    gap: 10px;
+    padding: 0 20px 20px;
+    justify-content: flex-end;
+}
+
+.cancel-btn, .save-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.cancel-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+}
+
+.cancel-btn:hover {
+    background: var(--bg-button-hover);
+}
+
+.save-btn {
+    background: var(--accent-primary);
+    color: white;
+}
+
+.save-btn:hover {
+    background: var(--accent-secondary);
+}
+
 
 
 /* Responsive Design */

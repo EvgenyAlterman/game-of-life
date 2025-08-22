@@ -3,7 +3,7 @@
  * A comprehensive collection of famous and interesting patterns
  */
 
-const GameOfLifePatterns = {
+export const GameOfLifePatterns = {
     
     // ===== STILL LIFES (Static Patterns) =====
     

@@ -1,3 +1,5 @@
+import { GameOfLifePatterns } from './patterns.js';
+
 class GameOfLife {
     constructor(canvasId) {
         this.canvas = document.getElementById(canvasId);
@@ -24,8 +26,35 @@ class GameOfLife {
         this.speedSlider = document.getElementById('speedSlider');
         this.speedValue = document.getElementById('speedValue');
         this.gridToggle = document.getElementById('gridToggle');
+        this.recordBtn = document.getElementById('recordBtn');
+        this.finishBtn = document.getElementById('finishBtn');
         this.generationDisplay = document.getElementById('generation');
         this.populationDisplay = document.getElementById('population');
+        
+        // Timeline elements
+        this.timelineSection = document.getElementById('timelineSection');
+        this.playTimelineBtn = document.getElementById('playTimelineBtn');
+        this.pauseTimelineBtn = document.getElementById('pauseTimelineBtn');
+        this.stopTimelineBtn = document.getElementById('stopTimelineBtn');
+        this.timelineSlider = document.getElementById('timelineSlider');
+        this.currentFrame = document.getElementById('currentFrame');
+        this.totalFrames = document.getElementById('totalFrames');
+        this.playbackSpeed = document.getElementById('playbackSpeed');
+        this.speedValue = document.getElementById('speedValue');
+        
+        // Recording management elements
+        this.recordingsSection = document.getElementById('recordingsSection');
+        this.loadRecordingsBtn = document.getElementById('loadRecordingsBtn');
+        this.recordingsList = document.getElementById('recordingsList');
+        
+        // Modal elements
+        this.saveModal = document.getElementById('saveModal');
+        this.modalClose = document.getElementById('modalClose');
+        this.recordingName = document.getElementById('recordingName');
+        this.recordedGenerationsSpan = document.getElementById('recordedGenerations');
+        this.recordingDuration = document.getElementById('recordingDuration');
+        this.cancelSave = document.getElementById('cancelSave');
+        this.confirmSave = document.getElementById('confirmSave');
         
         // UI elements - advanced controls
         this.gridWidthSlider = document.getElementById('gridWidth');
@@ -69,6 +98,18 @@ class GameOfLife {
         
         // Grid display settings
         this.showGrid = false;
+        
+        // Recording settings
+        this.isRecording = false;
+        this.recordedGenerations = [];
+        this.recordingStartTime = null;
+        
+        // Timeline settings
+        this.isReplaying = false;
+        this.replayData = null;
+        this.replayIndex = 0;
+        this.replaySpeed = 5;
+        this.replayInterval = null;
         
         this.initializeGrid();
         this.setupEventListeners();
@@ -313,6 +354,62 @@ class GameOfLife {
                 }
             }
         });
+        
+        // Recording controls
+        this.recordBtn.addEventListener('click', () => {
+            this.toggleRecording();
+        });
+        
+        this.finishBtn.addEventListener('click', () => {
+            this.finishRecording();
+        });
+        
+        // Timeline controls
+        this.playTimelineBtn.addEventListener('click', () => {
+            this.playTimeline();
+        });
+        
+        this.pauseTimelineBtn.addEventListener('click', () => {
+            this.pauseTimeline();
+        });
+        
+        this.stopTimelineBtn.addEventListener('click', () => {
+            this.stopTimeline();
+        });
+        
+        this.timelineSlider.addEventListener('input', (e) => {
+            this.seekTimeline(parseInt(e.target.value));
+        });
+        
+        this.playbackSpeed.addEventListener('input', (e) => {
+            this.replaySpeed = parseInt(e.target.value);
+            this.speedValue.textContent = e.target.value + 'x';
+        });
+        
+        // Recording management
+        this.loadRecordingsBtn.addEventListener('click', () => {
+            this.loadRecordings();
+        });
+        
+        // Modal controls
+        this.modalClose.addEventListener('click', () => {
+            this.closeModal();
+        });
+        
+        this.cancelSave.addEventListener('click', () => {
+            this.closeModal();
+        });
+        
+        this.confirmSave.addEventListener('click', () => {
+            this.saveRecording();
+        });
+        
+        // Close modal on overlay click
+        this.saveModal.addEventListener('click', (e) => {
+            if (e.target === this.saveModal) {
+                this.closeModal();
+            }
+        });
     }
     
     toggleCell(e) {
@@ -431,6 +528,12 @@ class GameOfLife {
         
         this.grid = newGrid;
         this.generation++;
+        
+        // Record generation if recording is active
+        if (this.isRecording) {
+            this.recordGeneration();
+        }
+        
         this.draw();
         this.updateInfo();
     }
@@ -1010,6 +1113,338 @@ class GameOfLife {
         return GameOfLifePatterns.getPattern(patternName);
     }
     
+    // Recording functionality
+    toggleRecording() {
+        if (this.isRecording) {
+            this.stopRecording();
+        } else {
+            this.startRecording();
+        }
+    }
+    
+    startRecording() {
+        if (this.isReplaying) {
+            this.stopTimeline();
+        }
+        
+        this.isRecording = true;
+        this.recordedGenerations = [];
+        this.recordingStartTime = Date.now();
+        
+        // Record initial state
+        this.recordGeneration();
+        
+        // Update UI
+        this.recordBtn.classList.add('recording');
+        this.recordBtn.title = 'Stop Recording';
+        this.finishBtn.style.display = 'inline-block';
+        
+        console.log('🔴 Recording started');
+    }
+    
+    stopRecording() {
+        this.isRecording = false;
+        
+        // Update UI
+        this.recordBtn.classList.remove('recording');
+        this.recordBtn.title = 'Start Recording';
+        
+        console.log(`🔴 Recording stopped. ${this.recordedGenerations.length} generations recorded.`);
+    }
+    
+    finishRecording() {
+        if (!this.isRecording || this.recordedGenerations.length === 0) {
+            alert('No recording to save!');
+            return;
+        }
+        
+        this.stopRecording();
+        this.finishBtn.style.display = 'none';
+        
+        // Show timeline and set up data
+        this.replayData = [...this.recordedGenerations]; // Copy array
+        this.setupTimeline();
+        
+        // Show save modal
+        this.showSaveModal();
+    }
+    
+    recordGeneration() {
+        const generationData = {
+            generation: this.generation,
+            grid: this.grid.map(row => [...row]), // Deep copy
+            population: this.calculatePopulation(),
+            timestamp: Date.now() - this.recordingStartTime
+        };
+        
+        this.recordedGenerations.push(generationData);
+    }
+    
+    calculatePopulation() {
+        let population = 0;
+        for (let row = 0; row < this.rows; row++) {
+            for (let col = 0; col < this.cols; col++) {
+                if (this.grid[row][col]) {
+                    population++;
+                }
+            }
+        }
+        return population;
+    }
+    
+    // Timeline functionality
+    setupTimeline() {
+        if (!this.replayData || this.replayData.length === 0) return;
+        
+        this.timelineSection.style.display = 'block';
+        this.timelineSlider.max = this.replayData.length - 1;
+        this.timelineSlider.value = 0;
+        this.totalFrames.textContent = this.replayData.length;
+        this.currentFrame.textContent = 1;
+        this.replayIndex = 0;
+        
+        // Load first frame
+        this.loadTimelineFrame(0);
+    }
+    
+    playTimeline() {
+        if (!this.replayData || this.replayData.length === 0) return;
+        
+        if (this.isRunning) {
+            this.toggleSimulation(); // Stop normal simulation
+        }
+        
+        this.isReplaying = true;
+        this.playTimelineBtn.style.display = 'none';
+        this.pauseTimelineBtn.style.display = 'inline-block';
+        
+        // Calculate interval based on speed (higher speed = shorter interval)
+        const interval = Math.max(50, 1000 / this.replaySpeed);
+        
+        this.replayInterval = setInterval(() => {
+            if (this.replayIndex < this.replayData.length - 1) {
+                this.replayIndex++;
+                this.loadTimelineFrame(this.replayIndex);
+                this.timelineSlider.value = this.replayIndex;
+                this.currentFrame.textContent = this.replayIndex + 1;
+            } else {
+                this.pauseTimeline();
+            }
+        }, interval);
+    }
+    
+    pauseTimeline() {
+        this.isReplaying = false;
+        if (this.replayInterval) {
+            clearInterval(this.replayInterval);
+            this.replayInterval = null;
+        }
+        
+        this.playTimelineBtn.style.display = 'inline-block';
+        this.pauseTimelineBtn.style.display = 'none';
+    }
+    
+    stopTimeline() {
+        this.pauseTimeline();
+        this.replayIndex = 0;
+        this.timelineSlider.value = 0;
+        this.currentFrame.textContent = 1;
+        
+        if (this.replayData && this.replayData.length > 0) {
+            this.loadTimelineFrame(0);
+        }
+    }
+    
+    seekTimeline(frameIndex) {
+        if (!this.replayData || frameIndex < 0 || frameIndex >= this.replayData.length) return;
+        
+        this.replayIndex = frameIndex;
+        this.currentFrame.textContent = frameIndex + 1;
+        this.loadTimelineFrame(frameIndex);
+    }
+    
+    loadTimelineFrame(frameIndex) {
+        if (!this.replayData || frameIndex < 0 || frameIndex >= this.replayData.length) return;
+        
+        const frame = this.replayData[frameIndex];
+        this.grid = frame.grid.map(row => [...row]); // Deep copy
+        this.generation = frame.generation;
+        
+        this.draw();
+        this.updateInfo();
+    }
+    
+    // Modal functionality
+    showSaveModal() {
+        const duration = this.recordingStartTime ? 
+            Math.floor((Date.now() - this.recordingStartTime) / 1000) : 0;
+        
+        this.recordedGenerationsSpan.textContent = this.recordedGenerations.length;
+        this.recordingDuration.textContent = duration + 's';
+        this.recordingName.value = `Recording ${new Date().toLocaleString()}`;
+        
+        this.saveModal.style.display = 'flex';
+        this.recordingName.focus();
+        this.recordingName.select();
+    }
+    
+    closeModal() {
+        this.saveModal.style.display = 'none';
+        this.recordingName.value = '';
+    }
+    
+    async saveRecording() {
+        const name = this.recordingName.value.trim();
+        if (!name) {
+            alert('Please enter a recording name!');
+            return;
+        }
+        
+        if (!this.recordedGenerations || this.recordedGenerations.length === 0) {
+            alert('No recording data to save!');
+            return;
+        }
+        
+        try {
+            const recordingData = {
+                generations: this.recordedGenerations,
+                settings: {
+                    cellSize: this.cellSize,
+                    rows: this.rows,
+                    cols: this.cols,
+                    speed: this.speed
+                }
+            };
+            
+            const response = await fetch('/api/recordings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: name,
+                    data: recordingData
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                alert(`Recording "${name}" saved successfully!`);
+                this.closeModal();
+                this.loadRecordings(); // Refresh the recordings list
+            } else {
+                throw new Error(result.error || 'Failed to save recording');
+            }
+            
+        } catch (error) {
+            console.error('Error saving recording:', error);
+            alert('Failed to save recording: ' + error.message);
+        }
+    }
+    
+    // Recording management
+    async loadRecordings() {
+        try {
+            const response = await fetch('/api/recordings');
+            const recordings = await response.json();
+            
+            this.displayRecordings(recordings);
+            
+        } catch (error) {
+            console.error('Error loading recordings:', error);
+            this.recordingsList.innerHTML = '<p class="no-recordings">Failed to load recordings</p>';
+        }
+    }
+    
+    displayRecordings(recordings) {
+        if (!recordings || recordings.length === 0) {
+            this.recordingsList.innerHTML = '<p class="no-recordings">No recordings available. Start recording to save your simulations!</p>';
+            return;
+        }
+        
+        this.recordingsList.innerHTML = recordings.map(recording => `
+            <div class="recording-item">
+                <div class="recording-info">
+                    <div class="recording-name">${recording.name}</div>
+                    <div class="recording-details">
+                        ${recording.totalGenerations} generations • ${recording.date} ${recording.time}
+                    </div>
+                </div>
+                <div class="recording-actions">
+                    <button class="play-recording-btn" onclick="game.playRecording('${recording.id}')">
+                        <i data-lucide="play" style="width: 12px; height: 12px;"></i>
+                        Play
+                    </button>
+                    <button class="delete-recording-btn" onclick="game.deleteRecording('${recording.id}', '${recording.name}')">
+                        <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i>
+                        Delete
+                    </button>
+                </div>
+            </div>
+        `).join('');
+        
+        // Re-create Lucide icons for the dynamically added buttons
+        lucide.createIcons();
+    }
+    
+    async playRecording(recordingId) {
+        try {
+            const response = await fetch(`/api/recordings/${recordingId}`);
+            const recording = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(recording.error || 'Failed to load recording');
+            }
+            
+            // Stop any current activity
+            if (this.isRunning) {
+                this.toggleSimulation();
+            }
+            if (this.isReplaying) {
+                this.stopTimeline();
+            }
+            
+            // Set up replay data
+            this.replayData = recording.generations;
+            this.setupTimeline();
+            
+            // Auto-play the recording
+            setTimeout(() => {
+                this.playTimeline();
+            }, 500);
+            
+        } catch (error) {
+            console.error('Error playing recording:', error);
+            alert('Failed to play recording: ' + error.message);
+        }
+    }
+    
+    async deleteRecording(recordingId, recordingName) {
+        if (!confirm(`Are you sure you want to delete "${recordingName}"?`)) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/recordings/${recordingId}`, {
+                method: 'DELETE'
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                alert(`Recording "${recordingName}" deleted successfully!`);
+                this.loadRecordings(); // Refresh the list
+            } else {
+                throw new Error(result.error || 'Failed to delete recording');
+            }
+            
+        } catch (error) {
+            console.error('Error deleting recording:', error);
+            alert('Failed to delete recording: ' + error.message);
+        }
+    }
+    
     updateDrawingModeUI() {
         // Update button visual states
         document.querySelectorAll('.preset-btn').forEach(btn => {
@@ -1297,13 +1732,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Lucide icons
     lucide.createIcons();
     
-    const game = new GameOfLife('gameCanvas');
+    // Make game instance global for recording buttons
+    window.game = new GameOfLife('gameCanvas');
     
     // Initialize pattern hints
-    game.updatePatternHints();
+    window.game.updatePatternHints();
     
     // Initialize grid UI
-    game.updateGridUI();
+    window.game.updateGridUI();
+    
+    // Load existing recordings
+    window.game.loadRecordings();
     
     // Add a glider pattern in the middle for demo (only if no saved settings exist)
     const hasSavedSettings = localStorage.getItem('gameoflife-settings');
