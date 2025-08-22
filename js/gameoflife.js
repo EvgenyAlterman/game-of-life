@@ -64,6 +64,7 @@ class GameOfLife {
         // Pattern preview settings
         this.previewPosition = null; // {row, col} or null
         this.showPreview = false;
+        this.patternRotation = 0; // 0, 90, 180, 270 degrees
         
         this.initializeGrid();
         this.setupEventListeners();
@@ -289,6 +290,19 @@ class GameOfLife {
         this.canvas.addEventListener('mouseleave', () => {
             isDrawing = false;
             this.clearPatternPreview();
+        });
+        
+        // Keyboard controls for pattern rotation
+        document.addEventListener('keydown', (e) => {
+            if (!this.isRunning && this.drawingMode !== 'cell' && this.selectedPattern) {
+                if (e.key === '[') {
+                    e.preventDefault();
+                    this.rotatePatternLeft();
+                } else if (e.key === ']') {
+                    e.preventDefault();
+                    this.rotatePatternRight();
+                }
+            }
         });
     }
     
@@ -691,16 +705,20 @@ class GameOfLife {
     selectDrawingPattern(patternName) {
         this.drawingMode = patternName;
         this.selectedPattern = this.getPatternData(patternName);
+        this.patternRotation = 0; // Reset rotation when selecting new pattern
         this.updateDrawingModeUI();
         this.clearPatternPreview(); // Clear any existing preview
+        this.updatePatternHints(); // Show pattern controls
         this.saveSettings();
     }
     
     selectCellDrawingMode() {
         this.drawingMode = 'cell';
         this.selectedPattern = null;
+        this.patternRotation = 0; // Reset rotation
         this.clearPatternPreview(); // Clear any existing preview
         this.updateDrawingModeUI();
+        this.updatePatternHints(); // Hide pattern controls
         this.saveSettings();
     }
     
@@ -714,16 +732,19 @@ class GameOfLife {
         const clickCol = Math.floor(x / this.cellSize);
         const clickRow = Math.floor(y / this.cellSize);
         
-        // Place pattern centered on click position
-        const startRow = clickRow - Math.floor(this.selectedPattern.length / 2);
-        const startCol = clickCol - Math.floor(this.selectedPattern[0].length / 2);
+        // Get the rotated pattern
+        const rotatedPattern = this.getRotatedPattern(this.selectedPattern, this.patternRotation);
         
-        for (let i = 0; i < this.selectedPattern.length; i++) {
-            for (let j = 0; j < this.selectedPattern[i].length; j++) {
+        // Place pattern centered on click position
+        const startRow = clickRow - Math.floor(rotatedPattern.length / 2);
+        const startCol = clickCol - Math.floor(rotatedPattern[0].length / 2);
+        
+        for (let i = 0; i < rotatedPattern.length; i++) {
+            for (let j = 0; j < rotatedPattern[i].length; j++) {
                 const row = startRow + i;
                 const col = startCol + j;
                 if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
-                    if (this.selectedPattern[i][j] === 1) {
+                    if (rotatedPattern[i][j] === 1) {
                         this.grid[row][col] = true;
                     }
                 }
@@ -781,18 +802,21 @@ class GameOfLife {
         const centerRow = this.previewPosition.row;
         const centerCol = this.previewPosition.col;
         
+        // Get the rotated pattern
+        const rotatedPattern = this.getRotatedPattern(this.selectedPattern, this.patternRotation);
+        
         // Calculate pattern placement (same logic as placePatternAtClick)
-        const startRow = centerRow - Math.floor(this.selectedPattern.length / 2);
-        const startCol = centerCol - Math.floor(this.selectedPattern[0].length / 2);
+        const startRow = centerRow - Math.floor(rotatedPattern.length / 2);
+        const startCol = centerCol - Math.floor(rotatedPattern[0].length / 2);
         
         // Draw preview pattern
-        for (let i = 0; i < this.selectedPattern.length; i++) {
-            for (let j = 0; j < this.selectedPattern[i].length; j++) {
+        for (let i = 0; i < rotatedPattern.length; i++) {
+            for (let j = 0; j < rotatedPattern[i].length; j++) {
                 const row = startRow + i;
                 const col = startCol + j;
                 
                 if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
-                    if (this.selectedPattern[i][j] === 1) {
+                    if (rotatedPattern[i][j] === 1) {
                         this.ctx.fillRect(
                             col * this.cellSize + 1,
                             row * this.cellSize + 1,
@@ -824,6 +848,80 @@ class GameOfLife {
         
         // Fallback for unknown formats
         return `rgba(66, 153, 225, ${alpha})`; // Default blue with alpha
+    }
+    
+    // Pattern rotation methods
+    rotatePatternLeft() {
+        this.patternRotation = (this.patternRotation - 90 + 360) % 360;
+        this.draw(); // Redraw to show rotated preview
+    }
+    
+    rotatePatternRight() {
+        this.patternRotation = (this.patternRotation + 90) % 360;
+        this.draw(); // Redraw to show rotated preview
+    }
+    
+    // Get pattern rotated by specified degrees (0, 90, 180, 270)
+    getRotatedPattern(pattern, degrees) {
+        if (!pattern || degrees === 0) return pattern;
+        
+        let rotated = pattern;
+        const times = (degrees / 90) % 4;
+        
+        for (let i = 0; i < times; i++) {
+            rotated = this.rotatePatternMatrix90(rotated);
+        }
+        
+        return rotated;
+    }
+    
+    // Rotate pattern matrix 90 degrees clockwise
+    rotatePatternMatrix90(matrix) {
+        const rows = matrix.length;
+        const cols = matrix[0].length;
+        const rotated = [];
+        
+        // Create new matrix with swapped dimensions
+        for (let i = 0; i < cols; i++) {
+            rotated[i] = [];
+            for (let j = 0; j < rows; j++) {
+                rotated[i][j] = matrix[rows - 1 - j][i];
+            }
+        }
+        
+        return rotated;
+    }
+    
+    // Update pattern hints UI
+    updatePatternHints() {
+        let hintsContainer = document.querySelector('.pattern-hints');
+        
+        if (this.drawingMode !== 'cell' && this.selectedPattern) {
+            // Show hints
+            if (!hintsContainer) {
+                hintsContainer = document.createElement('div');
+                hintsContainer.className = 'pattern-hints';
+                document.querySelector('.info').appendChild(hintsContainer);
+            }
+            
+            const patternInfo = GameOfLifePatterns.getPatternInfo(this.drawingMode);
+            const patternName = patternInfo ? patternInfo.name : this.drawingMode;
+            
+            hintsContainer.innerHTML = `
+                <div class="pattern-hint-content">
+                    <span class="pattern-name">${patternName}</span>
+                    <span class="pattern-controls">
+                        <kbd>[</kbd> rotate left • <kbd>]</kbd> rotate right • click to place
+                    </span>
+                </div>
+            `;
+            hintsContainer.style.display = 'block';
+        } else {
+            // Hide hints
+            if (hintsContainer) {
+                hintsContainer.style.display = 'none';
+            }
+        }
     }
     
     getPatternData(patternName) {
@@ -1111,6 +1209,9 @@ document.addEventListener('DOMContentLoaded', () => {
     lucide.createIcons();
     
     const game = new GameOfLife('gameCanvas');
+    
+    // Initialize pattern hints
+    game.updatePatternHints();
     
     // Add a glider pattern in the middle for demo (only if no saved settings exist)
     const hasSavedSettings = localStorage.getItem('gameoflife-settings');

@@ -701,6 +701,47 @@ body {
     font-size: 1.2rem;
 }
 
+/* Pattern Hints */
+.pattern-hints {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-primary);
+    padding: 12px 20px;
+    display: none;
+    transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.pattern-hint-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+}
+
+.pattern-name {
+    font-weight: 600;
+    color: var(--accent-primary);
+}
+
+.pattern-controls {
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pattern-controls kbd {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    box-shadow: 0 1px 2px var(--shadow-light);
+}
+
 
 
 /* Responsive Design */
@@ -821,6 +862,21 @@ body {
     .btn-icon {
         width: 16px;
         height: 16px;
+    }
+    
+    .pattern-hints {
+        padding: 10px 15px;
+    }
+    
+    .pattern-hint-content {
+        gap: 15px;
+        font-size: 0.8rem;
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .pattern-controls {
+        gap: 6px;
     }
 }
 
