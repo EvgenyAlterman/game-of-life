@@ -193,7 +193,24 @@ body {
     padding: 0 15px 20px 15px;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    gap: 6px;
+    max-height: 400px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-sidebar-secondary) transparent;
+}
+
+.drawing-tools::-webkit-scrollbar {
+    width: 4px;
+}
+
+.drawing-tools::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.drawing-tools::-webkit-scrollbar-thumb {
+    background: var(--border-sidebar-secondary);
+    border-radius: 2px;
 }
 
 .tool-btn, .preset-btn {

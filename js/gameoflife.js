@@ -188,6 +188,19 @@ class GameOfLife {
             btn.addEventListener('click', (e) => {
                 this.selectDrawingPattern(e.target.dataset.pattern);
             });
+            
+            // Add tooltip with pattern information
+            const patternName = btn.dataset.pattern;
+            const patternInfo = GameOfLifePatterns.getPatternInfo(patternName);
+            if (patternInfo) {
+                let tooltip = `${patternInfo.name}\nCategory: ${patternInfo.category}\n${patternInfo.description}`;
+                if (patternInfo.period) tooltip += `\nPeriod: ${patternInfo.period}`;
+                if (patternInfo.velocity) tooltip += `\nVelocity: ${patternInfo.velocity}`;
+                if (patternInfo.lifespan) tooltip += `\nLifespan: ${patternInfo.lifespan} generations`;
+                if (patternInfo.stabilization) tooltip += `\nStabilizes after: ${patternInfo.stabilization} generations`;
+                
+                btn.title = tooltip;
+            }
         });
         
         // Quick action buttons
@@ -579,63 +592,7 @@ class GameOfLife {
         const centerRow = Math.floor(this.rows / 2);
         const centerCol = Math.floor(this.cols / 2);
         
-        const patterns = {
-            glider: [
-                [0, 1, 0],
-                [0, 0, 1],
-                [1, 1, 1]
-            ],
-            blinker: [
-                [1, 1, 1]
-            ],
-            block: [
-                [1, 1],
-                [1, 1]
-            ],
-            beehive: [
-                [0, 1, 1, 0],
-                [1, 0, 0, 1],
-                [0, 1, 1, 0]
-            ],
-            toad: [
-                [0, 1, 1, 1],
-                [1, 1, 1, 0]
-            ],
-            beacon: [
-                [1, 1, 0, 0],
-                [1, 1, 0, 0],
-                [0, 0, 1, 1],
-                [0, 0, 1, 1]
-            ],
-            pulsar: [
-                [0,0,1,1,1,0,0,0,1,1,1,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [1,0,0,0,0,1,0,1,0,0,0,0,1],
-                [1,0,0,0,0,1,0,1,0,0,0,0,1],
-                [1,0,0,0,0,1,0,1,0,0,0,0,1],
-                [0,0,1,1,1,0,0,0,1,1,1,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,1,1,1,0,0,0,1,1,1,0,0],
-                [1,0,0,0,0,1,0,1,0,0,0,0,1],
-                [1,0,0,0,0,1,0,1,0,0,0,0,1],
-                [1,0,0,0,0,1,0,1,0,0,0,0,1],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,1,1,1,0,0,0,1,1,1,0,0]
-            ],
-            glidergun: [
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
-                [0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
-                [1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [1,1,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1,1,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-            ]
-        };
-        
-        const pattern = patterns[patternName];
+        const pattern = GameOfLifePatterns.getPattern(patternName);
         if (!pattern) return;
         
         const startRow = centerRow - Math.floor(pattern.length / 2);
@@ -699,63 +656,7 @@ class GameOfLife {
     }
     
     getPatternData(patternName) {
-        const patterns = {
-            glider: [
-                [0, 1, 0],
-                [0, 0, 1],
-                [1, 1, 1]
-            ],
-            blinker: [
-                [1, 1, 1]
-            ],
-            block: [
-                [1, 1],
-                [1, 1]
-            ],
-            beehive: [
-                [0, 1, 1, 0],
-                [1, 0, 0, 1],
-                [0, 1, 1, 0]
-            ],
-            toad: [
-                [0, 1, 1, 1],
-                [1, 1, 1, 0]
-            ],
-            beacon: [
-                [1, 1, 0, 0],
-                [1, 1, 0, 0],
-                [0, 0, 1, 1],
-                [0, 0, 1, 1]
-            ],
-            pulsar: [
-                [0,0,1,1,1,0,0,0,1,1,1,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [1,0,0,0,0,1,0,1,0,0,0,0,1],
-                [1,0,0,0,0,1,0,1,0,0,0,0,1],
-                [1,0,0,0,0,1,0,1,0,0,0,0,1],
-                [0,0,1,1,1,0,0,0,1,1,1,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,1,1,1,0,0,0,1,1,1,0,0],
-                [1,0,0,0,0,1,0,1,0,0,0,0,1],
-                [1,0,0,0,0,1,0,1,0,0,0,0,1],
-                [1,0,0,0,0,1,0,1,0,0,0,0,1],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,1,1,1,0,0,0,1,1,1,0,0]
-            ],
-            glidergun: [
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
-                [0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
-                [1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [1,1,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1,1,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-            ]
-        };
-        
-        return patterns[patternName];
+        return GameOfLifePatterns.getPattern(patternName);
     }
     
     updateDrawingModeUI() {
@@ -876,37 +777,23 @@ class GameOfLife {
 document.addEventListener('DOMContentLoaded', () => {
     const game = new GameOfLife('gameCanvas');
     
-    // Add some initial patterns for demonstration
-    const patterns = {
-        glider: [
-            [0, 1, 0],
-            [0, 0, 1],
-            [1, 1, 1]
-        ],
-        blinker: [
-            [1, 1, 1]
-        ],
-        block: [
-            [1, 1],
-            [1, 1]
-        ]
-    };
-    
     // Add a glider pattern in the middle for demo
     setTimeout(() => {
         const startRow = Math.floor(game.rows / 2);
         const startCol = Math.floor(game.cols / 2);
         
-        const pattern = patterns.glider;
-        for (let i = 0; i < pattern.length; i++) {
-            for (let j = 0; j < pattern[i].length; j++) {
-                if (startRow + i < game.rows && startCol + j < game.cols) {
-                    game.grid[startRow + i][startCol + j] = pattern[i][j] === 1;
+        const pattern = GameOfLifePatterns.getPattern('glider');
+        if (pattern) {
+            for (let i = 0; i < pattern.length; i++) {
+                for (let j = 0; j < pattern[i].length; j++) {
+                    if (startRow + i < game.rows && startCol + j < game.cols) {
+                        game.grid[startRow + i][startCol + j] = pattern[i][j] === 1;
+                    }
                 }
             }
+            
+            game.draw();
+            game.updateInfo();
         }
-        
-        game.draw();
-        game.updateInfo();
     }, 100);
 });
