@@ -16,19 +16,53 @@ class GameOfLife {
         this.speed = 5; // Updates per second
         this.lastTime = 0;
         
-        // UI elements
+        // UI elements - basic controls
         this.startStopBtn = document.getElementById('startStopBtn');
         this.resetBtn = document.getElementById('resetBtn');
         this.randomBtn = document.getElementById('randomBtn');
+        this.clearBtn = document.getElementById('clearBtn');
         this.speedSlider = document.getElementById('speedSlider');
         this.speedValue = document.getElementById('speedValue');
         this.generationDisplay = document.getElementById('generation');
         this.populationDisplay = document.getElementById('population');
         
+        // UI elements - advanced controls
+        this.gridWidthSlider = document.getElementById('gridWidth');
+        this.gridWidthValue = document.getElementById('gridWidthValue');
+        this.gridWidthMax = document.getElementById('gridWidthMax');
+        this.gridHeightSlider = document.getElementById('gridHeight');
+        this.gridHeightValue = document.getElementById('gridHeightValue');
+        this.gridHeightMax = document.getElementById('gridHeightMax');
+        this.cellSizeSlider = document.getElementById('cellSize');
+        this.cellSizeValue = document.getElementById('cellSizeValue');
+        this.cellSizeMax = document.getElementById('cellSizeMax');
+        this.applyGridBtn = document.getElementById('applyGridBtn');
+        this.randomDensitySlider = document.getElementById('randomDensity');
+        this.randomDensityValue = document.getElementById('randomDensityValue');
+        this.randomDensityMax = document.getElementById('randomDensityMax');
+        this.randomSeedInput = document.getElementById('randomSeed');
+        this.generateSeedBtn = document.getElementById('generateSeedBtn');
+        this.speedMax = document.getElementById('speedMax');
+        
+        // UI elements - sidebar
+        this.sidebarToggle = document.getElementById('sidebarToggle');
+        this.sidebar = document.querySelector('.sidebar');
+        this.mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        this.sidebarOverlay = document.getElementById('sidebarOverlay');
+        
+        // Random generation settings
+        this.randomDensity = 30; // percentage
+        this.randomSeed = null;
+        
+        // Drawing tool settings
+        this.drawingMode = 'cell'; // 'cell' or pattern name
+        this.selectedPattern = null;
+        
         this.initializeGrid();
         this.setupEventListeners();
         this.draw();
         this.updateInfo();
+        this.updateDrawingModeUI();
     }
     
     initializeGrid() {
@@ -52,6 +86,11 @@ class GameOfLife {
             this.reset();
         });
         
+        // Clear button
+        this.clearBtn.addEventListener('click', () => {
+            this.clearAll();
+        });
+        
         // Random button
         this.randomBtn.addEventListener('click', () => {
             this.randomize();
@@ -63,24 +102,124 @@ class GameOfLife {
             this.speedValue.textContent = this.speed;
         });
         
-        // Canvas click to toggle cells
+        // Speed max value
+        this.speedMax.addEventListener('input', (e) => {
+            this.updateSliderMax(this.speedSlider, e.target.value);
+        });
+        
+        // Sidebar toggle
+        this.sidebarToggle.addEventListener('click', () => {
+            this.toggleSidebar();
+        });
+        
+        // Mobile menu button
+        this.mobileMenuBtn.addEventListener('click', () => {
+            this.openMobileSidebar();
+        });
+        
+        // Sidebar overlay (for mobile)
+        this.sidebarOverlay.addEventListener('click', () => {
+            this.closeMobileSidebar();
+        });
+        
+        // Advanced controls - Grid settings
+        this.gridWidthSlider.addEventListener('input', (e) => {
+            this.gridWidthValue.textContent = e.target.value;
+        });
+        
+        this.gridWidthMax.addEventListener('input', (e) => {
+            this.updateSliderMax(this.gridWidthSlider, e.target.value);
+        });
+        
+        this.gridHeightSlider.addEventListener('input', (e) => {
+            this.gridHeightValue.textContent = e.target.value;
+        });
+        
+        this.gridHeightMax.addEventListener('input', (e) => {
+            this.updateSliderMax(this.gridHeightSlider, e.target.value);
+        });
+        
+        this.cellSizeSlider.addEventListener('input', (e) => {
+            this.cellSizeValue.textContent = e.target.value + 'px';
+        });
+        
+        this.cellSizeMax.addEventListener('input', (e) => {
+            this.updateSliderMax(this.cellSizeSlider, e.target.value);
+        });
+        
+        this.applyGridBtn.addEventListener('click', () => {
+            this.applyGridSettings();
+        });
+        
+        // Advanced controls - Random settings
+        this.randomDensitySlider.addEventListener('input', (e) => {
+            this.randomDensity = parseInt(e.target.value);
+            this.randomDensityValue.textContent = this.randomDensity + '%';
+        });
+        
+        this.randomDensityMax.addEventListener('input', (e) => {
+            this.updateSliderMax(this.randomDensitySlider, e.target.value);
+        });
+        
+        this.generateSeedBtn.addEventListener('click', () => {
+            this.generateRandomSeed();
+        });
+        
+        this.randomSeedInput.addEventListener('input', (e) => {
+            this.randomSeed = e.target.value ? parseInt(e.target.value) : null;
+        });
+        
+        // Cell drawing button
+        document.getElementById('cellDrawingBtn').addEventListener('click', () => {
+            this.selectCellDrawingMode();
+        });
+        
+        // Preset pattern buttons - now work as drawing tool selectors
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.selectDrawingPattern(e.target.dataset.pattern);
+            });
+        });
+        
+        // Quick action buttons
+        document.getElementById('fillRandomBtn').addEventListener('click', () => {
+            this.fillRandom();
+        });
+        
+        document.getElementById('fillEdgesBtn').addEventListener('click', () => {
+            this.fillEdges();
+        });
+        
+        document.getElementById('fillCenterBtn').addEventListener('click', () => {
+            this.fillCenter();
+        });
+        
+        document.getElementById('invertBtn').addEventListener('click', () => {
+            this.invertAll();
+        });
+        
+        // Canvas click to place patterns or toggle cells
         this.canvas.addEventListener('click', (e) => {
             if (!this.isRunning) {
-                this.toggleCell(e);
+                if (this.drawingMode === 'cell') {
+                    this.toggleCell(e);
+                } else {
+                    this.placePatternAtClick(e);
+                }
             }
         });
         
-        // Canvas mouse drag to draw
+        // Canvas mouse drag to draw (only in cell mode)
         let isDrawing = false;
         this.canvas.addEventListener('mousedown', (e) => {
-            if (!this.isRunning) {
+            if (!this.isRunning && this.drawingMode === 'cell') {
                 isDrawing = true;
                 this.toggleCell(e);
             }
         });
         
         this.canvas.addEventListener('mousemove', (e) => {
-            if (isDrawing && !this.isRunning) {
+            if (isDrawing && !this.isRunning && this.drawingMode === 'cell') {
                 this.setCellAlive(e);
             }
         });
@@ -270,14 +409,39 @@ class GameOfLife {
     randomize() {
         if (this.isRunning) return;
         
+        // Use seeded random if seed is provided
+        if (this.randomSeed !== null) {
+            this.seedRandom(this.randomSeed);
+        }
+        
+        const density = this.randomDensity / 100;
+        
         for (let row = 0; row < this.rows; row++) {
             for (let col = 0; col < this.cols; col++) {
-                this.grid[row][col] = Math.random() < 0.3; // 30% chance of being alive
+                this.grid[row][col] = Math.random() < density;
             }
         }
         this.generation = 0;
         this.draw();
         this.updateInfo();
+    }
+    
+    // Seeded random number generator for reproducible patterns
+    seedRandom(seed) {
+        // Simple seeded random - replace Math.random temporarily
+        let m = 0x80000000; // 2**31;
+        let a = 1103515245;
+        let c = 12345;
+        seed = seed || 1;
+        
+        const originalRandom = Math.random;
+        Math.random = function() {
+            seed = (a * seed + c) % m;
+            return seed / (m - 1);
+        };
+        
+        // Restore original random after use
+        setTimeout(() => { Math.random = originalRandom; }, 100);
     }
     
     updateInfo() {
@@ -292,6 +456,354 @@ class GameOfLife {
             }
         }
         this.populationDisplay.textContent = population;
+    }
+    
+    // Advanced control methods
+    clearAll() {
+        if (this.isRunning) return;
+        
+        for (let row = 0; row < this.rows; row++) {
+            for (let col = 0; col < this.cols; col++) {
+                this.grid[row][col] = false;
+            }
+        }
+        this.generation = 0;
+        this.draw();
+        this.updateInfo();
+    }
+    
+    applyGridSettings() {
+        if (this.isRunning) {
+            alert('Stop the simulation before changing grid settings.');
+            return;
+        }
+        
+        const newCols = parseInt(this.gridWidthSlider.value);
+        const newRows = parseInt(this.gridHeightSlider.value);
+        const newCellSize = parseInt(this.cellSizeSlider.value);
+        
+        // Update canvas size
+        this.canvas.width = newCols * newCellSize;
+        this.canvas.height = newRows * newCellSize;
+        
+        // Update grid properties
+        this.cellSize = newCellSize;
+        this.rows = newRows;
+        this.cols = newCols;
+        
+        // Reinitialize grid
+        this.initializeGrid();
+        this.generation = 0;
+        this.draw();
+        this.updateInfo();
+    }
+    
+    generateRandomSeed() {
+        const seed = Math.floor(Math.random() * 1000000);
+        this.randomSeedInput.value = seed;
+        this.randomSeed = seed;
+    }
+    
+    fillRandom() {
+        this.randomize();
+    }
+    
+    fillEdges() {
+        if (this.isRunning) return;
+        
+        this.clearAll();
+        
+        for (let row = 0; row < this.rows; row++) {
+            for (let col = 0; col < this.cols; col++) {
+                if (row === 0 || row === this.rows - 1 || col === 0 || col === this.cols - 1) {
+                    this.grid[row][col] = Math.random() < 0.5;
+                }
+            }
+        }
+        this.draw();
+        this.updateInfo();
+    }
+    
+    fillCenter() {
+        if (this.isRunning) return;
+        
+        this.clearAll();
+        
+        const centerRow = Math.floor(this.rows / 2);
+        const centerCol = Math.floor(this.cols / 2);
+        const radius = Math.min(this.rows, this.cols) / 6;
+        
+        for (let row = 0; row < this.rows; row++) {
+            for (let col = 0; col < this.cols; col++) {
+                const distance = Math.sqrt((row - centerRow) ** 2 + (col - centerCol) ** 2);
+                if (distance <= radius) {
+                    this.grid[row][col] = Math.random() < 0.4;
+                }
+            }
+        }
+        this.draw();
+        this.updateInfo();
+    }
+    
+    invertAll() {
+        if (this.isRunning) return;
+        
+        for (let row = 0; row < this.rows; row++) {
+            for (let col = 0; col < this.cols; col++) {
+                this.grid[row][col] = !this.grid[row][col];
+            }
+        }
+        this.draw();
+        this.updateInfo();
+    }
+    
+    loadPreset(patternName) {
+        if (this.isRunning) return;
+        
+        this.clearAll();
+        
+        const centerRow = Math.floor(this.rows / 2);
+        const centerCol = Math.floor(this.cols / 2);
+        
+        const patterns = {
+            glider: [
+                [0, 1, 0],
+                [0, 0, 1],
+                [1, 1, 1]
+            ],
+            blinker: [
+                [1, 1, 1]
+            ],
+            block: [
+                [1, 1],
+                [1, 1]
+            ],
+            beehive: [
+                [0, 1, 1, 0],
+                [1, 0, 0, 1],
+                [0, 1, 1, 0]
+            ],
+            toad: [
+                [0, 1, 1, 1],
+                [1, 1, 1, 0]
+            ],
+            beacon: [
+                [1, 1, 0, 0],
+                [1, 1, 0, 0],
+                [0, 0, 1, 1],
+                [0, 0, 1, 1]
+            ],
+            pulsar: [
+                [0,0,1,1,1,0,0,0,1,1,1,0,0],
+                [0,0,0,0,0,0,0,0,0,0,0,0,0],
+                [1,0,0,0,0,1,0,1,0,0,0,0,1],
+                [1,0,0,0,0,1,0,1,0,0,0,0,1],
+                [1,0,0,0,0,1,0,1,0,0,0,0,1],
+                [0,0,1,1,1,0,0,0,1,1,1,0,0],
+                [0,0,0,0,0,0,0,0,0,0,0,0,0],
+                [0,0,1,1,1,0,0,0,1,1,1,0,0],
+                [1,0,0,0,0,1,0,1,0,0,0,0,1],
+                [1,0,0,0,0,1,0,1,0,0,0,0,1],
+                [1,0,0,0,0,1,0,1,0,0,0,0,1],
+                [0,0,0,0,0,0,0,0,0,0,0,0,0],
+                [0,0,1,1,1,0,0,0,1,1,1,0,0]
+            ],
+            glidergun: [
+                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
+                [0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
+                [1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                [1,1,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1,1,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+            ]
+        };
+        
+        const pattern = patterns[patternName];
+        if (!pattern) return;
+        
+        const startRow = centerRow - Math.floor(pattern.length / 2);
+        const startCol = centerCol - Math.floor(pattern[0].length / 2);
+        
+        for (let i = 0; i < pattern.length; i++) {
+            for (let j = 0; j < pattern[i].length; j++) {
+                const row = startRow + i;
+                const col = startCol + j;
+                if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
+                    this.grid[row][col] = pattern[i][j] === 1;
+                }
+            }
+        }
+        
+        this.draw();
+        this.updateInfo();
+    }
+    
+    // Drawing tool methods
+    selectDrawingPattern(patternName) {
+        this.drawingMode = patternName;
+        this.selectedPattern = this.getPatternData(patternName);
+        this.updateDrawingModeUI();
+    }
+    
+    selectCellDrawingMode() {
+        this.drawingMode = 'cell';
+        this.selectedPattern = null;
+        this.updateDrawingModeUI();
+    }
+    
+    placePatternAtClick(e) {
+        if (!this.selectedPattern) return;
+        
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const clickCol = Math.floor(x / this.cellSize);
+        const clickRow = Math.floor(y / this.cellSize);
+        
+        // Place pattern centered on click position
+        const startRow = clickRow - Math.floor(this.selectedPattern.length / 2);
+        const startCol = clickCol - Math.floor(this.selectedPattern[0].length / 2);
+        
+        for (let i = 0; i < this.selectedPattern.length; i++) {
+            for (let j = 0; j < this.selectedPattern[i].length; j++) {
+                const row = startRow + i;
+                const col = startCol + j;
+                if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
+                    if (this.selectedPattern[i][j] === 1) {
+                        this.grid[row][col] = true;
+                    }
+                }
+            }
+        }
+        
+        this.draw();
+        this.updateInfo();
+    }
+    
+    getPatternData(patternName) {
+        const patterns = {
+            glider: [
+                [0, 1, 0],
+                [0, 0, 1],
+                [1, 1, 1]
+            ],
+            blinker: [
+                [1, 1, 1]
+            ],
+            block: [
+                [1, 1],
+                [1, 1]
+            ],
+            beehive: [
+                [0, 1, 1, 0],
+                [1, 0, 0, 1],
+                [0, 1, 1, 0]
+            ],
+            toad: [
+                [0, 1, 1, 1],
+                [1, 1, 1, 0]
+            ],
+            beacon: [
+                [1, 1, 0, 0],
+                [1, 1, 0, 0],
+                [0, 0, 1, 1],
+                [0, 0, 1, 1]
+            ],
+            pulsar: [
+                [0,0,1,1,1,0,0,0,1,1,1,0,0],
+                [0,0,0,0,0,0,0,0,0,0,0,0,0],
+                [1,0,0,0,0,1,0,1,0,0,0,0,1],
+                [1,0,0,0,0,1,0,1,0,0,0,0,1],
+                [1,0,0,0,0,1,0,1,0,0,0,0,1],
+                [0,0,1,1,1,0,0,0,1,1,1,0,0],
+                [0,0,0,0,0,0,0,0,0,0,0,0,0],
+                [0,0,1,1,1,0,0,0,1,1,1,0,0],
+                [1,0,0,0,0,1,0,1,0,0,0,0,1],
+                [1,0,0,0,0,1,0,1,0,0,0,0,1],
+                [1,0,0,0,0,1,0,1,0,0,0,0,1],
+                [0,0,0,0,0,0,0,0,0,0,0,0,0],
+                [0,0,1,1,1,0,0,0,1,1,1,0,0]
+            ],
+            glidergun: [
+                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
+                [0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1],
+                [1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                [1,1,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1,1,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                [0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+            ]
+        };
+        
+        return patterns[patternName];
+    }
+    
+    updateDrawingModeUI() {
+        // Update button visual states
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            if (btn.dataset.pattern === this.drawingMode) {
+                btn.classList.add('selected');
+            } else {
+                btn.classList.remove('selected');
+            }
+        });
+        
+        // Update cell drawing button if it exists
+        const cellBtn = document.getElementById('cellDrawingBtn');
+        if (cellBtn) {
+            if (this.drawingMode === 'cell') {
+                cellBtn.classList.add('selected');
+            } else {
+                cellBtn.classList.remove('selected');
+            }
+        }
+        
+        // Update cursor style based on drawing mode
+        if (this.drawingMode === 'cell') {
+            this.canvas.style.cursor = 'crosshair';
+        } else {
+            this.canvas.style.cursor = 'copy';
+        }
+    }
+    
+    // Sidebar methods
+    toggleSidebar() {
+        this.sidebar.classList.toggle('collapsed');
+    }
+    
+    openMobileSidebar() {
+        this.sidebar.classList.add('open');
+        this.sidebarOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    closeMobileSidebar() {
+        this.sidebar.classList.remove('open');
+        this.sidebarOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    
+    // Slider max value methods
+    updateSliderMax(slider, maxValue) {
+        const newMax = parseInt(maxValue);
+        const currentValue = parseInt(slider.value);
+        
+        if (newMax >= currentValue && newMax > parseInt(slider.min)) {
+            slider.max = newMax;
+        } else if (newMax < currentValue) {
+            // If new max is less than current value, set value to new max
+            slider.max = newMax;
+            slider.value = newMax;
+            
+            // Trigger input event to update display
+            slider.dispatchEvent(new Event('input'));
+        }
     }
 }
 

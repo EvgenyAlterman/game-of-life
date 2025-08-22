@@ -7,39 +7,141 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Conway's Game of Life</h1>
+    <div class="app-container">
+        <!-- Mobile Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
         
-        <div class="navigation">
-            <a href="explanation.html" class="nav-link">📖 Learn About the Game of Life</a>
+        <!-- Left Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>🔧 Tools</h2>
+                <button id="sidebarToggle" class="sidebar-toggle">‹</button>
+            </div>
+            
+            <div class="sidebar-content">
+                <!-- Drawing Tools Section -->
+                <div class="tool-section">
+                    <h3>Drawing Tools</h3>
+                    <p class="section-desc">Select a tool, then click on the grid</p>
+                    <div class="drawing-tools">
+                        <button id="cellDrawingBtn" class="tool-btn selected">🖊️ Single Cell</button>
+                        <button class="preset-btn" data-pattern="glider">✈️ Glider</button>
+                        <button class="preset-btn" data-pattern="blinker">⚡ Blinker</button>
+                        <button class="preset-btn" data-pattern="block">⬛ Block</button>
+                        <button class="preset-btn" data-pattern="beehive">🔶 Beehive</button>
+                        <button class="preset-btn" data-pattern="toad">🐸 Toad</button>
+                        <button class="preset-btn" data-pattern="beacon">🔵 Beacon</button>
+                        <button class="preset-btn" data-pattern="pulsar">⭐ Pulsar</button>
+                        <button class="preset-btn" data-pattern="glidergun">🔫 Glider Gun</button>
+                    </div>
+                </div>
+                
+                <!-- Grid Settings Section -->
+                <div class="tool-section">
+                    <h3>Grid Settings</h3>
+                    <div class="slider-control">
+                        <label for="gridWidth">Width:</label>
+                        <div class="slider-group">
+                            <input type="range" id="gridWidth" min="30" max="120" value="60">
+                            <span id="gridWidthValue">60</span>
+                            <input type="number" id="gridWidthMax" class="max-input" value="120" min="60" placeholder="Max">
+                        </div>
+                    </div>
+                    <div class="slider-control">
+                        <label for="gridHeight">Height:</label>
+                        <div class="slider-group">
+                            <input type="range" id="gridHeight" min="20" max="80" value="40">
+                            <span id="gridHeightValue">40</span>
+                            <input type="number" id="gridHeightMax" class="max-input" value="80" min="40" placeholder="Max">
+                        </div>
+                    </div>
+                    <div class="slider-control">
+                        <label for="cellSize">Cell Size:</label>
+                        <div class="slider-group">
+                            <input type="range" id="cellSize" min="3" max="20" value="10">
+                            <span id="cellSizeValue">10px</span>
+                            <input type="number" id="cellSizeMax" class="max-input" value="20" min="10" placeholder="Max">
+                        </div>
+                    </div>
+                    <button id="applyGridBtn" class="apply-btn">Apply Grid Settings</button>
+                </div>
+                
+                <!-- Random Generation Section -->
+                <div class="tool-section">
+                    <h3>Random Generation</h3>
+                    <div class="slider-control">
+                        <label for="randomDensity">Density:</label>
+                        <div class="slider-group">
+                            <input type="range" id="randomDensity" min="5" max="80" value="30">
+                            <span id="randomDensityValue">30%</span>
+                            <input type="number" id="randomDensityMax" class="max-input" value="80" min="30" placeholder="Max">
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <label for="randomSeed">Seed:</label>
+                        <input type="number" id="randomSeed" value="" placeholder="Random">
+                        <button id="generateSeedBtn" class="seed-btn">🎲</button>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions Section -->
+                <div class="tool-section">
+                    <h3>Quick Actions</h3>
+                    <div class="quick-actions">
+                        <button id="fillRandomBtn">Fill Random</button>
+                        <button id="fillEdgesBtn">Fill Edges</button>
+                        <button id="fillCenterBtn">Fill Center</button>
+                        <button id="invertBtn">Invert All</button>
+                    </div>
+                </div>
+            </div>
         </div>
         
-        <div class="controls">
-            <button id="startStopBtn">Start</button>
-            <button id="resetBtn">Reset</button>
-            <button id="randomBtn">Random</button>
-            <label for="speedSlider">Speed:</label>
-            <input type="range" id="speedSlider" min="1" max="20" value="5">
-            <span id="speedValue">5</span>
-        </div>
-        
-        <div class="game-container">
-            <canvas id="gameCanvas" width="600" height="400"></canvas>
-        </div>
-        
-        <div class="info">
-            <p>Generation: <span id="generation">0</span></p>
-            <p>Population: <span id="population">0</span></p>
-        </div>
-        
-        <div class="instructions">
-            <h3>Instructions:</h3>
-            <ul>
-                <li>Click on cells to toggle them alive/dead</li>
-                <li>Press "Start" to begin the simulation</li>
-                <li>Press "Random" to generate a random pattern</li>
-                <li>Use the speed slider to control simulation speed</li>
-            </ul>
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <div class="header">
+                <div class="header-top">
+                    <button id="mobileMenuBtn" class="mobile-menu-btn">☰</button>
+                    <h1>Conway's Game of Life</h1>
+                </div>
+                <div class="navigation">
+                    <a href="explanation.html" class="nav-link">📖 Learn About the Game of Life</a>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button id="startStopBtn">Start</button>
+                <button id="resetBtn">Reset</button>
+                <button id="randomBtn">Random</button>
+                <button id="clearBtn">Clear All</button>
+                <div class="speed-control">
+                    <label for="speedSlider">Speed:</label>
+                    <div class="slider-group">
+                        <input type="range" id="speedSlider" min="1" max="20" value="10">
+                        <span id="speedValue">10</span>
+                        <input type="number" id="speedMax" class="max-input" value="20" min="10" placeholder="Max">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="game-container">
+                <canvas id="gameCanvas" width="600" height="400"></canvas>
+            </div>
+            
+            <div class="info">
+                <p>Generation: <span id="generation">0</span></p>
+                <p>Population: <span id="population">0</span></p>
+            </div>
+            
+            <div class="instructions">
+                <h3>Quick Start:</h3>
+                <ul>
+                    <li><strong>Select a tool</strong> from the left sidebar</li>
+                    <li><strong>Click on the grid</strong> to draw patterns</li>
+                    <li><strong>Press "Start"</strong> to begin the simulation</li>
+                    <li><strong>Adjust settings</strong> in the sidebar for advanced options</li>
+                </ul>
+            </div>
         </div>
     </div>
     
