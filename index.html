@@ -14,11 +14,30 @@
         <!-- Left Sidebar -->
         <div class="sidebar">
             <div class="sidebar-header">
-                <h2>🔧 Tools</h2>
+                <h2>🔧 Controls</h2>
                 <button id="sidebarToggle" class="sidebar-toggle">‹</button>
             </div>
             
             <div class="sidebar-content">
+                <!-- Main Controls Section -->
+                <div class="tool-section">
+                    <h3>Simulation</h3>
+                    <div class="main-controls">
+                        <button id="startStopBtn" class="main-btn">Start</button>
+                        <button id="resetBtn" class="main-btn">Reset</button>
+                        <button id="randomBtn" class="main-btn">Random</button>
+                        <button id="clearBtn" class="main-btn">Clear All</button>
+                    </div>
+                    <div class="speed-control">
+                        <label for="speedSlider">Speed:</label>
+                        <div class="slider-group">
+                            <input type="range" id="speedSlider" min="1" max="20" value="10">
+                            <span id="speedValue">10</span>
+                            <input type="number" id="speedMax" class="max-input" value="20" min="10" placeholder="Max">
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Drawing Tools Section -->
                 <div class="tool-section">
                     <h3>Drawing Tools</h3>
@@ -126,26 +145,11 @@
                 <div class="header-top">
                     <button id="mobileMenuBtn" class="mobile-menu-btn">☰</button>
                     <h1>Conway's Game of Life</h1>
-                </div>
-                <div class="navigation">
-                    <button id="darkModeToggle" class="dark-mode-toggle" title="Toggle Dark Mode">
-                        <span class="toggle-icon">🌙</span>
-                    </button>
-                    <a href="explanation.html" class="nav-link">📖 Learn About the Game of Life</a>
-                </div>
-            </div>
-            
-            <div class="controls">
-                <button id="startStopBtn">Start</button>
-                <button id="resetBtn">Reset</button>
-                <button id="randomBtn">Random</button>
-                <button id="clearBtn">Clear All</button>
-                <div class="speed-control">
-                    <label for="speedSlider">Speed:</label>
-                    <div class="slider-group">
-                        <input type="range" id="speedSlider" min="1" max="20" value="10">
-                        <span id="speedValue">10</span>
-                        <input type="number" id="speedMax" class="max-input" value="20" min="10" placeholder="Max">
+                    <div class="header-controls">
+                        <button id="darkModeToggle" class="dark-mode-toggle" title="Toggle Dark Mode">
+                            <span class="toggle-icon">🌙</span>
+                        </button>
+                        <a href="explanation.html" class="help-btn" title="Learn About the Game of Life">?</a>
                     </div>
                 </div>
             </div>

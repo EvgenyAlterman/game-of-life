@@ -440,7 +440,7 @@ body {
 }
 
 .header {
-    padding: 30px 40px 20px 40px;
+    padding: 15px 20px;
     background: var(--bg-header);
     border-bottom: 1px solid var(--border-primary);
     transition: background 0.3s ease, border-color 0.3s ease;
@@ -449,6 +449,7 @@ body {
 .header-top {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 15px;
 }
 
@@ -470,19 +471,21 @@ body {
 
 .header h1 {
     color: var(--text-primary);
-    font-size: 2.2rem;
-    font-weight: 700;
-    margin-bottom: 15px;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
     text-shadow: 0 1px 2px var(--shadow-light);
     transition: color 0.3s ease;
+    flex: 1;
 }
 
-.navigation {
-    margin: 0;
+.header-controls {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 10px;
 }
+
+
 
 /* Dark Mode Toggle */
 .dark-mode-toggle {
@@ -524,106 +527,79 @@ body {
     transform: scale(0.95);
 }
 
-.nav-link {
-    display: inline-block;
-    background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
-    color: white;
-    text-decoration: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px var(--shadow-light);
-}
-
-.nav-link:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px var(--shadow-medium);
-}
-
-/* Main Controls */
-.controls {
-    padding: 30px 40px;
+.help-btn {
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-primary);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
-    gap: 20px;
-    flex-wrap: wrap;
-    background: var(--bg-tertiary);
-    border-bottom: 1px solid var(--border-primary);
-    transition: background 0.3s ease, border-color 0.3s ease;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px var(--shadow-light);
+    font-weight: bold;
+    font-size: 14px;
+    color: var(--text-primary);
+    text-decoration: none;
 }
 
-.controls button {
+.help-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-medium);
+    background: var(--bg-tertiary);
+}
+
+/* Main Controls in Sidebar */
+.main-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.main-btn {
     background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
     color: white;
     border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
+    padding: 10px 12px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 13px;
     font-weight: 600;
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px var(--shadow-light);
 }
 
-.controls button:hover {
+.main-btn:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px var(--shadow-medium);
 }
 
 .speed-control {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-left: auto;
+    margin-top: 10px;
 }
 
 .speed-control label {
-    font-weight: 600;
-    color: var(--text-secondary);
+    display: block;
     font-size: 0.9rem;
-}
-
-.speed-control .slider-group {
-    background: var(--bg-secondary);
-    border: 2px solid var(--border-primary);
-    padding: 8px 12px;
-    min-width: 200px;
-    transition: background 0.3s ease, border-color 0.3s ease;
-}
-
-.speed-control .slider-group:focus-within {
-    border-color: var(--accent-primary);
-    box-shadow: 0 0 0 3px var(--shadow-light);
-}
-
-.speed-control input[type="range"] {
-    background: var(--border-primary);
-}
-
-.speed-control input[type="range"]::-webkit-slider-thumb {
-    background: var(--accent-primary);
-}
-
-.speed-control input[type="range"]::-moz-range-thumb {
-    background: var(--accent-primary);
-}
-
-.speed-control span {
-    color: var(--accent-primary);
-    font-weight: 700;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--text-sidebar-secondary);
 }
 
 /* Game Container */
 .game-container {
     flex: 1;
+    overflow: auto;
+    padding: 20px;
+    background: var(--bg-secondary);
+    transition: background 0.3s ease;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 40px;
-    background: var(--bg-secondary);
-    transition: background 0.3s ease;
+    min-height: 0;
 }
 
 #gameCanvas {
@@ -742,14 +718,8 @@ body {
         flex-direction: column;
     }
     
-    .controls {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 15px;
-    }
-    
-    .speed-control {
-        margin-left: 0;
+    .header h1 {
+        font-size: 1.3rem;
     }
     
     .info {
@@ -761,28 +731,35 @@ body {
 
 @media (max-width: 768px) {
     .header {
-        padding: 20px;
+        padding: 10px 15px;
     }
     
     .header h1 {
-        font-size: 1.8rem;
-    }
-    
-    .controls {
-        padding: 20px;
+        font-size: 1.2rem;
     }
     
     .game-container {
-        padding: 20px;
+        padding: 15px;
     }
     
     #gameCanvas {
-        max-width: 100%;
+        max-width: calc(100vw - 30px);
         height: auto;
     }
     
     .instructions {
         padding: 20px;
+    }
+    
+    .dark-mode-toggle {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .help-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
     }
 }
 
