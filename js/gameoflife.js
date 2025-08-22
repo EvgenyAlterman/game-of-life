@@ -346,13 +346,17 @@ class GameOfLife {
     toggleSimulation() {
         this.isRunning = !this.isRunning;
         
+        const playIcon = this.startStopBtn.querySelector('.play-icon');
+        
         if (this.isRunning) {
-            this.startStopBtn.textContent = 'Stop';
-            this.startStopBtn.style.background = 'linear-gradient(45deg, #e53e3e, #c53030)';
+            playIcon.setAttribute('data-lucide', 'pause');
+            this.startStopBtn.title = 'Pause Simulation';
+            lucide.createIcons();
             this.animate(0);
         } else {
-            this.startStopBtn.textContent = 'Start';
-            this.startStopBtn.style.background = 'linear-gradient(45deg, #667eea, #764ba2)';
+            playIcon.setAttribute('data-lucide', 'play');
+            this.startStopBtn.title = 'Start Simulation';
+            lucide.createIcons();
             if (this.animationId) {
                 cancelAnimationFrame(this.animationId);
             }
@@ -481,8 +485,12 @@ class GameOfLife {
     reset() {
         this.isRunning = false;
         this.generation = 0;
-        this.startStopBtn.textContent = 'Start';
-        this.startStopBtn.style.background = 'linear-gradient(45deg, #667eea, #764ba2)';
+        
+        const playIcon = this.startStopBtn.querySelector('.play-icon');
+        playIcon.setAttribute('data-lucide', 'play');
+        this.startStopBtn.title = 'Start Simulation';
+        lucide.createIcons();
+        
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
         }
@@ -996,15 +1004,19 @@ class GameOfLife {
     updateDarkModeIcon(isDark) {
         const icon = this.darkModeToggle.querySelector('.toggle-icon');
         if (isDark) {
-            icon.textContent = '☀️';
+            icon.setAttribute('data-lucide', 'sun');
         } else {
-            icon.textContent = '🌙';
+            icon.setAttribute('data-lucide', 'moon');
         }
+        lucide.createIcons();
     }
 }
 
 // Initialize the game when the page loads
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize Lucide icons
+    lucide.createIcons();
+    
     const game = new GameOfLife('gameCanvas');
     
     // Add a glider pattern in the middle for demo (only if no saved settings exist)

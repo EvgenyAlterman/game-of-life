@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conway's Game of Life</title>
     <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 </head>
 <body>
     <div class="app-container">
@@ -16,7 +17,7 @@
             </div>
             <div class="header-controls">
                 <button id="darkModeToggle" class="dark-mode-toggle" title="Toggle Dark Mode">
-                    <span class="toggle-icon">🌙</span>
+                    <i data-lucide="moon" class="toggle-icon"></i>
                 </button>
                 <a href="explanation.html" class="help-btn" title="Learn About the Game of Life">?</a>
             </div>
@@ -38,7 +39,6 @@
                 <div class="tool-section">
                     <h3>Simulation</h3>
                     <div class="main-controls">
-                        <button id="startStopBtn" class="main-btn">Start</button>
                         <button id="resetBtn" class="main-btn">Reset</button>
                         <button id="randomBtn" class="main-btn">Random</button>
                         <button id="clearBtn" class="main-btn">Clear All</button>
@@ -161,8 +161,15 @@
                 </div>
                 
                 <div class="info">
-                    <p>Generation: <span id="generation">0</span></p>
-                    <p>Population: <span id="population">0</span></p>
+                    <div class="info-left">
+                        <button id="startStopBtn" class="play-pause-btn" title="Start/Stop Simulation">
+                            <i data-lucide="play" class="play-icon"></i>
+                        </button>
+                    </div>
+                    <div class="info-right">
+                        <p>Generation: <span id="generation">0</span></p>
+                        <p>Population: <span id="population">0</span></p>
+                    </div>
                 </div>
             </div>
         </div>

@@ -537,17 +537,15 @@ body {
 }
 
 .dark-mode-toggle .toggle-icon {
-    font-size: 1.2rem;
+    width: 20px;
+    height: 20px;
+    color: var(--text-primary);
     transition: all 0.3s ease;
     transform: rotate(0deg);
 }
 
 [data-theme="dark"] .dark-mode-toggle .toggle-icon {
     transform: rotate(360deg);
-}
-
-[data-theme="dark"] .dark-mode-toggle .toggle-icon::before {
-    content: '☀️';
 }
 
 .dark-mode-toggle:active {
@@ -580,8 +578,8 @@ body {
 
 /* Main Controls in Sidebar */
 .main-controls {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 8px;
     margin-bottom: 15px;
 }
@@ -646,11 +644,53 @@ body {
 .info {
     padding: 20px 40px;
     display: flex;
-    justify-content: center;
-    gap: 60px;
+    justify-content: space-between;
+    align-items: center;
     background: var(--bg-tertiary);
     border-top: 1px solid var(--border-primary);
     transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.info-left {
+    display: flex;
+    align-items: center;
+}
+
+.info-right {
+    display: flex;
+    gap: 60px;
+    align-items: center;
+}
+
+.play-pause-btn {
+    background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    box-shadow: 0 4px 12px var(--shadow-medium);
+    transition: all 0.3s ease;
+}
+
+.play-pause-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px var(--shadow-medium);
+}
+
+.play-pause-btn:active {
+    transform: scale(0.95);
+}
+
+.play-icon {
+    width: 20px;
+    height: 20px;
+    color: white;
+    transition: all 0.3s ease;
 }
 
 .info p {
@@ -711,6 +751,16 @@ body {
         gap: 20px;
         text-align: center;
     }
+    
+    .info-right {
+        gap: 30px;
+        justify-content: center;
+    }
+    
+    .play-pause-btn {
+        width: 45px;
+        height: 45px;
+    }
 }
 
 @media (max-width: 768px) {
@@ -740,6 +790,25 @@ body {
         width: 28px;
         height: 28px;
         font-size: 12px;
+    }
+    
+    .info {
+        padding: 15px 20px;
+    }
+    
+    .info-right {
+        gap: 20px;
+    }
+    
+    .play-pause-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+    }
+    
+    .play-icon {
+        width: 16px;
+        height: 16px;
     }
 }
 
