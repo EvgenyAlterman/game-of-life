@@ -1,4 +1,5 @@
 import { GameOfLifePatterns } from './patterns.js';
+import { GameOfLifeEngine } from './game-engine.js';
 
 class GameOfLife {
     constructor(canvasId) {
@@ -10,10 +11,11 @@ class GameOfLife {
         this.rows = Math.floor(this.canvas.height / this.cellSize);
         this.cols = Math.floor(this.canvas.width / this.cellSize);
         
-        // Game state
-        this.grid = [];
+        // Game engine
+        this.engine = new GameOfLifeEngine(this.rows, this.cols);
+        
+        // UI state
         this.isRunning = false;
-        this.generation = 0;
         this.animationId = null;
         this.speed = 5; // Updates per second
         this.lastTime = 0;
@@ -115,12 +117,9 @@ class GameOfLife {
         // Fade/ghost trail settings
         this.fadeMode = false;
         this.fadeDuration = 1;
-        this.fadeGrid = []; // Tracks fade levels for each cell
         
         // Maturity settings
         this.maturityMode = false;
-        this.maturityGrid = []; // Tracks how long cells have been alive
-        this.deadGrid = []; // Tracks how long cells have been dead
         this.maturityEndColor = '#4c1d95'; // Deep violet default color
         
         // Inspector settings
@@ -141,34 +140,13 @@ class GameOfLife {
         
         // Initial state for reset functionality
         this.initialState = null;
-        this.initialGeneration = 0;
         
-        this.initializeGrid();
         this.setupEventListeners();
         this.initializeDarkMode();
         this.loadSettings();
         this.draw();
         this.updateInfo();
         this.updateDrawingModeUI();
-    }
-    
-    initializeGrid() {
-        this.grid = [];
-        this.fadeGrid = [];
-        this.maturityGrid = [];
-        this.deadGrid = [];
-        for (let row = 0; row < this.rows; row++) {
-            this.grid[row] = [];
-            this.fadeGrid[row] = [];
-            this.maturityGrid[row] = [];
-            this.deadGrid[row] = [];
-            for (let col = 0; col < this.cols; col++) {
-                this.grid[row][col] = false; // false = dead, true = alive
-                this.fadeGrid[row][col] = 0; // 0 = no fade, > 0 = fade level
-                this.maturityGrid[row][col] = 0; // 0 = newborn, higher = more mature
-                this.deadGrid[row][col] = 0; // 0 = just died, higher = longer dead
-            }
-        }
     }
     
     setupEventListeners() {
@@ -514,7 +492,7 @@ class GameOfLife {
         const row = Math.floor(y / this.cellSize);
         
         if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
-            this.grid[row][col] = !this.grid[row][col];
+            this.engine.toggleCell(row, col);
             this.draw();
             this.updateInfo();
             this.saveSettings();
@@ -530,7 +508,7 @@ class GameOfLife {
         const row = Math.floor(y / this.cellSize);
         
         if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
-            this.grid[row][col] = true;
+            this.engine.setCell(row, col, true);
             this.draw();
             this.updateInfo();
             this.saveSettings();
@@ -546,7 +524,7 @@ class GameOfLife {
         const row = Math.floor(y / this.cellSize);
         
         if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
-            this.grid[row][col] = state;
+            this.engine.setCell(row, col, state);
             this.draw();
             this.updateInfo();
             this.saveSettings();
@@ -590,50 +568,13 @@ class GameOfLife {
     }
     
     update() {
-        const newGrid = [];
-        
-        // Create new grid
-        for (let row = 0; row < this.rows; row++) {
-            newGrid[row] = [];
-            for (let col = 0; col < this.cols; col++) {
-                newGrid[row][col] = false;
-            }
-        }
-        
-        // Apply Conway's Game of Life rules
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                const neighbors = this.countNeighbors(row, col);
-                const isAlive = this.grid[row][col];
-                
-                if (isAlive) {
-                    // Rule 1: Any live cell with fewer than two live neighbors dies (underpopulation)
-                    // Rule 2: Any live cell with two or three live neighbors lives on
-                    // Rule 3: Any live cell with more than three live neighbors dies (overpopulation)
-                    if (neighbors === 2 || neighbors === 3) {
-                        newGrid[row][col] = true;
-                    }
-                } else {
-                    // Rule 4: Any dead cell with exactly three live neighbors becomes a live cell (reproduction)
-                    if (neighbors === 3) {
-                        newGrid[row][col] = true;
-                    }
-                }
-            }
-        }
+        // Update game engine
+        const result = this.engine.updateGeneration();
         
         // Update fade effects if fade mode is enabled
         if (this.fadeMode) {
-            this.updateFadeGrid(newGrid);
+            this.engine.updateFadeGrid(this.fadeDuration);
         }
-        
-        // Update maturity grid if maturity mode is enabled
-        if (this.maturityMode) {
-            this.updateMaturityGrid(newGrid);
-        }
-        
-        this.grid = newGrid;
-        this.generation++;
         
         // Record generation if recording is active
         if (this.isRecording) {
@@ -642,28 +583,6 @@ class GameOfLife {
         
         this.draw();
         this.updateInfo();
-    }
-    
-    countNeighbors(row, col) {
-        let count = 0;
-        
-        for (let i = -1; i <= 1; i++) {
-            for (let j = -1; j <= 1; j++) {
-                if (i === 0 && j === 0) continue; // Skip the cell itself
-                
-                const newRow = row + i;
-                const newCol = col + j;
-                
-                // Check bounds and count living neighbors
-                if (newRow >= 0 && newRow < this.rows && newCol >= 0 && newCol < this.cols) {
-                    if (this.grid[newRow][newCol]) {
-                        count++;
-                    }
-                }
-            }
-        }
-        
-        return count;
     }
     
     draw() {
@@ -699,7 +618,7 @@ class GameOfLife {
         this.ctx.fillStyle = cellColor;
         for (let row = 0; row < this.rows; row++) {
             for (let col = 0; col < this.cols; col++) {
-                if (this.grid[row][col]) {
+                if (this.engine.getCell(row, col)) {
                     this.ctx.fillRect(
                         col * this.cellSize + 1,
                         row * this.cellSize + 1,
@@ -745,8 +664,7 @@ class GameOfLife {
         if (this.initialState) {
             this.restoreInitialState();
         } else {
-            this.generation = 0;
-            this.initializeGrid();
+            this.engine.clear();
         }
         
         this.draw();
@@ -756,111 +674,47 @@ class GameOfLife {
     
     // Initial state management for reset functionality
     captureInitialState() {
-        // Deep copy the current grid state
-        this.initialState = this.grid.map(row => [...row]);
-        this.initialGeneration = this.generation;
+        // Capture full engine state
+        this.initialState = this.engine.getGridSnapshot();
     }
     
     restoreInitialState() {
         if (!this.initialState) return;
         
-        // Deep copy the initial state back to current grid
-        this.grid = this.initialState.map(row => [...row]);
-        this.generation = this.initialGeneration;
+        // Restore full engine state
+        this.engine.restoreFromSnapshot(this.initialState);
     }
     
     randomize() {
         if (this.isRunning) return;
         
-        // Use seeded random if seed is provided
-        if (this.randomSeed !== null) {
-            this.seedRandom(this.randomSeed);
-        }
-        
         const density = this.randomDensity / 100;
         
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                this.grid[row][col] = Math.random() < density;
-            }
-        }
-        this.generation = 0;
+        // Use engine's randomize method
+        this.engine.randomize(density, this.randomSeed);
         
         // Clear initial state since user is generating a new random pattern
         this.initialState = null;
-        this.initialGeneration = 0;
-        
-        // Clear fade grid
-        if (this.fadeGrid && this.fadeGrid.length > 0) {
-            this.clearFadeGrid();
-        }
-        
-        // Clear maturity grid
-        if (this.maturityGrid && this.maturityGrid.length > 0) {
-            this.clearMaturityGrid();
-        }
         
         this.draw();
         this.updateInfo();
         this.saveSettings();
     }
     
-    // Seeded random number generator for reproducible patterns
-    seedRandom(seed) {
-        // Simple seeded random - replace Math.random temporarily
-        let m = 0x80000000; // 2**31;
-        let a = 1103515245;
-        let c = 12345;
-        seed = seed || 1;
-        
-        const originalRandom = Math.random;
-        Math.random = function() {
-            seed = (a * seed + c) % m;
-            return seed / (m - 1);
-        };
-        
-        // Restore original random after use
-        setTimeout(() => { Math.random = originalRandom; }, 100);
-    }
-    
     updateInfo() {
-        this.generationDisplay.textContent = this.generation;
-        
-        let population = 0;
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                if (this.grid[row][col]) {
-                    population++;
-                }
-            }
-        }
-        this.populationDisplay.textContent = population;
+        this.generationDisplay.textContent = this.engine.generation;
+        this.populationDisplay.textContent = this.engine.getPopulation();
     }
     
     // Advanced control methods
     clearAll() {
         if (this.isRunning) return;
         
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                this.grid[row][col] = false;
-            }
-        }
-        this.generation = 0;
+        // Use engine's clear method
+        this.engine.clear();
         
         // Clear initial state since user is starting fresh
         this.initialState = null;
-        this.initialGeneration = 0;
-        
-        // Clear fade grid
-        if (this.fadeGrid && this.fadeGrid.length > 0) {
-            this.clearFadeGrid();
-        }
-        
-        // Clear maturity grid
-        if (this.maturityGrid && this.maturityGrid.length > 0) {
-            this.clearMaturityGrid();
-        }
         
         this.draw();
         this.updateInfo();
@@ -886,13 +740,11 @@ class GameOfLife {
         this.rows = newRows;
         this.cols = newCols;
         
-        // Reinitialize grid
-        this.initializeGrid();
-        this.generation = 0;
+        // Resize engine
+        this.engine.resize(newRows, newCols);
         
         // Clear initial state since grid dimensions changed
         this.initialState = null;
-        this.initialGeneration = 0;
         
         this.draw();
         this.updateInfo();
@@ -913,15 +765,7 @@ class GameOfLife {
     fillEdges() {
         if (this.isRunning) return;
         
-        this.clearAll();
-        
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                if (row === 0 || row === this.rows - 1 || col === 0 || col === this.cols - 1) {
-                    this.grid[row][col] = Math.random() < 0.5;
-                }
-            }
-        }
+        this.engine.fillEdges(0.5);
         this.draw();
         this.updateInfo();
         this.saveSettings();
@@ -930,20 +774,7 @@ class GameOfLife {
     fillCenter() {
         if (this.isRunning) return;
         
-        this.clearAll();
-        
-        const centerRow = Math.floor(this.rows / 2);
-        const centerCol = Math.floor(this.cols / 2);
-        const radius = Math.min(this.rows, this.cols) / 6;
-        
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                const distance = Math.sqrt((row - centerRow) ** 2 + (col - centerCol) ** 2);
-                if (distance <= radius) {
-                    this.grid[row][col] = Math.random() < 0.4;
-                }
-            }
-        }
+        this.engine.fillCenter(0.4);
         this.draw();
         this.updateInfo();
         this.saveSettings();
@@ -952,11 +783,7 @@ class GameOfLife {
     invertAll() {
         if (this.isRunning) return;
         
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                this.grid[row][col] = !this.grid[row][col];
-            }
-        }
+        this.engine.invert();
         this.draw();
         this.updateInfo();
         this.saveSettings();
@@ -973,18 +800,7 @@ class GameOfLife {
         const pattern = GameOfLifePatterns.getPattern(patternName);
         if (!pattern) return;
         
-        const startRow = centerRow - Math.floor(pattern.length / 2);
-        const startCol = centerCol - Math.floor(pattern[0].length / 2);
-        
-        for (let i = 0; i < pattern.length; i++) {
-            for (let j = 0; j < pattern[i].length; j++) {
-                const row = startRow + i;
-                const col = startCol + j;
-                if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
-                    this.grid[row][col] = pattern[i][j] === 1;
-                }
-            }
-        }
+        this.engine.placePattern(pattern, centerRow, centerCol);
         
         this.draw();
         this.updateInfo();
@@ -1029,21 +845,8 @@ class GameOfLife {
         // Get the rotated pattern
         const rotatedPattern = this.getRotatedPattern(this.selectedPattern, this.patternRotation);
         
-        // Place pattern centered on click position
-        const startRow = clickRow - Math.floor(rotatedPattern.length / 2);
-        const startCol = clickCol - Math.floor(rotatedPattern[0].length / 2);
-        
-        for (let i = 0; i < rotatedPattern.length; i++) {
-            for (let j = 0; j < rotatedPattern[i].length; j++) {
-                const row = startRow + i;
-                const col = startCol + j;
-                if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
-                    if (rotatedPattern[i][j] === 1) {
-                        this.grid[row][col] = true;
-                    }
-                }
-            }
-        }
+        // Place pattern using engine
+        this.engine.placePattern(rotatedPattern, clickRow, clickCol);
         
         this.clearPatternPreview(); // Clear preview after placing
         this.draw();
@@ -1310,7 +1113,7 @@ class GameOfLife {
         
         // Clear existing fade grid when toggling mode
         if (!this.fadeMode) {
-            this.clearFadeGrid();
+            this.engine.clearStateTracking();
         }
         
         this.draw(); // Redraw to show/hide fade effects
@@ -1329,50 +1132,16 @@ class GameOfLife {
         }
     }
     
-    clearFadeGrid() {
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                this.fadeGrid[row][col] = 0;
-            }
-        }
-    }
-    
-    updateFadeGrid(newGrid) {
-        // First, decrease all existing fade levels
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                if (this.fadeGrid[row][col] > 0) {
-                    this.fadeGrid[row][col]--;
-                }
-            }
-        }
-        
-        // Then, set fade level for cells that just died
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                const wasAlive = this.grid[row][col];
-                const isAlive = newGrid[row][col];
-                
-                if (wasAlive && !isAlive) {
-                    // Cell just died - start fade effect
-                    this.fadeGrid[row][col] = this.fadeDuration;
-                } else if (isAlive) {
-                    // Cell is alive - no fade
-                    this.fadeGrid[row][col] = 0;
-                }
-            }
-        }
-    }
-    
     drawFadingCells(baseCellColor) {
         // Convert cell color to rgba for transparency
         const baseColor = this.hexToRgba(baseCellColor, 1.0);
         
         for (let row = 0; row < this.rows; row++) {
             for (let col = 0; col < this.cols; col++) {
-                const fadeLevel = this.fadeGrid[row][col];
+                const fadeLevel = this.engine.getCellFadeLevel(row, col);
+                const isAlive = this.engine.getCell(row, col);
                 
-                if (fadeLevel > 0 && !this.grid[row][col]) {
+                if (fadeLevel > 0 && !isAlive) {
                     // Calculate opacity based on fade level (higher = more opaque)
                     const opacity = fadeLevel / this.fadeDuration * 0.8; // Max 80% opacity
                     const fadeColor = this.hexToRgba(baseCellColor, opacity);
@@ -1396,7 +1165,7 @@ class GameOfLife {
         
         // Clear existing maturity grid when toggling mode
         if (!this.maturityMode) {
-            this.clearMaturityGrid();
+            this.engine.clearStateTracking();
         }
         
         this.draw(); // Redraw to show/hide maturity effects
@@ -1441,51 +1210,11 @@ class GameOfLife {
         return colorMap[hexColor.toLowerCase()] || 'Custom';
     }
     
-    clearMaturityGrid() {
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                this.maturityGrid[row][col] = 0;
-                this.deadGrid[row][col] = 0;
-            }
-        }
-    }
-    
-    updateMaturityGrid(newGrid) {
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                const wasAlive = this.grid[row][col];
-                const isAlive = newGrid[row][col];
-                
-                if (isAlive) {
-                    if (wasAlive) {
-                        // Cell survived - increase maturity
-                        this.maturityGrid[row][col]++;
-                    } else {
-                        // Cell was just born - start at 0
-                        this.maturityGrid[row][col] = 0;
-                    }
-                    // Cell is alive - reset dead time
-                    this.deadGrid[row][col] = 0;
-                } else {
-                    // Cell is dead
-                    this.maturityGrid[row][col] = 0;
-                    if (wasAlive) {
-                        // Cell just died - start dead counter at 0
-                        this.deadGrid[row][col] = 0;
-                    } else {
-                        // Cell has been dead - increase dead time
-                        this.deadGrid[row][col]++;
-                    }
-                }
-            }
-        }
-    }
-    
     drawMatureCells() {
         for (let row = 0; row < this.rows; row++) {
             for (let col = 0; col < this.cols; col++) {
-                const isAlive = this.grid[row][col];
-                const maturity = this.maturityGrid[row][col];
+                const isAlive = this.engine.getCell(row, col);
+                const maturity = this.engine.getCellMaturity(row, col);
                 
                 if (isAlive && maturity > 0) {
                     // Generate violet color based on maturity
@@ -1566,9 +1295,9 @@ class GameOfLife {
         
         // Check if coordinates are within grid bounds
         if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
-            const isAlive = this.grid[row][col];
-            const maturity = this.maturityGrid[row][col];
-            const deadTime = this.deadGrid[row][col];
+            const isAlive = this.engine.getCell(row, col);
+            const maturity = this.engine.getCellMaturity(row, col);
+            const deadTime = this.engine.getCellDeadTime(row, col);
             
             let tooltipContent = `
                 <div class="tooltip-cell-info">
@@ -1680,25 +1409,13 @@ class GameOfLife {
     
     recordGeneration() {
         const generationData = {
-            generation: this.generation,
-            grid: this.grid.map(row => [...row]), // Deep copy
-            population: this.calculatePopulation(),
+            generation: this.engine.generation,
+            grid: this.engine.getGridSnapshot().grid, // Use engine's grid
+            population: this.engine.getPopulation(),
             timestamp: Date.now() - this.recordingStartTime
         };
         
         this.recordedGenerations.push(generationData);
-    }
-    
-    calculatePopulation() {
-        let population = 0;
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                if (this.grid[row][col]) {
-                    population++;
-                }
-            }
-        }
-        return population;
     }
     
     // Timeline functionality
@@ -1776,8 +1493,16 @@ class GameOfLife {
         if (!this.replayData || frameIndex < 0 || frameIndex >= this.replayData.length) return;
         
         const frame = this.replayData[frameIndex];
-        this.grid = frame.grid.map(row => [...row]); // Deep copy
-        this.generation = frame.generation;
+        
+        // Update engine's grid directly
+        for (let row = 0; row < this.rows; row++) {
+            for (let col = 0; col < this.cols; col++) {
+                if (frame.grid[row] && frame.grid[row][col] !== undefined) {
+                    this.engine.setCell(row, col, frame.grid[row][col]);
+                }
+            }
+        }
+        this.engine.generation = frame.generation;
         
         this.draw();
         this.updateInfo();
@@ -2039,7 +1764,7 @@ class GameOfLife {
             randomDensity: this.randomDensity,
             randomSeed: this.randomSeed,
             drawingMode: this.drawingMode,
-            generation: this.generation,
+            generation: this.engine.generation,
             
             // UI settings
             gridWidth: this.gridWidthSlider.value,
@@ -2059,7 +1784,7 @@ class GameOfLife {
             randomDensityMax: this.randomDensityMax.value,
             
             // Grid state
-            grid: this.grid.map(row => [...row]), // Deep copy
+            gridSnapshot: this.engine.getGridSnapshot(),
             
             // Sidebar state
             sidebarCollapsed: this.sidebar.classList.contains('collapsed'),
@@ -2162,15 +1887,25 @@ class GameOfLife {
                 this.rows = settings.rows;
                 this.cols = settings.cols;
                 
-                // Initialize grid with new dimensions
-                this.initializeGrid();
+                // Resize engine with new dimensions
+                this.engine.resize(settings.rows, settings.cols);
             }
             
             // Load grid state
-            if (settings.grid && Array.isArray(settings.grid) && 
+            if (settings.gridSnapshot) {
+                // Load from new format (engine snapshot)
+                this.engine.restoreFromSnapshot(settings.gridSnapshot);
+            } else if (settings.grid && Array.isArray(settings.grid) && 
                 settings.grid.length === this.rows) {
-                this.grid = settings.grid.map(row => [...row]); // Deep copy
-                this.generation = settings.generation || 0;
+                // Legacy format - migrate to engine
+                for (let row = 0; row < this.rows; row++) {
+                    for (let col = 0; col < this.cols; col++) {
+                        if (settings.grid[row] && settings.grid[row][col] !== undefined) {
+                            this.engine.setCell(row, col, settings.grid[row][col]);
+                        }
+                    }
+                }
+                this.engine.generation = settings.generation || 0;
             }
             
             // Load drawing mode
