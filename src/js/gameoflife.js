@@ -120,7 +120,12 @@ class GameOfLife {
         // Maturity settings
         this.maturityMode = false;
         this.maturityGrid = []; // Tracks how long cells have been alive
+        this.deadGrid = []; // Tracks how long cells have been dead
         this.maturityEndColor = '#4c1d95'; // Deep violet default color
+        
+        // Inspector settings
+        this.inspectorMode = false;
+        this.tooltip = null;
         
         // Recording settings
         this.isRecording = false;
@@ -151,14 +156,17 @@ class GameOfLife {
         this.grid = [];
         this.fadeGrid = [];
         this.maturityGrid = [];
+        this.deadGrid = [];
         for (let row = 0; row < this.rows; row++) {
             this.grid[row] = [];
             this.fadeGrid[row] = [];
             this.maturityGrid[row] = [];
+            this.deadGrid[row] = [];
             for (let col = 0; col < this.cols; col++) {
                 this.grid[row][col] = false; // false = dead, true = alive
                 this.fadeGrid[row][col] = 0; // 0 = no fade, > 0 = fade level
                 this.maturityGrid[row][col] = 0; // 0 = newborn, higher = more mature
+                this.deadGrid[row][col] = 0; // 0 = just died, higher = longer dead
             }
         }
     }
@@ -315,6 +323,11 @@ class GameOfLife {
             this.selectCellDrawingMode();
         });
         
+        // Cell inspector button
+        document.getElementById('cellInspectorBtn').addEventListener('click', () => {
+            this.selectInspectorMode();
+        });
+        
         // Preset pattern buttons - now work as drawing tool selectors
         document.querySelectorAll('.preset-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -357,9 +370,9 @@ class GameOfLife {
         let hasDragged = false;
         let drawingState = true; // true = drawing (making alive), false = erasing (making dead)
         
-        // Canvas click for patterns (only when not in cell drawing mode)
+        // Canvas click for patterns (only when not in cell drawing mode and not in inspector mode)
         this.canvas.addEventListener('click', (e) => {
-            if (!this.isRunning && this.drawingMode !== 'cell') {
+            if (!this.isRunning && this.drawingMode !== 'cell' && !this.inspectorMode) {
                 this.placePatternAtClick(e);
             }
         });
@@ -391,9 +404,12 @@ class GameOfLife {
             if (isDrawing && !this.isRunning && this.drawingMode === 'cell') {
                 hasDragged = true;
                 this.setCellToState(e, drawingState);
-            } else if (!this.isRunning && this.drawingMode !== 'cell' && this.selectedPattern) {
+            } else if (!this.isRunning && this.drawingMode !== 'cell' && this.selectedPattern && !this.inspectorMode) {
                 // Show pattern preview
                 this.updatePatternPreview(e);
+            } else if (this.inspectorMode) {
+                // Show inspector tooltip
+                this.updateInspectorTooltip(e);
             }
         });
         
@@ -404,6 +420,7 @@ class GameOfLife {
         this.canvas.addEventListener('mouseleave', () => {
             isDrawing = false;
             this.clearPatternPreview();
+            this.hideInspectorTooltip();
         });
         
         // Keyboard controls for pattern rotation
@@ -977,19 +994,23 @@ class GameOfLife {
     // Drawing tool methods
     selectDrawingPattern(patternName) {
         this.drawingMode = patternName;
+        this.inspectorMode = false;
         this.selectedPattern = this.getPatternData(patternName);
         this.patternRotation = 0; // Reset rotation when selecting new pattern
         this.updateDrawingModeUI();
         this.clearPatternPreview(); // Clear any existing preview
+        this.hideInspectorTooltip();
         this.updatePatternHints(); // Show pattern controls
         this.saveSettings();
     }
     
     selectCellDrawingMode() {
         this.drawingMode = 'cell';
+        this.inspectorMode = false;
         this.selectedPattern = null;
         this.patternRotation = 0; // Reset rotation
         this.clearPatternPreview(); // Clear any existing preview
+        this.hideInspectorTooltip();
         this.updateDrawingModeUI();
         this.updatePatternHints(); // Hide pattern controls
         this.saveSettings();
@@ -1169,8 +1190,25 @@ class GameOfLife {
     updatePatternHints() {
         let hintsContainer = document.querySelector('.pattern-hints');
         
-        if (this.drawingMode !== 'cell' && this.selectedPattern) {
-            // Show hints
+        if (this.inspectorMode) {
+            // Show inspector hints
+            if (!hintsContainer) {
+                hintsContainer = document.createElement('div');
+                hintsContainer.className = 'pattern-hints';
+                document.querySelector('.info').appendChild(hintsContainer);
+            }
+            
+            hintsContainer.innerHTML = `
+                <div class="pattern-hint-content">
+                    <span class="pattern-name">Cell Inspector</span>
+                    <span class="pattern-controls">
+                        hover over cells to see maturity information
+                    </span>
+                </div>
+            `;
+            hintsContainer.style.display = 'block';
+        } else if (this.drawingMode !== 'cell' && this.selectedPattern) {
+            // Show pattern hints
             if (!hintsContainer) {
                 hintsContainer = document.createElement('div');
                 hintsContainer.className = 'pattern-hints';
@@ -1407,6 +1445,7 @@ class GameOfLife {
         for (let row = 0; row < this.rows; row++) {
             for (let col = 0; col < this.cols; col++) {
                 this.maturityGrid[row][col] = 0;
+                this.deadGrid[row][col] = 0;
             }
         }
     }
@@ -1425,9 +1464,18 @@ class GameOfLife {
                         // Cell was just born - start at 0
                         this.maturityGrid[row][col] = 0;
                     }
+                    // Cell is alive - reset dead time
+                    this.deadGrid[row][col] = 0;
                 } else {
-                    // Cell is dead - reset maturity
+                    // Cell is dead
                     this.maturityGrid[row][col] = 0;
+                    if (wasAlive) {
+                        // Cell just died - start dead counter at 0
+                        this.deadGrid[row][col] = 0;
+                    } else {
+                        // Cell has been dead - increase dead time
+                        this.deadGrid[row][col]++;
+                    }
                 }
             }
         }
@@ -1481,6 +1529,93 @@ class GameOfLife {
             g: parseInt(result[2], 16),
             b: parseInt(result[3], 16)
         } : { r: 76, g: 29, b: 149 }; // Default to deep violet if parsing fails
+    }
+    
+    // Inspector mode methods
+    selectInspectorMode() {
+        this.drawingMode = 'inspector';
+        this.inspectorMode = true;
+        this.selectedPattern = null;
+        this.patternRotation = 0;
+        this.clearPatternPreview();
+        this.updateDrawingModeUI();
+        this.updatePatternHints();
+        this.createInspectorTooltip();
+        this.saveSettings();
+    }
+    
+    createInspectorTooltip() {
+        // Remove existing tooltip
+        this.hideInspectorTooltip();
+        
+        // Create new tooltip element
+        this.tooltip = document.createElement('div');
+        this.tooltip.className = 'cell-inspector-tooltip';
+        document.body.appendChild(this.tooltip);
+    }
+    
+    updateInspectorTooltip(e) {
+        if (!this.tooltip) return;
+        
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const col = Math.floor(x / this.cellSize);
+        const row = Math.floor(y / this.cellSize);
+        
+        // Check if coordinates are within grid bounds
+        if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
+            const isAlive = this.grid[row][col];
+            const maturity = this.maturityGrid[row][col];
+            const deadTime = this.deadGrid[row][col];
+            
+            let tooltipContent = `
+                <div class="tooltip-cell-info">
+                    <span class="tooltip-label">Position:</span> 
+                    <span class="tooltip-value">(${col}, ${row})</span>
+                </div>
+                <div class="tooltip-cell-info">
+                    <span class="tooltip-label">State:</span> 
+                    <span class="tooltip-value">${isAlive ? 'Alive' : 'Dead'}</span>
+                </div>
+            `;
+            
+            if (isAlive) {
+                tooltipContent += `
+                    <div class="tooltip-cell-info">
+                        <span class="tooltip-label">Alive for:</span> 
+                        <span class="tooltip-value">${maturity + 1} generation${maturity === 0 ? '' : 's'}</span>
+                    </div>
+                `;
+            } else {
+                tooltipContent += `
+                    <div class="tooltip-cell-info">
+                        <span class="tooltip-label">Dead for:</span> 
+                        <span class="tooltip-value">${deadTime + 1} generation${deadTime === 0 ? '' : 's'}</span>
+                    </div>
+                `;
+            }
+            
+            // Show tooltip
+            this.tooltip.innerHTML = tooltipContent;
+            this.tooltip.style.left = (e.clientX) + 'px';
+            this.tooltip.style.top = (e.clientY - 10) + 'px';
+            this.tooltip.classList.add('show');
+        } else {
+            this.hideInspectorTooltip();
+        }
+    }
+    
+    hideInspectorTooltip() {
+        if (this.tooltip) {
+            this.tooltip.classList.remove('show');
+            // Clean up tooltip when not in inspector mode
+            if (!this.inspectorMode) {
+                this.tooltip.remove();
+                this.tooltip = null;
+            }
+        }
     }
     
     getPatternData(patternName) {
@@ -1839,9 +1974,21 @@ class GameOfLife {
             }
         }
         
+        // Update inspector button if it exists
+        const inspectorBtn = document.getElementById('cellInspectorBtn');
+        if (inspectorBtn) {
+            if (this.inspectorMode) {
+                inspectorBtn.classList.add('selected');
+            } else {
+                inspectorBtn.classList.remove('selected');
+            }
+        }
+        
         // Update cursor style based on drawing mode
         if (this.drawingMode === 'cell') {
             this.canvas.style.cursor = 'crosshair';
+        } else if (this.inspectorMode) {
+            this.canvas.style.cursor = 'help';
         } else {
             this.canvas.style.cursor = 'crosshair'; // Changed from 'copy' to 'crosshair' for better precision
         }
@@ -1902,6 +2049,7 @@ class GameOfLife {
             fadeDuration: this.fadeDuration,
             maturityMode: this.maturityMode,
             maturityEndColor: this.maturityEndColor,
+            inspectorMode: this.inspectorMode,
             
             // Slider max values
             speedMax: this.speedMax.value,
@@ -2062,6 +2210,11 @@ class GameOfLife {
                 this.maturityEndColor = settings.maturityEndColor;
                 this.maturityColor.value = settings.maturityEndColor;
                 this.updateColorLabel();
+            }
+            
+            // Load inspector mode settings
+            if (settings.inspectorMode !== undefined && settings.inspectorMode) {
+                this.selectInspectorMode();
             }
             
             // Load sidebar state

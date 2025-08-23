@@ -310,6 +310,24 @@ body {
     scrollbar-color: var(--border-sidebar-secondary) transparent;
 }
 
+/* Full width for tool buttons */
+.drawing-tools .tool-btn {
+    grid-column: span 1;
+}
+
+/* Make search and pattern tree span full width */
+.pattern-search {
+    grid-column: span 2;
+}
+
+.pattern-tree {
+    grid-column: span 2;
+}
+
+.search-results {
+    grid-column: span 2;
+}
+
 .drawing-tools::-webkit-scrollbar {
     width: 4px;
 }
@@ -1628,6 +1646,58 @@ body {
     white-space: nowrap;
     z-index: 1000;
     pointer-events: none;
+}
+
+/* Cell Inspector Tooltip */
+.cell-inspector-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    line-height: 1.4;
+    z-index: 10000;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    transform: translate(-50%, -100%) scale(0.9);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cell-inspector-tooltip.show {
+    opacity: 1;
+    transform: translate(-50%, -100%) scale(1);
+}
+
+.cell-inspector-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.9);
+}
+
+.tooltip-cell-info {
+    margin-bottom: 4px;
+}
+
+.tooltip-cell-info:last-child {
+    margin-bottom: 0;
+}
+
+.tooltip-label {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.tooltip-value {
+    color: #90cdf4;
+    font-weight: 600;
 }
 
 
