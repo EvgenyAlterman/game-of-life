@@ -1,7 +1,7 @@
 import { GameOfLifePatterns } from './patterns.js';
 import { GameOfLifeEngine } from './game-engine.js';
 
-class GameOfLife {
+class GameOfLifeStudio {
     constructor(canvasId) {
         this.canvas = document.getElementById(canvasId);
         this.ctx = this.canvas.getContext('2d');
@@ -2384,7 +2384,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupCollapsibleSections();
     
     // Make game instance global for recording buttons
-    window.game = new GameOfLife('gameCanvas');
+    window.game = new GameOfLifeStudio('gameCanvas');
     
     // Initialize pattern hints
     window.game.updatePatternHints();

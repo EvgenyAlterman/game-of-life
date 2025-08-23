@@ -34,7 +34,7 @@ game of life/
 │   ├── css/
 │   │   └── style.css      # All styles including new timeline UI
 │   └── js/
-│       ├── gameoflife.js  # Main game logic + recording functionality  
+│       ├── gameoflifestudio.js  # Main game logic + recording functionality  
 │       └── patterns.js    # Pattern definitions (ES6 module)
 ├── saves/                 # Recording storage directory
 ├── index.html            # Main HTML with timeline & recording UI
