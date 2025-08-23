@@ -98,6 +98,15 @@ class GameOfLifeStudio {
         // UI elements - dark mode
         this.darkModeToggle = document.getElementById('darkModeToggle');
         
+        // UI elements - fullscreen
+        this.fullscreenBtn = document.getElementById('fullscreenBtn');
+        this.exitFullscreenBtn = document.getElementById('exitFullscreenBtn');
+        this.gameContainer = document.querySelector('.game-container');
+        this.fullscreenFloatingControls = document.getElementById('fullscreenFloatingControls');
+        this.fullscreenPlayPauseBtn = document.getElementById('fullscreenPlayPauseBtn');
+        this.fullscreenShuffleBtn = document.getElementById('fullscreenShuffleBtn');
+        this.fullscreenClearBtn = document.getElementById('fullscreenClearBtn');
+        
         // Random generation settings
         this.randomDensity = 30; // percentage
         this.randomSeed = null;
@@ -140,6 +149,13 @@ class GameOfLifeStudio {
         
         // Initial state for reset functionality
         this.initialState = null;
+        
+        // Fullscreen settings
+        this.isFullscreen = false;
+        this.originalCanvasSize = {
+            width: this.canvas.width,
+            height: this.canvas.height
+        };
         
         this.setupEventListeners();
         this.initializeDarkMode();
@@ -238,6 +254,33 @@ class GameOfLifeStudio {
         // Dark mode toggle
         this.darkModeToggle.addEventListener('click', () => {
             this.toggleDarkMode();
+        });
+        
+        // Fullscreen toggle
+        this.fullscreenBtn.addEventListener('click', () => {
+            this.enterFullscreen();
+        });
+        
+        this.exitFullscreenBtn.addEventListener('click', () => {
+            this.exitFullscreen();
+        });
+        
+        // Listen for fullscreen changes (ESC key, F11, etc.)
+        document.addEventListener('fullscreenchange', () => {
+            this.handleFullscreenChange();
+        });
+        
+        // Floating fullscreen controls
+        this.fullscreenPlayPauseBtn.addEventListener('click', () => {
+            this.toggleSimulation();
+        });
+        
+        this.fullscreenShuffleBtn.addEventListener('click', () => {
+            this.randomize();
+        });
+        
+        this.fullscreenClearBtn.addEventListener('click', () => {
+            this.clearAll();
         });
         
         // Advanced controls - Grid settings
@@ -401,8 +444,16 @@ class GameOfLifeStudio {
             this.hideInspectorTooltip();
         });
         
-        // Keyboard controls for pattern rotation
+        // Keyboard controls for pattern rotation and fullscreen
         document.addEventListener('keydown', (e) => {
+            // Handle ESC key for fullscreen exit
+            if (e.key === 'Escape' && this.isFullscreen) {
+                e.preventDefault();
+                this.exitFullscreen();
+                return;
+            }
+            
+            // Handle pattern rotation
             if (!this.isRunning && this.drawingMode !== 'cell' && this.selectedPattern) {
                 if (e.key === '[') {
                     e.preventDefault();
@@ -552,6 +603,11 @@ class GameOfLifeStudio {
                 cancelAnimationFrame(this.animationId);
             }
         }
+        
+        // Update floating controls if in fullscreen
+        if (this.isFullscreen) {
+            this.updateFloatingPlayPauseButton();
+        }
     }
     
     animate(currentTime) {
@@ -670,6 +726,11 @@ class GameOfLifeStudio {
         this.draw();
         this.updateInfo();
         this.saveSettings();
+        
+        // Update floating controls if in fullscreen
+        if (this.isFullscreen) {
+            this.updateFloatingPlayPauseButton();
+        }
     }
     
     // Initial state management for reset functionality
@@ -2333,6 +2394,139 @@ class GameOfLifeStudio {
         this.searchResults.querySelectorAll('.search-result-item').forEach(p => {
             p.classList.remove('selected');
         });
+    }
+    
+    // Fullscreen methods
+    enterFullscreen() {
+        try {
+            // Store original canvas size
+            this.originalCanvasSize = {
+                width: this.canvas.width,
+                height: this.canvas.height
+            };
+            
+            // Add fullscreen classes
+            document.body.classList.add('fullscreen-active');
+            this.gameContainer.classList.add('fullscreen');
+            
+            // Show exit button and floating controls
+            this.exitFullscreenBtn.style.display = 'block';
+            this.fullscreenFloatingControls.style.display = 'flex';
+            
+            // Sync floating play/pause button state
+            this.updateFloatingPlayPauseButton();
+            
+            // Update button state
+            this.fullscreenBtn.title = 'Exit Fullscreen';
+            const fullscreenIcon = this.fullscreenBtn.querySelector('.btn-icon');
+            fullscreenIcon.setAttribute('data-lucide', 'minimize');
+            lucide.createIcons();
+            
+            // Set fullscreen flag
+            this.isFullscreen = true;
+            
+            // Resize canvas for fullscreen
+            this.resizeCanvasForFullscreen();
+            
+            console.log('🖥️ Entered fullscreen mode');
+            
+        } catch (error) {
+            console.error('Error entering fullscreen:', error);
+            this.exitFullscreen(); // Fallback
+        }
+    }
+    
+    exitFullscreen() {
+        try {
+            // Remove fullscreen classes
+            document.body.classList.remove('fullscreen-active');
+            this.gameContainer.classList.remove('fullscreen');
+            
+            // Hide exit button and floating controls
+            this.exitFullscreenBtn.style.display = 'none';
+            this.fullscreenFloatingControls.style.display = 'none';
+            
+            // Restore button state
+            this.fullscreenBtn.title = 'Enter Fullscreen';
+            const fullscreenIcon = this.fullscreenBtn.querySelector('.btn-icon');
+            fullscreenIcon.setAttribute('data-lucide', 'maximize');
+            lucide.createIcons();
+            
+            // Clear fullscreen flag
+            this.isFullscreen = false;
+            
+            // Restore original canvas size
+            this.canvas.width = this.originalCanvasSize.width;
+            this.canvas.height = this.originalCanvasSize.height;
+            
+            // Update grid dimensions
+            this.rows = Math.floor(this.canvas.height / this.cellSize);
+            this.cols = Math.floor(this.canvas.width / this.cellSize);
+            
+            // Resize engine to match
+            this.engine.resize(this.rows, this.cols);
+            
+            // Redraw
+            this.draw();
+            
+            console.log('🖥️ Exited fullscreen mode');
+            
+        } catch (error) {
+            console.error('Error exiting fullscreen:', error);
+        }
+    }
+    
+    resizeCanvasForFullscreen() {
+        // Calculate the optimal canvas size for fullscreen
+        const maxWidth = window.innerWidth - 40; // Account for padding
+        const maxHeight = window.innerHeight - 40; // Account for padding
+        
+        // Calculate how many cells we can fit while maintaining cell size
+        const newCols = Math.floor(maxWidth / this.cellSize);
+        const newRows = Math.floor(maxHeight / this.cellSize);
+        
+        // Set canvas dimensions
+        this.canvas.width = newCols * this.cellSize;
+        this.canvas.height = newRows * this.cellSize;
+        
+        // Update grid properties
+        this.cols = newCols;
+        this.rows = newRows;
+        
+        // Resize engine
+        this.engine.resize(this.rows, this.cols);
+        
+        // Redraw with new dimensions
+        this.draw();
+        this.updateInfo();
+    }
+    
+    handleFullscreenChange() {
+        // This handles browser fullscreen changes (F11, etc.)
+        const isDocumentFullscreen = !!document.fullscreenElement;
+        
+        if (!isDocumentFullscreen && this.isFullscreen) {
+            // Browser exited fullscreen but our state thinks we're still fullscreen
+            this.exitFullscreen();
+        }
+    }
+    
+    updateFloatingPlayPauseButton() {
+        if (!this.fullscreenPlayPauseBtn) return;
+        
+        const icon = this.fullscreenPlayPauseBtn.querySelector('.btn-icon');
+        
+        if (this.isRunning) {
+            icon.setAttribute('data-lucide', 'pause');
+            this.fullscreenPlayPauseBtn.title = 'Pause Simulation';
+            this.fullscreenPlayPauseBtn.classList.add('active');
+        } else {
+            icon.setAttribute('data-lucide', 'play');
+            this.fullscreenPlayPauseBtn.title = 'Start Simulation';
+            this.fullscreenPlayPauseBtn.classList.remove('active');
+        }
+        
+        lucide.createIcons();
     }
 }
 

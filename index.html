@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conway's Game of Life</title>
+    <title>Game of Life Studio</title>
     <link rel="stylesheet" href="/src/css/style.css">
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 </head>
@@ -13,7 +13,7 @@
         <div class="app-header">
             <div class="header-left">
                 <button id="mobileMenuBtn" class="mobile-menu-btn">☰</button>
-                <h1>Conway's Game of Life</h1>
+                <h1>Game of Life Studio</h1>
             </div>
             <div class="header-controls">
                 <button id="darkModeToggle" class="dark-mode-toggle" title="Toggle Dark Mode">
@@ -188,6 +188,22 @@
             <div class="main-content">
                 <div class="game-container">
                     <canvas id="gameCanvas" width="600" height="400"></canvas>
+                    <button id="exitFullscreenBtn" class="exit-fullscreen-btn" style="display: none;" title="Exit Fullscreen (ESC)">
+                        <i data-lucide="minimize" class="btn-icon"></i>
+                    </button>
+                    
+                    <!-- Floating Controls for Fullscreen -->
+                    <div class="fullscreen-floating-controls" id="fullscreenFloatingControls" style="display: none;">
+                        <button id="fullscreenPlayPauseBtn" class="floating-control-btn" title="Play/Pause">
+                            <i data-lucide="play" class="btn-icon"></i>
+                        </button>
+                        <button id="fullscreenShuffleBtn" class="floating-control-btn" title="Generate Random Pattern">
+                            <i data-lucide="shuffle" class="btn-icon"></i>
+                        </button>
+                        <button id="fullscreenClearBtn" class="floating-control-btn" title="Clear All Cells">
+                            <i data-lucide="trash-2" class="btn-icon"></i>
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="info">
@@ -210,6 +226,9 @@
                                 </button>
                                 <button id="finishBtn" class="control-btn finish-btn" title="Finish & Save Recording" style="display: none;">
                                     <i data-lucide="save" class="btn-icon"></i>
+                                </button>
+                                <button id="fullscreenBtn" class="control-btn" title="Enter Fullscreen">
+                                    <i data-lucide="maximize" class="btn-icon"></i>
                                 </button>
                             </div>
                         </div>
