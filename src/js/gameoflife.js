@@ -1957,7 +1957,7 @@ class GameOfLife {
                 if (subPatterns.length === 0) return '';
                 
                 const patternItemsHTML = subPatterns.map(pattern => `
-                    <div class="pattern-item" data-pattern="${pattern.key}" 
+                    <div class="pattern-item" data-pattern="${pattern.key}" tabindex="0"
                          title="${pattern.description}${pattern.discoverer ? ' • ' + pattern.discoverer : ''}${pattern.year ? ' (' + pattern.year + ')' : ''}">
                         <span class="pattern-icon">${this.getPatternIcon(pattern)}</span>
                         <span class="pattern-name">${pattern.name}</span>
@@ -1967,11 +1967,10 @@ class GameOfLife {
                 
                 return `
                     <div class="subcategory">
-                        <div class="subcategory-header" data-subcategory="${subKey}">
-                            <span class="category-toggle">▶</span>
+                        <div class="subcategory-header" data-subcategory="${subKey}" tabindex="0">
+                            <i data-lucide="chevron-right" class="subcategory-expand-icon"></i>
                             <span class="subcategory-icon">${subcategory.icon}</span>
-                            <span class="subcategory-name">${subcategory.name}</span>
-                            <span class="category-count">(${subPatterns.length})</span>
+                            <span class="subcategory-name">${subcategory.name} (${subPatterns.length})</span>
                         </div>
                         <div class="subcategory-content">
                             ${patternItemsHTML}
@@ -1983,12 +1982,12 @@ class GameOfLife {
             const totalPatterns = patterns.length;
             
             return `
-                <div class="tree-category">
-                    <div class="category-header" data-category="${categoryKey}">
-                        <span class="category-toggle">▶</span>
+                <div class="tree-category collapsed">
+                    <div class="category-header" data-category="${categoryKey}" tabindex="0">
+                        <i data-lucide="chevron-down" class="expand-icon"></i>
                         <span class="category-icon">${category.icon}</span>
-                        <span class="category-name">${category.name}</span>
-                        <span class="category-count">(${totalPatterns})</span>
+                        <span class="category-title">${category.name}</span>
+                        <span class="category-count">${totalPatterns}</span>
                     </div>
                     <div class="category-content">
                         ${subcategoryHTML}
@@ -2059,38 +2058,110 @@ class GameOfLife {
                 this.selectPatternFromTree(item);
             });
         });
+        
+        // Add keyboard navigation
+        this.patternTree.addEventListener('keydown', (e) => {
+            this.handleTreeKeyNavigation(e);
+        });
     }
     
     toggleCategory(header) {
-        const content = header.nextElementSibling;
-        const toggle = header.querySelector('.category-toggle');
-        const isExpanded = content.classList.contains('expanded');
+        const category = header.closest('.tree-category');
+        const isCollapsed = category.classList.contains('collapsed');
         
-        if (isExpanded) {
-            content.classList.remove('expanded');
-            header.classList.remove('expanded');
-            toggle.classList.remove('expanded');
+        if (isCollapsed) {
+            category.classList.remove('collapsed');
+            category.classList.add('expanded');
         } else {
-            content.classList.add('expanded');
-            header.classList.add('expanded');
-            toggle.classList.add('expanded');
+            category.classList.remove('expanded');
+            category.classList.add('collapsed');
         }
+        
+        // Re-initialize Lucide icons after DOM changes
+        setTimeout(() => lucide.createIcons(), 0);
     }
     
     toggleSubcategory(header) {
-        const content = header.nextElementSibling;
-        const toggle = header.querySelector('.category-toggle');
-        const isExpanded = content.classList.contains('expanded');
+        const subcategory = header.closest('.subcategory');
+        const isExpanded = subcategory.classList.contains('expanded');
         
         if (isExpanded) {
-            content.classList.remove('expanded');
-            header.classList.remove('expanded');
-            toggle.classList.remove('expanded');
+            subcategory.classList.remove('expanded');
         } else {
-            content.classList.add('expanded');
-            header.classList.add('expanded');
-            toggle.classList.add('expanded');
+            subcategory.classList.add('expanded');
         }
+        
+        // Re-initialize Lucide icons after DOM changes
+        setTimeout(() => lucide.createIcons(), 0);
+    }
+    
+    handleTreeKeyNavigation(e) {
+        const activeElement = document.activeElement;
+        let targetElement = null;
+        
+        switch(e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                targetElement = this.getNextFocusableTreeItem(activeElement);
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                targetElement = this.getPrevFocusableTreeItem(activeElement);
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                if (activeElement.classList.contains('category-header')) {
+                    const category = activeElement.closest('.tree-category');
+                    if (category.classList.contains('collapsed')) {
+                        this.toggleCategory(activeElement);
+                    }
+                } else if (activeElement.classList.contains('subcategory-header')) {
+                    const subcategory = activeElement.closest('.subcategory');
+                    if (!subcategory.classList.contains('expanded')) {
+                        this.toggleSubcategory(activeElement);
+                    }
+                }
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                if (activeElement.classList.contains('category-header')) {
+                    const category = activeElement.closest('.tree-category');
+                    if (category.classList.contains('expanded')) {
+                        this.toggleCategory(activeElement);
+                    }
+                } else if (activeElement.classList.contains('subcategory-header')) {
+                    const subcategory = activeElement.closest('.subcategory');
+                    if (subcategory.classList.contains('expanded')) {
+                        this.toggleSubcategory(activeElement);
+                    }
+                }
+                break;
+            case 'Enter':
+            case ' ':
+                e.preventDefault();
+                if (activeElement.classList.contains('pattern-item')) {
+                    this.selectPatternFromTree(activeElement);
+                } else if (activeElement.classList.contains('category-header')) {
+                    this.toggleCategory(activeElement);
+                } else if (activeElement.classList.contains('subcategory-header')) {
+                    this.toggleSubcategory(activeElement);
+                }
+                break;
+        }
+        
+        if (targetElement) {
+            targetElement.focus();
+        }
+    }
+    
+    getNextFocusableTreeItem(current) {
+        // Implementation for getting next focusable item in tree
+        return current.nextElementSibling || current.parentElement.nextElementSibling;
+    }
+    
+    getPrevFocusableTreeItem(current) {
+        // Implementation for getting previous focusable item in tree
+        return current.previousElementSibling || current.parentElement.previousElementSibling;
     }
     
     selectPatternFromTree(item) {
@@ -2187,10 +2258,52 @@ class GameOfLife {
     }
 }
 
+// Setup collapsible sections functionality
+function setupCollapsibleSections() {
+    // Add click listeners to all section headers
+    document.querySelectorAll('.section-header[data-toggle]').forEach(header => {
+        header.addEventListener('click', (e) => {
+            const sectionType = header.dataset.toggle;
+            const section = header.closest('.tool-section');
+            
+            section.classList.toggle('collapsed');
+            
+            // Save collapsed state to localStorage
+            const settings = JSON.parse(localStorage.getItem('gameOfLifeSettings') || '{}');
+            if (!settings.collapsedSections) {
+                settings.collapsedSections = {};
+            }
+            settings.collapsedSections[sectionType] = section.classList.contains('collapsed');
+            localStorage.setItem('gameOfLifeSettings', JSON.stringify(settings));
+        });
+    });
+    
+    // Load collapsed states from localStorage
+    try {
+        const settings = JSON.parse(localStorage.getItem('gameOfLifeSettings') || '{}');
+        if (settings.collapsedSections) {
+            Object.entries(settings.collapsedSections).forEach(([sectionType, isCollapsed]) => {
+                if (isCollapsed) {
+                    const header = document.querySelector(`[data-toggle="${sectionType}"]`);
+                    if (header) {
+                        const section = header.closest('.tool-section');
+                        section.classList.add('collapsed');
+                    }
+                }
+            });
+        }
+    } catch (error) {
+        console.warn('Error loading collapsed section states:', error);
+    }
+}
+
 // Initialize the game when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize Lucide icons
     lucide.createIcons();
+    
+    // Setup collapsible sections
+    setupCollapsibleSections();
     
     // Make game instance global for recording buttons
     window.game = new GameOfLife('gameCanvas');

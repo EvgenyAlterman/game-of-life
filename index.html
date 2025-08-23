@@ -230,16 +230,21 @@
                 </div>
                 
                 <!-- Recording Management -->
-                <div class="recordings-section" id="recordingsSection">
-                    <div class="recordings-header">
+                <div class="tool-section" id="recordingsSection">
+                    <div class="section-header" data-toggle="recordings">
                         <h3>💾 Saved Recordings</h3>
-                        <button id="loadRecordingsBtn" class="load-btn" title="Load Recordings">
-                            <i data-lucide="folder-open" class="btn-icon"></i>
-                            Load
-                        </button>
+                        <i data-lucide="chevron-down" class="toggle-icon"></i>
                     </div>
-                    <div class="recordings-list" id="recordingsList">
-                        <p class="no-recordings">No recordings available. Start recording to save your simulations!</p>
+                    <div class="section-content" id="recordingsContent">
+                        <div class="recordings-controls">
+                            <button id="loadRecordingsBtn" class="load-btn" title="Load Recordings">
+                                <i data-lucide="folder-open" class="btn-icon"></i>
+                                Load
+                            </button>
+                        </div>
+                        <div class="recordings-list" id="recordingsList">
+                            <p class="no-recordings">No recordings available. Start recording to save your simulations!</p>
+                        </div>
                     </div>
                 </div>
             </div>
