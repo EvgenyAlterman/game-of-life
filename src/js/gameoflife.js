@@ -1,4 +1,4 @@
-import { GameOfLifePatterns } from './patterns/PatternLibrary.js';
+import { GameOfLifePatterns } from './patterns.js';
 
 class GameOfLife {
     constructor(canvasId) {
@@ -126,15 +126,6 @@ class GameOfLife {
         // Inspector settings
         this.inspectorMode = false;
         this.tooltip = null;
-        
-        // Fullscreen settings
-        this.isFullscreen = false;
-        this.originalCanvasSize = {
-            width: this.canvas.width,
-            height: this.canvas.height,
-            cellSize: this.cellSize
-        };
-        this.fullscreenContainer = null;
         
         // Recording settings
         this.isRecording = false;
@@ -337,11 +328,6 @@ class GameOfLife {
             this.selectInspectorMode();
         });
         
-        // Fullscreen toggle
-        document.getElementById('fullscreenToggle').addEventListener('click', () => {
-            this.toggleFullscreen();
-        });
-        
         // Preset pattern buttons - now work as drawing tool selectors
         document.querySelectorAll('.preset-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -437,7 +423,7 @@ class GameOfLife {
             this.hideInspectorTooltip();
         });
         
-        // Keyboard controls for pattern rotation and fullscreen
+        // Keyboard controls for pattern rotation
         document.addEventListener('keydown', (e) => {
             if (!this.isRunning && this.drawingMode !== 'cell' && this.selectedPattern) {
                 if (e.key === '[') {
@@ -447,12 +433,6 @@ class GameOfLife {
                     e.preventDefault();
                     this.rotatePatternRight();
                 }
-            }
-            
-            // Space key to toggle play/pause in fullscreen mode
-            if (e.key === ' ' && this.isFullscreen) {
-                e.preventDefault();
-                this.toggleSimulation();
             }
         });
         
@@ -592,14 +572,6 @@ class GameOfLife {
             lucide.createIcons();
             if (this.animationId) {
                 cancelAnimationFrame(this.animationId);
-            }
-        }
-        
-        // Update fullscreen play/pause button if in fullscreen mode
-        if (this.isFullscreen) {
-            const fullscreenPlayPause = document.getElementById('fullscreenPlayPause');
-            if (fullscreenPlayPause) {
-                this.updateFullscreenPlayPauseButton(fullscreenPlayPause);
             }
         }
     }
@@ -2309,234 +2281,6 @@ class GameOfLife {
         lucide.createIcons();
     }
     
-    // Fullscreen functionality
-    toggleFullscreen() {
-        if (this.isFullscreen) {
-            this.exitFullscreen();
-        } else {
-            this.enterFullscreen();
-        }
-    }
-    
-    enterFullscreen() {
-        if (this.isFullscreen) return;
-        
-        // Store original canvas size
-        this.originalCanvasSize = {
-            width: this.canvas.width,
-            height: this.canvas.height,
-            cellSize: this.cellSize
-        };
-        
-        // Create fullscreen container
-        this.fullscreenContainer = document.createElement('div');
-        this.fullscreenContainer.className = 'fullscreen-container';
-        
-        // Create fullscreen controls overlay
-        const controlsOverlay = this.createFullscreenControls();
-        this.fullscreenContainer.appendChild(controlsOverlay);
-        
-        // Move canvas to fullscreen container
-        const gameContainer = document.querySelector('.game-container');
-        gameContainer.appendChild(this.fullscreenContainer);
-        this.fullscreenContainer.appendChild(this.canvas);
-        
-        // Calculate optimal canvas size for fullscreen
-        this.resizeCanvasForFullscreen();
-        
-        // Set fullscreen state
-        this.isFullscreen = true;
-        
-        // Hide body scrollbars
-        document.body.style.overflow = 'hidden';
-        
-        console.log('🖥️ Entered fullscreen mode');
-    }
-    
-    exitFullscreen() {
-        if (!this.isFullscreen) return;
-        
-        // Restore body scrollbars
-        document.body.style.overflow = '';
-        
-        // Move canvas back to original container
-        const gameContainer = document.querySelector('.game-container');
-        gameContainer.appendChild(this.canvas);
-        
-        // Remove fullscreen container
-        if (this.fullscreenContainer && this.fullscreenContainer.parentNode) {
-            this.fullscreenContainer.parentNode.removeChild(this.fullscreenContainer);
-        }
-        this.fullscreenContainer = null;
-        
-        // Restore original canvas size
-        this.canvas.width = this.originalCanvasSize.width;
-        this.canvas.height = this.originalCanvasSize.height;
-        this.cellSize = this.originalCanvasSize.cellSize;
-        this.rows = Math.floor(this.canvas.height / this.cellSize);
-        this.cols = Math.floor(this.canvas.width / this.cellSize);
-        
-        // Set fullscreen state
-        this.isFullscreen = false;
-        
-        // Redraw the game
-        this.draw();
-        
-        console.log('📱 Exited fullscreen mode');
-    }
-    
-    createFullscreenControls() {
-        const controls = document.createElement('div');
-        controls.className = 'fullscreen-controls';
-        
-        // Left side controls
-        const leftGroup = document.createElement('div');
-        leftGroup.className = 'control-group';
-        
-        // Exit fullscreen button
-        const exitBtn = document.createElement('div');
-        exitBtn.className = 'fullscreen-btn';
-        exitBtn.title = 'Exit Fullscreen';
-        exitBtn.innerHTML = '<i data-lucide="minimize" class="exit-icon"></i>';
-        exitBtn.addEventListener('click', () => this.exitFullscreen());
-        leftGroup.appendChild(exitBtn);
-        
-        // Play/pause button
-        const playPauseBtn = document.createElement('div');
-        playPauseBtn.className = 'fullscreen-btn';
-        playPauseBtn.id = 'fullscreenPlayPause';
-        this.updateFullscreenPlayPauseButton(playPauseBtn);
-        playPauseBtn.addEventListener('click', () => {
-            this.toggleSimulation();
-            this.updateFullscreenPlayPauseButton(playPauseBtn);
-        });
-        leftGroup.appendChild(playPauseBtn);
-        
-        controls.appendChild(leftGroup);
-        
-        // Right side info
-        const rightGroup = document.createElement('div');
-        rightGroup.className = 'control-group';
-        
-        const info = document.createElement('div');
-        info.className = 'fullscreen-info';
-        info.textContent = 'Press SPACE to play/pause';
-        rightGroup.appendChild(info);
-        
-        controls.appendChild(rightGroup);
-        
-        return controls;
-    }
-    
-    updateFullscreenPlayPauseButton(button) {
-        const icon = button.querySelector('i') || document.createElement('i');
-        
-        if (this.isRunning) {
-            icon.setAttribute('data-lucide', 'pause');
-            button.title = 'Pause Simulation';
-        } else {
-            icon.setAttribute('data-lucide', 'play');
-            button.title = 'Start Simulation';
-        }
-        
-        if (!button.querySelector('i')) {
-            button.appendChild(icon);
-        }
-        
-        // Re-initialize Lucide icons for new elements
-        lucide.createIcons();
-    }
-    
-    resizeCanvasForFullscreen() {
-        // Get screen dimensions
-        const screenWidth = window.innerWidth;
-        const screenHeight = window.innerHeight;
-        
-        // Keep the same cell size for consistency
-        const cellSize = this.cellSize;
-        
-        // Calculate maximum grid size that fits on screen
-        const maxCols = Math.floor(screenWidth / cellSize);
-        const maxRows = Math.floor(screenHeight / cellSize);
-        
-        // Calculate centered canvas size
-        const newWidth = maxCols * cellSize;
-        const newHeight = maxRows * cellSize;
-        
-        // Update canvas size
-        this.canvas.width = newWidth;
-        this.canvas.height = newHeight;
-        
-        // Update grid dimensions
-        const oldRows = this.rows;
-        const oldCols = this.cols;
-        this.rows = maxRows;
-        this.cols = maxCols;
-        
-        // Preserve existing grid data in the center
-        this.preserveGridData(oldRows, oldCols);
-        
-        // Redraw the game
-        this.draw();
-        
-        console.log(`🔄 Fullscreen canvas resized to ${newWidth}x${newHeight} (${maxCols}x${maxRows} cells)`);
-    }
-    
-    preserveGridData(oldRows, oldCols) {
-        // Create new grids with the new dimensions
-        const newGrid = [];
-        const newFadeGrid = [];
-        const newMaturityGrid = [];
-        const newDeadGrid = [];
-        
-        // Initialize new grids
-        for (let row = 0; row < this.rows; row++) {
-            newGrid[row] = [];
-            newFadeGrid[row] = [];
-            newMaturityGrid[row] = [];
-            newDeadGrid[row] = [];
-            for (let col = 0; col < this.cols; col++) {
-                newGrid[row][col] = false;
-                newFadeGrid[row][col] = 0;
-                newMaturityGrid[row][col] = 0;
-                newDeadGrid[row][col] = 0;
-            }
-        }
-        
-        // Calculate offset to center the old grid in the new grid
-        const rowOffset = Math.floor((this.rows - oldRows) / 2);
-        const colOffset = Math.floor((this.cols - oldCols) / 2);
-        
-        // Copy old grid data to the center of the new grid
-        for (let row = 0; row < Math.min(oldRows, this.rows); row++) {
-            for (let col = 0; col < Math.min(oldCols, this.cols); col++) {
-                const newRow = row + rowOffset;
-                const newCol = col + colOffset;
-                
-                if (newRow >= 0 && newRow < this.rows && newCol >= 0 && newCol < this.cols) {
-                    if (this.grid[row] && this.grid[row][col] !== undefined) {
-                        newGrid[newRow][newCol] = this.grid[row][col];
-                    }
-                    if (this.fadeGrid[row] && this.fadeGrid[row][col] !== undefined) {
-                        newFadeGrid[newRow][newCol] = this.fadeGrid[row][col];
-                    }
-                    if (this.maturityGrid[row] && this.maturityGrid[row][col] !== undefined) {
-                        newMaturityGrid[newRow][newCol] = this.maturityGrid[row][col];
-                    }
-                    if (this.deadGrid[row] && this.deadGrid[row][col] !== undefined) {
-                        newDeadGrid[newRow][newCol] = this.deadGrid[row][col];
-                    }
-                }
-            }
-        }
-        
-        // Replace old grids with new ones
-        this.grid = newGrid;
-        this.fadeGrid = newFadeGrid;
-        this.maturityGrid = newMaturityGrid;
-        this.deadGrid = newDeadGrid;
-    }
-    
     // Pattern Tree Management
     initializePatternTree() {
         this.buildPatternTree();
@@ -2906,9 +2650,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Make game instance global for recording buttons
     window.game = new GameOfLife('gameCanvas');
-    
-    // Make patterns available globally for various UI features
-    window.GameOfLifePatterns = GameOfLifePatterns;
     
     // Initialize pattern hints
     window.game.updatePatternHints();
