@@ -31,6 +31,9 @@ class GameOfLife {
         this.fadeSlider = document.getElementById('fadeSlider');
         this.fadeValue = document.getElementById('fadeValue');
         this.fadeMax = document.getElementById('fadeMax');
+        this.maturityToggle = document.getElementById('maturityToggle');
+        this.maturitySettings = document.getElementById('maturitySettings');
+        this.maturityColor = document.getElementById('maturityColor');
         this.recordBtn = document.getElementById('recordBtn');
         this.finishBtn = document.getElementById('finishBtn');
         this.generationDisplay = document.getElementById('generation');
@@ -114,6 +117,11 @@ class GameOfLife {
         this.fadeDuration = 1;
         this.fadeGrid = []; // Tracks fade levels for each cell
         
+        // Maturity settings
+        this.maturityMode = false;
+        this.maturityGrid = []; // Tracks how long cells have been alive
+        this.maturityEndColor = '#4c1d95'; // Deep violet default color
+        
         // Recording settings
         this.isRecording = false;
         this.recordedGenerations = [];
@@ -142,12 +150,15 @@ class GameOfLife {
     initializeGrid() {
         this.grid = [];
         this.fadeGrid = [];
+        this.maturityGrid = [];
         for (let row = 0; row < this.rows; row++) {
             this.grid[row] = [];
             this.fadeGrid[row] = [];
+            this.maturityGrid[row] = [];
             for (let col = 0; col < this.cols; col++) {
                 this.grid[row][col] = false; // false = dead, true = alive
                 this.fadeGrid[row][col] = 0; // 0 = no fade, > 0 = fade level
+                this.maturityGrid[row][col] = 0; // 0 = newborn, higher = more mature
             }
         }
     }
@@ -194,6 +205,19 @@ class GameOfLife {
         this.fadeSlider.addEventListener('input', (e) => {
             this.fadeDuration = parseInt(e.target.value);
             this.fadeValue.textContent = this.fadeDuration;
+            this.saveSettings();
+        });
+        
+        // Maturity toggle
+        this.maturityToggle.addEventListener('click', () => {
+            this.toggleMaturityMode();
+        });
+        
+        // Maturity color picker
+        this.maturityColor.addEventListener('input', (e) => {
+            this.maturityEndColor = e.target.value;
+            this.updateColorLabel();
+            this.draw(); // Redraw to show new colors
             this.saveSettings();
         });
         
@@ -586,6 +610,11 @@ class GameOfLife {
             this.updateFadeGrid(newGrid);
         }
         
+        // Update maturity grid if maturity mode is enabled
+        if (this.maturityMode) {
+            this.updateMaturityGrid(newGrid);
+        }
+        
         this.grid = newGrid;
         this.generation++;
         
@@ -669,6 +698,11 @@ class GameOfLife {
             this.drawFadingCells(cellColor);
         }
         
+        // Draw mature cells if maturity mode is enabled
+        if (this.maturityMode) {
+            this.drawMatureCells();
+        }
+        
         // Draw grid overlay (every 5 cells with thicker lines)
         if (this.showGrid) {
             this.drawGridOverlay();
@@ -744,6 +778,11 @@ class GameOfLife {
             this.clearFadeGrid();
         }
         
+        // Clear maturity grid
+        if (this.maturityGrid && this.maturityGrid.length > 0) {
+            this.clearMaturityGrid();
+        }
+        
         this.draw();
         this.updateInfo();
         this.saveSettings();
@@ -799,6 +838,11 @@ class GameOfLife {
         // Clear fade grid
         if (this.fadeGrid && this.fadeGrid.length > 0) {
             this.clearFadeGrid();
+        }
+        
+        // Clear maturity grid
+        if (this.maturityGrid && this.maturityGrid.length > 0) {
+            this.clearMaturityGrid();
         }
         
         this.draw();
@@ -1307,6 +1351,138 @@ class GameOfLife {
         }
     }
     
+    // Maturity mode methods
+    toggleMaturityMode() {
+        this.maturityMode = !this.maturityMode;
+        this.updateMaturityUI();
+        
+        // Clear existing maturity grid when toggling mode
+        if (!this.maturityMode) {
+            this.clearMaturityGrid();
+        }
+        
+        this.draw(); // Redraw to show/hide maturity effects
+        this.saveSettings();
+    }
+    
+    updateMaturityUI() {
+        if (this.maturityMode) {
+            this.maturityToggle.classList.add('active');
+            this.maturityToggle.querySelector('span').textContent = 'Maturity ON';
+            this.maturitySettings.style.display = 'block';
+        } else {
+            this.maturityToggle.classList.remove('active');
+            this.maturityToggle.querySelector('span').textContent = 'Maturity Mode';
+            this.maturitySettings.style.display = 'none';
+        }
+    }
+    
+    updateColorLabel() {
+        const colorLabel = document.querySelector('.color-label');
+        const colorName = this.getColorName(this.maturityEndColor);
+        colorLabel.textContent = colorName;
+    }
+    
+    getColorName(hexColor) {
+        // Convert hex to a readable color name
+        const colorMap = {
+            '#4c1d95': 'Deep Violet',
+            '#7c3aed': 'Purple',
+            '#8b5cf6': 'Light Purple',
+            '#dc2626': 'Red',
+            '#ea580c': 'Orange',
+            '#ca8a04': 'Yellow',
+            '#16a34a': 'Green',
+            '#0ea5e9': 'Blue',
+            '#e11d48': 'Pink',
+            '#9333ea': 'Violet',
+            '#000000': 'Black',
+            '#ffffff': 'White'
+        };
+        
+        return colorMap[hexColor.toLowerCase()] || 'Custom';
+    }
+    
+    clearMaturityGrid() {
+        for (let row = 0; row < this.rows; row++) {
+            for (let col = 0; col < this.cols; col++) {
+                this.maturityGrid[row][col] = 0;
+            }
+        }
+    }
+    
+    updateMaturityGrid(newGrid) {
+        for (let row = 0; row < this.rows; row++) {
+            for (let col = 0; col < this.cols; col++) {
+                const wasAlive = this.grid[row][col];
+                const isAlive = newGrid[row][col];
+                
+                if (isAlive) {
+                    if (wasAlive) {
+                        // Cell survived - increase maturity
+                        this.maturityGrid[row][col]++;
+                    } else {
+                        // Cell was just born - start at 0
+                        this.maturityGrid[row][col] = 0;
+                    }
+                } else {
+                    // Cell is dead - reset maturity
+                    this.maturityGrid[row][col] = 0;
+                }
+            }
+        }
+    }
+    
+    drawMatureCells() {
+        for (let row = 0; row < this.rows; row++) {
+            for (let col = 0; col < this.cols; col++) {
+                const isAlive = this.grid[row][col];
+                const maturity = this.maturityGrid[row][col];
+                
+                if (isAlive && maturity > 0) {
+                    // Generate violet color based on maturity
+                    const maturityColor = this.getMaturityColor(maturity);
+                    
+                    this.ctx.fillStyle = maturityColor;
+                    this.ctx.fillRect(
+                        col * this.cellSize + 1,
+                        row * this.cellSize + 1,
+                        this.cellSize - 2,
+                        this.cellSize - 2
+                    );
+                }
+            }
+        }
+    }
+    
+    getMaturityColor(maturity) {
+        // Cap maturity at 20 for color calculation
+        const cappedMaturity = Math.min(maturity, 20);
+        
+        // Calculate color intensity (0 to 1)
+        const intensity = cappedMaturity / 20;
+        
+        // Create a gradient from light blue to selected end color
+        const startColor = { r: 144, g: 205, b: 244 }; // Light blue
+        const endColor = this.hexToRgb(this.maturityEndColor);
+        
+        const r = Math.round(startColor.r + (endColor.r - startColor.r) * intensity);
+        const g = Math.round(startColor.g + (endColor.g - startColor.g) * intensity);
+        const b = Math.round(startColor.b + (endColor.b - startColor.b) * intensity);
+        
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+    
+    hexToRgb(hex) {
+        // Convert hex color to RGB object
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : { r: 76, g: 29, b: 149 }; // Default to deep violet if parsing fails
+    }
+    
     getPatternData(patternName) {
         return GameOfLifePatterns.getPattern(patternName);
     }
@@ -1724,6 +1900,8 @@ class GameOfLife {
             showGrid: this.showGrid,
             fadeMode: this.fadeMode,
             fadeDuration: this.fadeDuration,
+            maturityMode: this.maturityMode,
+            maturityEndColor: this.maturityEndColor,
             
             // Slider max values
             speedMax: this.speedMax.value,
@@ -1872,6 +2050,18 @@ class GameOfLife {
                 this.fadeDuration = settings.fadeDuration;
                 this.fadeSlider.value = settings.fadeDuration;
                 this.fadeValue.textContent = settings.fadeDuration;
+            }
+            
+            // Load maturity mode settings
+            if (settings.maturityMode !== undefined) {
+                this.maturityMode = settings.maturityMode;
+                this.updateMaturityUI();
+            }
+            
+            if (settings.maturityEndColor !== undefined) {
+                this.maturityEndColor = settings.maturityEndColor;
+                this.maturityColor.value = settings.maturityEndColor;
+                this.updateColorLabel();
             }
             
             // Load sidebar state
@@ -2316,6 +2506,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize fade UI
     window.game.updateFadeUI();
+    
+    // Initialize maturity UI
+    window.game.updateMaturityUI();
+    window.game.updateColorLabel();
     
     // Load existing recordings
     window.game.loadRecordings();
