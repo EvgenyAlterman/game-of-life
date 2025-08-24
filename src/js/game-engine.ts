@@ -54,10 +54,10 @@ export class GameOfLifeEngine {
         this.fadeGrid = [];
         
         for (let row = 0; row < this.rows; row++) {
-            this.grid[row] = [];
-            this.maturityGrid[row] = [];
-            this.deadGrid[row] = [];
-            this.fadeGrid[row] = [];
+            this.grid[row] = [] as boolean[];
+            this.maturityGrid[row] = [] as number[];
+            this.deadGrid[row] = [] as number[];
+            this.fadeGrid[row] = [] as number[];
             
             for (let col = 0; col < this.cols; col++) {
                 this.grid[row][col] = false; // false = dead, true = alive

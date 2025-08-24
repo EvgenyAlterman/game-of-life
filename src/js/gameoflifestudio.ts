@@ -94,20 +94,76 @@ class GameOfLifeStudio {
     
     // Other properties
     public recordingManager: RecordingManager;
-    public isDragging: boolean;
-    public lastGridRow: number;
-    public lastGridCol: number;
-    public currentPattern: Pattern | null;
-    public placingMode: boolean;
+    public isDragging: boolean = false;
+    public lastGridRow: number = -1;
+    public lastGridCol: number = -1;
+    public currentPattern: Pattern | null = null;
+    public placingMode: boolean = false;
+    public selectedPattern: Pattern | null = null;
+    public previewPosition: { row: number; col: number } | null = null;
+    public showPreview: boolean = false;
+    public patternRotation: number = 0;
     
     // Visual settings
-    public showGrid: boolean;
-    public showPixelGrid: boolean;
-    public showFade: boolean;
-    public showMaturity: boolean;
-    public fadeDuration: number;
-    public maturityColors: string[];
-    public cellShape: CellShape;
+    public showGrid: boolean = false;
+    public showPixelGrid: boolean = false;
+    public showFade: boolean = false;
+    public showMaturity: boolean = false;
+    public fadeDuration: number = 1;
+    public maturityColors: string[] = ['#ffffff', '#4c1d95'];
+    public cellShape: CellShape = CellShape.Square;
+    public availableShapes: string[] = [];
+    
+    // Missing properties from errors
+    public randomDensity: number;
+    public randomSeed: number | null;
+    public drawingMode: string;
+    public inspectorMode: boolean;
+    public fadeMode: boolean;
+    public maturityMode: boolean;
+    public maturityEndColor: string;
+    public isFullscreen: boolean;
+    public originalCanvasSize: { width: number; height: number };
+    public isReplaying: boolean;
+    public replayData: any[] | null;
+    public replayIndex: number;
+    public replaySpeed: number;
+    public replayInterval: NodeJS.Timeout | null;
+    public recordedGenerations: any[];
+    public recordingStartTime: number | null;
+    public selectionMode: boolean;
+    public selectionStart: any;
+    public selectionEnd: any;
+    public selectedPatternData: any;
+    public patternSize: HTMLElement | null;
+    public patternCells: HTMLElement | null;
+    public patternName: HTMLInputElement | null;
+    public patternCategory: HTMLSelectElement | null;
+    public savePatternModal: HTMLElement | null;
+    public patternPreviewCanvas: HTMLCanvasElement | null;
+    public recordingName: HTMLInputElement | null;
+    public saveModal: HTMLElement | null;
+    public recordingsList: HTMLElement | null;
+    public recordedGenerationsSpan: HTMLElement | null;
+    public recordingDuration: HTMLElement | null;
+    
+    // Additional missing properties
+    public initialState: any = null;
+    public tooltip: HTMLElement | null = null;
+    public isSelecting: boolean = false;
+    public isRecording: boolean = false;
+    public recordBtn: HTMLElement | null = null;
+    public finishBtn: HTMLElement | null = null;
+    public timelineSection: HTMLElement | null = null;
+    public timelineSlider: HTMLInputElement | null = null;
+    public playTimelineBtn: HTMLElement | null = null;
+    public pauseTimelineBtn: HTMLElement | null = null;
+    public totalFrames: HTMLElement | null = null;
+    public currentFrame: HTMLElement | null = null;
+    public patternModalClose: HTMLElement | null = null;
+    public cancelPatternSave: HTMLElement | null = null;
+    public confirmPatternSave: HTMLElement | null = null;
+    public grid: boolean[][] = [];
 
     constructor(canvasId: string) {
         const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
@@ -141,19 +197,19 @@ class GameOfLifeStudio {
         this.resetBtn = document.getElementById('resetBtn');
         this.randomBtn = document.getElementById('randomBtn');
         this.clearBtn = document.getElementById('clearBtn');
-        this.speedSlider = document.getElementById('speedSlider');
+        this.speedSlider = document.getElementById('speedSlider') as HTMLInputElement | null;
         this.speedValue = document.getElementById('speedValue');
-        this.pixelGridToggle = document.getElementById('pixelGridToggle');
-        this.gridToggle = document.getElementById('gridToggle');
-        this.fadeToggle = document.getElementById('fadeToggle');
+        this.pixelGridToggle = document.getElementById('pixelGridToggle') as HTMLInputElement | null;
+        this.gridToggle = document.getElementById('gridToggle') as HTMLInputElement | null;
+        this.fadeToggle = document.getElementById('fadeToggle') as HTMLInputElement | null;
         this.fadeSettings = document.getElementById('fadeSettings');
-        this.fadeSlider = document.getElementById('fadeSlider');
+        this.fadeSlider = document.getElementById('fadeSlider') as HTMLInputElement | null;
         this.fadeValue = document.getElementById('fadeValue');
         this.fadeMax = document.getElementById('fadeMax');
-        this.maturityToggle = document.getElementById('maturityToggle');
+        this.maturityToggle = document.getElementById('maturityToggle') as HTMLInputElement | null;
         this.maturitySettings = document.getElementById('maturitySettings');
-        this.maturityColor = document.getElementById('maturityColor');
-        this.cellShapeToggle = document.getElementById('cellShapeToggle');
+        this.maturityColor = document.getElementById('maturityColor') as HTMLInputElement | null;
+        this.cellShapeToggle = document.getElementById('cellShapeToggle') as HTMLInputElement | null;
 
         this.generationDisplay = document.getElementById('generation');
         this.populationDisplay = document.getElementById('population');
@@ -161,26 +217,26 @@ class GameOfLifeStudio {
         // Recording and timeline UI elements are now handled by RecordingManager
         
         // Pattern tree elements
-        this.patternSearch = document.getElementById('patternSearch');
+        this.patternSearch = document.getElementById('patternSearch') as HTMLInputElement | null;
         this.patternTree = document.getElementById('patternTree');
         this.searchResults = document.getElementById('searchResults');
         
         // UI elements - advanced controls
-        this.gridWidthSlider = document.getElementById('gridWidth');
+        this.gridWidthSlider = document.getElementById('gridWidth') as HTMLInputElement | null;
         this.gridWidthValue = document.getElementById('gridWidthValue');
-        this.gridWidthMax = document.getElementById('gridWidthMax');
-        this.gridHeightSlider = document.getElementById('gridHeight');
+        this.gridWidthMax = document.getElementById('gridWidthMax') as HTMLInputElement | null;
+        this.gridHeightSlider = document.getElementById('gridHeight') as HTMLInputElement | null;
         this.gridHeightValue = document.getElementById('gridHeightValue');
-        this.gridHeightMax = document.getElementById('gridHeightMax');
-        this.cellSizeSlider = document.getElementById('cellSize');
+        this.gridHeightMax = document.getElementById('gridHeightMax') as HTMLInputElement | null;
+        this.cellSizeSlider = document.getElementById('cellSize') as HTMLInputElement | null;
         this.cellSizeValue = document.getElementById('cellSizeValue');
-        this.cellSizeMax = document.getElementById('cellSizeMax');
-        this.randomDensitySlider = document.getElementById('randomDensity');
+        this.cellSizeMax = document.getElementById('cellSizeMax') as HTMLInputElement | null;
+        this.randomDensitySlider = document.getElementById('randomDensity') as HTMLInputElement | null;
         this.randomDensityValue = document.getElementById('randomDensityValue');
-        this.randomDensityMax = document.getElementById('randomDensityMax');
-        this.randomSeedInput = document.getElementById('randomSeed');
+        this.randomDensityMax = document.getElementById('randomDensityMax') as HTMLInputElement | null;
+        this.randomSeedInput = document.getElementById('randomSeed') as HTMLInputElement | null;
         this.generateSeedBtn = document.getElementById('generateSeedBtn');
-        this.speedMax = document.getElementById('speedMax');
+        this.speedMax = document.getElementById('speedMax') as HTMLInputElement | null;
         
         // UI elements - sidebar
         this.sidebarToggle = document.getElementById('sidebarToggle');
@@ -189,7 +245,7 @@ class GameOfLifeStudio {
         this.sidebarOverlay = document.getElementById('sidebarOverlay');
         
         // UI elements - dark mode
-        this.darkModeToggle = document.getElementById('darkModeToggle');
+        this.darkModeToggle = document.getElementById('darkModeToggle') as HTMLInputElement | null;
         
         // UI elements - fullscreen
         this.fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -201,7 +257,7 @@ class GameOfLifeStudio {
         this.fullscreenClearBtn = document.getElementById('fullscreenClearBtn');
         
         // UI elements - custom rules
-        this.rulePresets = document.getElementById('rulePresets');
+        this.rulePresets = document.getElementById('rulePresets') as HTMLSelectElement | null;
         this.customRuleInputs = document.getElementById('customRuleInputs');
         this.currentRuleString = document.getElementById('currentRuleString');
         
@@ -217,30 +273,41 @@ class GameOfLifeStudio {
         this.randomDensity = 30; // percentage
         this.randomSeed = null;
         
-        // Drawing tool settings
+        // Drawing tool settings (already initialized above)
         this.drawingMode = 'cell'; // 'cell' or pattern name
-        this.selectedPattern = null;
         
-        // Pattern preview settings
-        this.previewPosition = null; // {row, col} or null
-        this.showPreview = false;
-        this.patternRotation = 0; // 0, 90, 180, 270 degrees
-        
-        // Grid display settings
-        this.showPixelGrid = false; // Individual cell boundaries
-        this.showGrid = false; // Grid overlay (every 5 cells)
-        
-        // Fade/ghost trail settings
-        this.fadeMode = false;
-        this.fadeDuration = 1;
-        
-        // Maturity settings
+        // Initialize missing properties
+        this.inspectorMode = false;
         this.maturityMode = false;
-        this.maturityEndColor = '#4c1d95'; // Deep violet default color
+        this.maturityEndColor = '#4c1d95';
+        this.isFullscreen = false;
+        this.originalCanvasSize = { width: this.canvas.width, height: this.canvas.height };
+        this.isReplaying = false;
+        this.replayData = null;
+        this.replayIndex = 0;
+        this.replaySpeed = 5;
+        this.replayInterval = null;
+        this.recordedGenerations = [];
+        this.recordingStartTime = null;
+        this.selectionMode = false;
+        this.selectionStart = null;
+        this.selectionEnd = null;
+        this.selectedPatternData = null;
         
-        // Cell shape settings
-        this.cellShape = 'rectangle'; // 'rectangle', 'circle', 'triangle', 'diamond', 'pentagon', 'hexagon', 'star'
-        this.availableShapes = ['rectangle', 'circle', 'triangle', 'diamond', 'pentagon', 'hexagon', 'star'];
+        // Initialize modal-related elements
+        this.patternSize = document.getElementById('patternSize');
+        this.patternCells = document.getElementById('patternCells');
+        this.patternName = document.getElementById('patternName') as HTMLInputElement | null;
+        this.patternCategory = document.getElementById('patternCategory') as HTMLSelectElement | null;
+        this.savePatternModal = document.getElementById('savePatternModal');
+        this.patternPreviewCanvas = document.getElementById('patternPreviewCanvas') as HTMLCanvasElement | null;
+        this.recordingName = document.getElementById('recordingName') as HTMLInputElement | null;
+        this.saveModal = document.getElementById('saveModal');
+        this.recordingsList = document.getElementById('recordingsList');
+        this.recordedGenerationsSpan = document.getElementById('recordedGenerations');
+        this.recordingDuration = document.getElementById('recordingDuration');
+        
+        // Cell shape settings (already initialized above)
         
         // Inspector settings
         this.inspectorMode = false;

@@ -77,8 +77,8 @@ export class RecordingManager {
         this.playTimelineBtn = document.getElementById('playTimelineBtn');
         this.pauseTimelineBtn = document.getElementById('pauseTimelineBtn');
         this.stopTimelineBtn = document.getElementById('stopTimelineBtn');
-        this.timelineSlider = document.getElementById('timelineSlider');
-        this.playbackSpeed = document.getElementById('playbackSpeed');
+        this.timelineSlider = document.getElementById('timelineSlider') as HTMLInputElement | null;
+        this.playbackSpeed = document.getElementById('playbackSpeed') as HTMLInputElement | null;
         
         // Timeline info displays
         this.currentFrame = document.getElementById('currentFrame');
@@ -94,7 +94,7 @@ export class RecordingManager {
         
         // Save modal elements
         this.saveModal = document.getElementById('saveModal');
-        this.recordingName = document.getElementById('recordingName');
+        this.recordingName = document.getElementById('recordingName') as HTMLInputElement | null;
         this.modalClose = document.getElementById('modalClose');
         this.cancelSave = document.getElementById('cancelSave');
         this.confirmSave = document.getElementById('confirmSave');
