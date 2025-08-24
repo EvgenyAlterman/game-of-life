@@ -124,7 +124,8 @@ class GameOfLifeStudio {
         this.maturityEndColor = '#4c1d95'; // Deep violet default color
         
         // Cell shape settings
-        this.cellShape = 'rectangle'; // 'rectangle' or 'circle'
+        this.cellShape = 'rectangle'; // 'rectangle', 'circle', 'triangle', 'diamond', 'pentagon', 'hexagon', 'star'
+        this.availableShapes = ['rectangle', 'circle', 'triangle', 'diamond', 'pentagon', 'hexagon', 'star'];
         
         // Inspector settings
         this.inspectorMode = false;
@@ -613,11 +614,7 @@ class GameOfLifeStudio {
         
         // Draw living cells
         this.ctx.fillStyle = cellColor;
-        if (this.cellShape === 'circle') {
-            this.drawCircularCells();
-        } else {
-            this.drawRectangularCells();
-        }
+        this.drawCells();
         
         // Draw fading cells if fade mode is enabled
         if (this.fadeMode) {
@@ -1107,15 +1104,8 @@ class GameOfLifeStudio {
     // Grid overlay methods
     toggleGrid() {
         this.showGrid = !this.showGrid;
-        
-        // If enabling overlay grid, disable pixel grid
-        if (this.showGrid && this.showPixelGrid) {
-            this.showPixelGrid = false;
-            this.updatePixelGridUI();
-        }
-        
         this.updateGridUI();
-        this.draw(); // Redraw to show/hide grid
+        this.draw(); // Redraw to show/hide grid overlay
         this.saveSettings();
     }
     
@@ -1323,23 +1313,7 @@ class GameOfLifeStudio {
                     const fadeColor = this.hexToRgba(baseCellColor, opacity);
                     
                     this.ctx.fillStyle = fadeColor;
-                    
-                    if (this.cellShape === 'circle') {
-                        const radius = (this.cellSize - 2) / 2;
-                        const centerX = col * this.cellSize + this.cellSize / 2;
-                        const centerY = row * this.cellSize + this.cellSize / 2;
-                        
-                        this.ctx.beginPath();
-                        this.ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-                        this.ctx.fill();
-                    } else {
-                        this.ctx.fillRect(
-                            col * this.cellSize + 1,
-                            row * this.cellSize + 1,
-                            this.cellSize - 2,
-                            this.cellSize - 2
-                        );
-                    }
+                    this.drawSingleCell(row, col);
                 }
             }
         }
@@ -1357,23 +1331,7 @@ class GameOfLifeStudio {
                     const maturityColor = this.interpolateMaturityColor(maturityRatio);
                     
                     this.ctx.fillStyle = maturityColor;
-                    
-                    if (this.cellShape === 'circle') {
-                        const radius = (this.cellSize - 2) / 2;
-                        const centerX = col * this.cellSize + this.cellSize / 2;
-                        const centerY = row * this.cellSize + this.cellSize / 2;
-                        
-                        this.ctx.beginPath();
-                        this.ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-                        this.ctx.fill();
-                    } else {
-                        this.ctx.fillRect(
-                            col * this.cellSize + 1,
-                            row * this.cellSize + 1,
-                            this.cellSize - 2,
-                            this.cellSize - 2
-                        );
-                    }
+                    this.drawSingleCell(row, col);
                 }
             }
         }
@@ -1445,7 +1403,9 @@ class GameOfLifeStudio {
     
     // Cell shape methods
     toggleCellShape() {
-        this.cellShape = this.cellShape === 'rectangle' ? 'circle' : 'rectangle';
+        const currentIndex = this.availableShapes.indexOf(this.cellShape);
+        const nextIndex = (currentIndex + 1) % this.availableShapes.length;
+        this.cellShape = this.availableShapes[nextIndex];
         this.updateCellShapeUI();
         this.draw(); // Redraw to show new cell shape
         this.saveSettings();
@@ -1455,47 +1415,132 @@ class GameOfLifeStudio {
         const icon = this.cellShapeToggle.querySelector('.toolbar-icon');
         const text = this.cellShapeToggle.querySelector('.toolbar-label');
         
-        if (this.cellShape === 'circle') {
-            icon.setAttribute('data-lucide', 'circle');
-            text.textContent = 'Circle';
-        } else {
-            icon.setAttribute('data-lucide', 'square');
-            text.textContent = 'Shape';
-        }
+        const shapeConfig = {
+            'rectangle': { icon: 'square', text: 'Square' },
+            'circle': { icon: 'circle', text: 'Circle' },
+            'triangle': { icon: 'triangle', text: 'Triangle' },
+            'diamond': { icon: 'diamond', text: 'Diamond' },
+            'pentagon': { icon: 'pentagon', text: 'Pentagon' },
+            'hexagon': { icon: 'hexagon', text: 'Hexagon' },
+            'star': { icon: 'star', text: 'Star' }
+        };
+        
+        const config = shapeConfig[this.cellShape] || shapeConfig['rectangle'];
+        icon.setAttribute('data-lucide', config.icon);
+        text.textContent = config.text;
         
         // Update the icon
         lucide.createIcons();
     }
     
-    drawRectangularCells() {
+    drawCells() {
         for (let row = 0; row < this.rows; row++) {
             for (let col = 0; col < this.cols; col++) {
                 if (this.engine.getCell(row, col)) {
-                    this.ctx.fillRect(
-                        col * this.cellSize + 1,
-                        row * this.cellSize + 1,
-                        this.cellSize - 2,
-                        this.cellSize - 2
-                    );
+                    this.drawSingleCell(row, col);
                 }
             }
         }
     }
     
-    drawCircularCells() {
-        const radius = (this.cellSize - 2) / 2;
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                if (this.engine.getCell(row, col)) {
-                    const centerX = col * this.cellSize + this.cellSize / 2;
-                    const centerY = row * this.cellSize + this.cellSize / 2;
-                    
-                    this.ctx.beginPath();
-                    this.ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-                    this.ctx.fill();
-                }
+    drawSingleCell(row, col) {
+        const centerX = col * this.cellSize + this.cellSize / 2;
+        const centerY = row * this.cellSize + this.cellSize / 2;
+        const size = this.cellSize - 2;
+        
+        switch (this.cellShape) {
+            case 'rectangle':
+                this.ctx.fillRect(
+                    col * this.cellSize + 1,
+                    row * this.cellSize + 1,
+                    size,
+                    size
+                );
+                break;
+                
+            case 'circle':
+                const radius = size / 2;
+                this.ctx.beginPath();
+                this.ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                this.ctx.fill();
+                break;
+                
+            case 'triangle':
+                const triangleSize = size * 0.8;
+                this.ctx.beginPath();
+                this.ctx.moveTo(centerX, centerY - triangleSize / 2); // Top point
+                this.ctx.lineTo(centerX - triangleSize / 2, centerY + triangleSize / 4); // Bottom left
+                this.ctx.lineTo(centerX + triangleSize / 2, centerY + triangleSize / 4); // Bottom right
+                this.ctx.closePath();
+                this.ctx.fill();
+                break;
+                
+            case 'diamond':
+                const diamondSize = size * 0.8;
+                this.ctx.beginPath();
+                this.ctx.moveTo(centerX, centerY - diamondSize / 2); // Top
+                this.ctx.lineTo(centerX + diamondSize / 2, centerY); // Right
+                this.ctx.lineTo(centerX, centerY + diamondSize / 2); // Bottom
+                this.ctx.lineTo(centerX - diamondSize / 2, centerY); // Left
+                this.ctx.closePath();
+                this.ctx.fill();
+                break;
+                
+            case 'pentagon':
+                this.drawRegularPolygon(centerX, centerY, size * 0.4, 5);
+                break;
+                
+            case 'hexagon':
+                this.drawRegularPolygon(centerX, centerY, size * 0.4, 6);
+                break;
+                
+            case 'star':
+                this.drawStar(centerX, centerY, size * 0.4, 6);
+                break;
+                
+            default:
+                // Fallback to rectangle
+                this.ctx.fillRect(
+                    col * this.cellSize + 1,
+                    row * this.cellSize + 1,
+                    size,
+                    size
+                );
+        }
+    }
+    
+    drawRegularPolygon(centerX, centerY, radius, sides) {
+        this.ctx.beginPath();
+        for (let i = 0; i < sides; i++) {
+            const angle = (i / sides) * 2 * Math.PI - Math.PI / 2; // Start from top
+            const x = centerX + radius * Math.cos(angle);
+            const y = centerY + radius * Math.sin(angle);
+            if (i === 0) {
+                this.ctx.moveTo(x, y);
+            } else {
+                this.ctx.lineTo(x, y);
             }
         }
+        this.ctx.closePath();
+        this.ctx.fill();
+    }
+    
+    drawStar(centerX, centerY, radius, points) {
+        const innerRadius = radius * 0.5;
+        this.ctx.beginPath();
+        for (let i = 0; i < points * 2; i++) {
+            const angle = (i / (points * 2)) * 2 * Math.PI - Math.PI / 2;
+            const currentRadius = i % 2 === 0 ? radius : innerRadius;
+            const x = centerX + currentRadius * Math.cos(angle);
+            const y = centerY + currentRadius * Math.sin(angle);
+            if (i === 0) {
+                this.ctx.moveTo(x, y);
+            } else {
+                this.ctx.lineTo(x, y);
+            }
+        }
+        this.ctx.closePath();
+        this.ctx.fill();
     }
     
     getColorName(hexColor) {
