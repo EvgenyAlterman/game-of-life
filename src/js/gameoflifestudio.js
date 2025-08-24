@@ -28,6 +28,7 @@ class GameOfLifeStudio {
         this.clearBtn = document.getElementById('clearBtn');
         this.speedSlider = document.getElementById('speedSlider');
         this.speedValue = document.getElementById('speedValue');
+        this.pixelGridToggle = document.getElementById('pixelGridToggle');
         this.gridToggle = document.getElementById('gridToggle');
         this.fadeToggle = document.getElementById('fadeToggle');
         this.fadeSettings = document.getElementById('fadeSettings');
@@ -37,6 +38,7 @@ class GameOfLifeStudio {
         this.maturityToggle = document.getElementById('maturityToggle');
         this.maturitySettings = document.getElementById('maturitySettings');
         this.maturityColor = document.getElementById('maturityColor');
+        this.cellShapeToggle = document.getElementById('cellShapeToggle');
 
         this.generationDisplay = document.getElementById('generation');
         this.populationDisplay = document.getElementById('population');
@@ -110,7 +112,8 @@ class GameOfLifeStudio {
         this.patternRotation = 0; // 0, 90, 180, 270 degrees
         
         // Grid display settings
-        this.showGrid = false;
+        this.showPixelGrid = false; // Individual cell boundaries
+        this.showGrid = false; // Grid overlay (every 5 cells)
         
         // Fade/ghost trail settings
         this.fadeMode = false;
@@ -119,6 +122,9 @@ class GameOfLifeStudio {
         // Maturity settings
         this.maturityMode = false;
         this.maturityEndColor = '#4c1d95'; // Deep violet default color
+        
+        // Cell shape settings
+        this.cellShape = 'rectangle'; // 'rectangle' or 'circle'
         
         // Inspector settings
         this.inspectorMode = false;
@@ -177,6 +183,11 @@ class GameOfLifeStudio {
             this.saveSettings();
         });
         
+        // Pixel grid toggle
+        this.pixelGridToggle.addEventListener('click', () => {
+            this.togglePixelGrid();
+        });
+        
         // Grid toggle
         this.gridToggle.addEventListener('click', () => {
             this.toggleGrid();
@@ -205,6 +216,11 @@ class GameOfLifeStudio {
             this.updateColorLabel();
             this.draw(); // Redraw to show new colors
             this.saveSettings();
+        });
+        
+        // Cell shape toggle
+        this.cellShapeToggle.addEventListener('click', () => {
+            this.toggleCellShape();
         });
         
         // Fade max value
@@ -593,42 +609,14 @@ class GameOfLifeStudio {
         
         // Get computed CSS custom properties for current theme
         const rootStyles = getComputedStyle(document.documentElement);
-        const gridColor = rootStyles.getPropertyValue('--canvas-grid').trim();
         const cellColor = rootStyles.getPropertyValue('--canvas-cell').trim();
-        
-        // Draw grid
-        this.ctx.strokeStyle = gridColor;
-        this.ctx.lineWidth = 1;
-        
-        // Vertical lines
-        for (let col = 0; col <= this.cols; col++) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(col * this.cellSize, 0);
-            this.ctx.lineTo(col * this.cellSize, this.canvas.height);
-            this.ctx.stroke();
-        }
-        
-        // Horizontal lines
-        for (let row = 0; row <= this.rows; row++) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(0, row * this.cellSize);
-            this.ctx.lineTo(this.canvas.width, row * this.cellSize);
-            this.ctx.stroke();
-        }
         
         // Draw living cells
         this.ctx.fillStyle = cellColor;
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                if (this.engine.getCell(row, col)) {
-                    this.ctx.fillRect(
-                        col * this.cellSize + 1,
-                        row * this.cellSize + 1,
-                        this.cellSize - 2,
-                        this.cellSize - 2
-                    );
-                }
-            }
+        if (this.cellShape === 'circle') {
+            this.drawCircularCells();
+        } else {
+            this.drawRectangularCells();
         }
         
         // Draw fading cells if fade mode is enabled
@@ -639,6 +627,11 @@ class GameOfLifeStudio {
         // Draw mature cells if maturity mode is enabled
         if (this.maturityMode) {
             this.drawMatureCells();
+        }
+        
+        // Draw pixel grid (individual cell boundaries)
+        if (this.showPixelGrid) {
+            this.drawPixelGrid();
         }
         
         // Draw grid overlay (every 5 cells with thicker lines)
@@ -1114,19 +1107,53 @@ class GameOfLifeStudio {
     // Grid overlay methods
     toggleGrid() {
         this.showGrid = !this.showGrid;
+        
+        // If enabling overlay grid, disable pixel grid
+        if (this.showGrid && this.showPixelGrid) {
+            this.showPixelGrid = false;
+            this.updatePixelGridUI();
+        }
+        
         this.updateGridUI();
         this.draw(); // Redraw to show/hide grid
         this.saveSettings();
     }
     
-    updateGridUI() {
-        const gridText = this.gridToggle.querySelector('span');
-        if (this.showGrid) {
-            this.gridToggle.classList.add('selected');
-            gridText.textContent = 'Hide Grid';
+    togglePixelGrid() {
+        this.showPixelGrid = !this.showPixelGrid;
+        this.updatePixelGridUI();
+        this.draw(); // Redraw to show/hide pixel grid
+        this.saveSettings();
+    }
+    
+    updatePixelGridUI() {
+        const text = this.pixelGridToggle.querySelector('.toolbar-label');
+        
+        if (this.showPixelGrid) {
+            this.pixelGridToggle.classList.add('active');
+            text.textContent = 'Pixels ON';
         } else {
-            this.gridToggle.classList.remove('selected');
-            gridText.textContent = 'Show Grid';
+            this.pixelGridToggle.classList.remove('active');
+            text.textContent = 'Pixels';
+        }
+    }
+    
+    toggleGrid() {
+        this.showGrid = !this.showGrid;
+        this.updateGridUI();
+        this.draw(); // Redraw to show/hide grid overlay
+        this.saveSettings();
+    }
+    
+    updateGridUI() {
+        const text = this.gridToggle.querySelector('.toolbar-label');
+        
+        if (this.showGrid) {
+            this.gridToggle.classList.add('active');
+            text.textContent = 'Grid ON';
+        } else {
+            this.gridToggle.classList.remove('active');
+            text.textContent = 'Grid';
         }
     }
     
@@ -1179,6 +1206,56 @@ class GameOfLifeStudio {
         this.ctx.lineWidth = 1;
     }
     
+    drawPixelGrid() {
+        // Get theme-appropriate grid color
+        const rootStyles = getComputedStyle(document.documentElement);
+        const gridColor = rootStyles.getPropertyValue('--canvas-grid').trim();
+        
+        // Create a subtle pixel grid color when overlay grid is also active
+        let pixelGridColor;
+        if (this.showGrid) {
+            // If overlay grid is also shown, make pixel grid more subtle
+            if (gridColor.includes('rgb')) {
+                pixelGridColor = gridColor.replace(/rgba?\(([^)]*)\)/, (match, values) => {
+                    const parts = values.split(',').map(v => v.trim());
+                    if (parts.length === 3) {
+                        return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, 0.3)`;
+                    } else if (parts.length === 4) {
+                        return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, 0.3)`;
+                    }
+                    return gridColor;
+                });
+            } else if (gridColor.includes('#')) {
+                pixelGridColor = this.hexToRgba(gridColor, 0.3);
+            } else {
+                pixelGridColor = 'rgba(128, 128, 128, 0.3)';
+            }
+            this.ctx.lineWidth = 0.5;
+        } else {
+            // If only pixel grid is shown, use normal visibility
+            pixelGridColor = gridColor;
+            this.ctx.lineWidth = 1;
+        }
+        
+        this.ctx.strokeStyle = pixelGridColor;
+        
+        // Draw vertical lines for each cell column
+        for (let col = 0; col <= this.cols; col++) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(col * this.cellSize, 0);
+            this.ctx.lineTo(col * this.cellSize, this.canvas.height);
+            this.ctx.stroke();
+        }
+        
+        // Draw horizontal lines for each cell row
+        for (let row = 0; row <= this.rows; row++) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, row * this.cellSize);
+            this.ctx.lineTo(this.canvas.width, row * this.cellSize);
+            this.ctx.stroke();
+        }
+    }
+    
     // Fade mode methods
     toggleFadeMode() {
         this.fadeMode = !this.fadeMode;
@@ -1194,40 +1271,16 @@ class GameOfLifeStudio {
     }
     
     updateFadeUI() {
+        const text = this.fadeToggle.querySelector('.toolbar-label');
+        
         if (this.fadeMode) {
             this.fadeToggle.classList.add('active');
-            this.fadeToggle.querySelector('span').textContent = 'Ghost Trail ON';
+            text.textContent = 'Trail ON';
             this.fadeSettings.style.display = 'block';
         } else {
             this.fadeToggle.classList.remove('active');
-            this.fadeToggle.querySelector('span').textContent = 'Ghost Trail';
+            text.textContent = 'Trail';
             this.fadeSettings.style.display = 'none';
-        }
-    }
-    
-    drawFadingCells(baseCellColor) {
-        // Convert cell color to rgba for transparency
-        const baseColor = this.hexToRgba(baseCellColor, 1.0);
-        
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                const fadeLevel = this.engine.getCellFadeLevel(row, col);
-                const isAlive = this.engine.getCell(row, col);
-                
-                if (fadeLevel > 0 && !isAlive) {
-                    // Calculate opacity based on fade level (higher = more opaque)
-                    const opacity = fadeLevel / this.fadeDuration * 0.8; // Max 80% opacity
-                    const fadeColor = this.hexToRgba(baseCellColor, opacity);
-                    
-                    this.ctx.fillStyle = fadeColor;
-                    this.ctx.fillRect(
-                        col * this.cellSize + 1,
-                        row * this.cellSize + 1,
-                        this.cellSize - 2,
-                        this.cellSize - 2
-                    );
-                }
-            }
         }
     }
     
@@ -1248,11 +1301,138 @@ class GameOfLifeStudio {
     updateMaturityUI() {
         if (this.maturityMode) {
             this.maturityToggle.classList.add('active');
-            this.maturityToggle.querySelector('span').textContent = 'Maturity ON';
             this.maturitySettings.style.display = 'block';
         } else {
             this.maturityToggle.classList.remove('active');
-            this.maturityToggle.querySelector('span').textContent = 'Maturity Mode';
+            this.maturitySettings.style.display = 'none';
+        }
+    }
+    
+    drawFadingCells(baseCellColor) {
+        // Convert cell color to rgba for transparency
+        const baseColor = this.hexToRgba(baseCellColor, 1.0);
+        
+        for (let row = 0; row < this.rows; row++) {
+            for (let col = 0; col < this.cols; col++) {
+                const fadeLevel = this.engine.getCellFadeLevel(row, col);
+                const isAlive = this.engine.getCell(row, col);
+                
+                if (fadeLevel > 0 && !isAlive) {
+                    // Calculate opacity based on fade level (higher = more opaque)
+                    const opacity = fadeLevel / this.fadeDuration * 0.8; // Max 80% opacity
+                    const fadeColor = this.hexToRgba(baseCellColor, opacity);
+                    
+                    this.ctx.fillStyle = fadeColor;
+                    
+                    if (this.cellShape === 'circle') {
+                        const radius = (this.cellSize - 2) / 2;
+                        const centerX = col * this.cellSize + this.cellSize / 2;
+                        const centerY = row * this.cellSize + this.cellSize / 2;
+                        
+                        this.ctx.beginPath();
+                        this.ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                        this.ctx.fill();
+                    } else {
+                        this.ctx.fillRect(
+                            col * this.cellSize + 1,
+                            row * this.cellSize + 1,
+                            this.cellSize - 2,
+                            this.cellSize - 2
+                        );
+                    }
+                }
+            }
+        }
+    }
+    
+    drawMatureCells() {
+        for (let row = 0; row < this.rows; row++) {
+            for (let col = 0; col < this.cols; col++) {
+                const maturityLevel = this.engine.getCellMaturity(row, col);
+                const isAlive = this.engine.getCell(row, col);
+                
+                if (maturityLevel > 0 && isAlive) {
+                    // Calculate color interpolation based on maturity level
+                    const maturityRatio = Math.min(maturityLevel / 10, 1); // Max at 10 generations
+                    const maturityColor = this.interpolateMaturityColor(maturityRatio);
+                    
+                    this.ctx.fillStyle = maturityColor;
+                    
+                    if (this.cellShape === 'circle') {
+                        const radius = (this.cellSize - 2) / 2;
+                        const centerX = col * this.cellSize + this.cellSize / 2;
+                        const centerY = row * this.cellSize + this.cellSize / 2;
+                        
+                        this.ctx.beginPath();
+                        this.ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                        this.ctx.fill();
+                    } else {
+                        this.ctx.fillRect(
+                            col * this.cellSize + 1,
+                            row * this.cellSize + 1,
+                            this.cellSize - 2,
+                            this.cellSize - 2
+                        );
+                    }
+                }
+            }
+        }
+    }
+    
+    interpolateMaturityColor(ratio) {
+        // Interpolate between the base cell color and maturity end color
+        const rootStyles = getComputedStyle(document.documentElement);
+        const baseCellColor = rootStyles.getPropertyValue('--canvas-cell').trim();
+        
+        // Convert both colors to RGB for interpolation
+        const baseRgb = this.hexToRgb(baseCellColor);
+        const matureRgb = this.hexToRgb(this.maturityEndColor);
+        
+        if (!baseRgb || !matureRgb) {
+            return this.maturityEndColor; // Fallback
+        }
+        
+        // Interpolate between base and mature colors
+        const r = Math.round(baseRgb.r + (matureRgb.r - baseRgb.r) * ratio);
+        const g = Math.round(baseRgb.g + (matureRgb.g - baseRgb.g) * ratio);
+        const b = Math.round(baseRgb.b + (matureRgb.b - baseRgb.b) * ratio);
+        
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+    
+    hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+    
+    // Maturity mode methods
+    toggleMaturityMode() {
+        this.maturityMode = !this.maturityMode;
+        this.updateMaturityUI();
+        
+        // Clear existing maturity grid when toggling mode
+        if (!this.maturityMode) {
+            this.engine.clearStateTracking();
+        }
+        
+        this.draw(); // Redraw to show/hide maturity effects
+        this.saveSettings();
+    }
+    
+    updateMaturityUI() {
+        const text = this.maturityToggle.querySelector('.toolbar-label');
+        
+        if (this.maturityMode) {
+            this.maturityToggle.classList.add('active');
+            text.textContent = 'Mature';
+            this.maturitySettings.style.display = 'block';
+        } else {
+            this.maturityToggle.classList.remove('active');
+            text.textContent = 'Maturity';
             this.maturitySettings.style.display = 'none';
         }
     }
@@ -1261,6 +1441,61 @@ class GameOfLifeStudio {
         const colorLabel = document.querySelector('.color-label');
         const colorName = this.getColorName(this.maturityEndColor);
         colorLabel.textContent = colorName;
+    }
+    
+    // Cell shape methods
+    toggleCellShape() {
+        this.cellShape = this.cellShape === 'rectangle' ? 'circle' : 'rectangle';
+        this.updateCellShapeUI();
+        this.draw(); // Redraw to show new cell shape
+        this.saveSettings();
+    }
+    
+    updateCellShapeUI() {
+        const icon = this.cellShapeToggle.querySelector('.toolbar-icon');
+        const text = this.cellShapeToggle.querySelector('.toolbar-label');
+        
+        if (this.cellShape === 'circle') {
+            icon.setAttribute('data-lucide', 'circle');
+            text.textContent = 'Circle';
+        } else {
+            icon.setAttribute('data-lucide', 'square');
+            text.textContent = 'Shape';
+        }
+        
+        // Update the icon
+        lucide.createIcons();
+    }
+    
+    drawRectangularCells() {
+        for (let row = 0; row < this.rows; row++) {
+            for (let col = 0; col < this.cols; col++) {
+                if (this.engine.getCell(row, col)) {
+                    this.ctx.fillRect(
+                        col * this.cellSize + 1,
+                        row * this.cellSize + 1,
+                        this.cellSize - 2,
+                        this.cellSize - 2
+                    );
+                }
+            }
+        }
+    }
+    
+    drawCircularCells() {
+        const radius = (this.cellSize - 2) / 2;
+        for (let row = 0; row < this.rows; row++) {
+            for (let col = 0; col < this.cols; col++) {
+                if (this.engine.getCell(row, col)) {
+                    const centerX = col * this.cellSize + this.cellSize / 2;
+                    const centerY = row * this.cellSize + this.cellSize / 2;
+                    
+                    this.ctx.beginPath();
+                    this.ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                    this.ctx.fill();
+                }
+            }
+        }
     }
     
     getColorName(hexColor) {
@@ -1842,11 +2077,13 @@ class GameOfLifeStudio {
             // UI settings
             gridWidth: this.gridWidthSlider.value,
             gridHeight: this.gridHeightSlider.value,
+            showPixelGrid: this.showPixelGrid,
             showGrid: this.showGrid,
             fadeMode: this.fadeMode,
             fadeDuration: this.fadeDuration,
             maturityMode: this.maturityMode,
             maturityEndColor: this.maturityEndColor,
+            cellShape: this.cellShape,
             inspectorMode: this.inspectorMode,
             
             // Slider max values
@@ -1995,7 +2232,12 @@ class GameOfLifeStudio {
                 }
             }
             
-            // Load grid display state
+            // Load grid display states
+            if (settings.showPixelGrid !== undefined) {
+                this.showPixelGrid = settings.showPixelGrid;
+                this.updatePixelGridUI();
+            }
+            
             if (settings.showGrid !== undefined) {
                 this.showGrid = settings.showGrid;
                 this.updateGridUI();
@@ -2023,6 +2265,12 @@ class GameOfLifeStudio {
                 this.maturityEndColor = settings.maturityEndColor;
                 this.maturityColor.value = settings.maturityEndColor;
                 this.updateColorLabel();
+            }
+            
+            // Load cell shape settings
+            if (settings.cellShape !== undefined) {
+                this.cellShape = settings.cellShape;
+                this.updateCellShapeUI();
             }
             
             // Load inspector mode settings
@@ -2733,7 +2981,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize pattern hints
     window.game.updatePatternHints();
     
-    // Initialize grid UI
+    // Initialize visual toolbar UIs
+    window.game.updatePixelGridUI();
     window.game.updateGridUI();
     
     // Initialize fade UI
@@ -2742,6 +2991,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize maturity UI
     window.game.updateMaturityUI();
     window.game.updateColorLabel();
+    
+    // Initialize cell shape UI
+    window.game.updateCellShapeUI();
     
     // Load existing recordings
     window.game.recordingManager.loadRecordings();

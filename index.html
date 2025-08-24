@@ -48,40 +48,58 @@
                         </div>
                     </div>
                     
-                    <div class="grid-control">
-                        <button id="gridToggle" class="tool-btn" title="Toggle Grid Overlay">
-                            <i data-lucide="grid-3x3" class="tool-icon"></i>
-                            <span>Show Grid</span>
-                        </button>
-                    </div>
-                    
-                    <div class="fade-control">
-                        <button id="fadeToggle" class="tool-btn" title="Toggle Ghost Trail Mode">
-                            <i data-lucide="ghost" class="tool-icon"></i>
-                            <span>Ghost Trail</span>
-                        </button>
-                        
-                        <div class="fade-settings" id="fadeSettings" style="display: none;">
-                            <label for="fadeSlider">Trail Duration:</label>
-                            <div class="slider-group">
-                                <input type="range" id="fadeSlider" min="1" max="10" value="1">
-                                <span id="fadeValue">1</span>
-                                <input type="number" id="fadeMax" class="max-input" value="10" min="5" placeholder="Max">
-                            </div>
+                    <!-- Visual Controls Toolbar -->
+                    <div class="visual-toolbar">
+                        <div class="toolbar-group">
+                            <button id="pixelGridToggle" class="toolbar-btn" title="Toggle Pixel Grid">
+                                <i data-lucide="hash" class="toolbar-icon"></i>
+                                <span class="toolbar-label">Pixels</span>
+                            </button>
+                            
+                            <button id="gridToggle" class="toolbar-btn" title="Toggle Grid Overlay">
+                                <i data-lucide="grid-3x3" class="toolbar-icon"></i>
+                                <span class="toolbar-label">Grid</span>
+                            </button>
+                            
+                            <button id="fadeToggle" class="toolbar-btn" title="Toggle Ghost Trail Mode">
+                                <i data-lucide="ghost" class="toolbar-icon"></i>
+                                <span class="toolbar-label">Trail</span>
+                            </button>
+                            
+                            <button id="maturityToggle" class="toolbar-btn" title="Toggle Cell Maturity Mode">
+                                <i data-lucide="timer" class="toolbar-icon"></i>
+                                <span class="toolbar-label">Maturity</span>
+                            </button>
+                            
+                            <button id="cellShapeToggle" class="toolbar-btn" title="Toggle Cell Shape">
+                                <i data-lucide="square" class="toolbar-icon"></i>
+                                <span class="toolbar-label">Shape</span>
+                            </button>
                         </div>
                     </div>
                     
-                    <div class="maturity-control">
-                        <button id="maturityToggle" class="tool-btn" title="Toggle Cell Maturity Mode">
-                            <i data-lucide="timer" class="tool-icon"></i>
-                            <span>Maturity Mode</span>
-                        </button>
+                    <!-- Settings Panels (Hidden by default) -->
+                    <div class="settings-panels">
+                        <div class="fade-settings panel-settings" id="fadeSettings" style="display: none;">
+                            <h4>Ghost Trail Settings</h4>
+                            <div class="setting-row">
+                                <label for="fadeSlider">Trail Duration:</label>
+                                <div class="slider-group">
+                                    <input type="range" id="fadeSlider" min="1" max="10" value="1">
+                                    <span id="fadeValue">1</span>
+                                    <input type="number" id="fadeMax" class="max-input" value="10" min="5" placeholder="Max">
+                                </div>
+                            </div>
+                        </div>
                         
-                        <div class="maturity-settings" id="maturitySettings" style="display: none;">
-                            <label for="maturityColor">Mature Color:</label>
-                            <div class="color-group">
-                                <input type="color" id="maturityColor" value="#4c1d95" class="color-input">
-                                <span class="color-label">Deep Violet</span>
+                        <div class="maturity-settings panel-settings" id="maturitySettings" style="display: none;">
+                            <h4>Maturity Settings</h4>
+                            <div class="setting-row">
+                                <label for="maturityColor">Mature Color:</label>
+                                <div class="color-group">
+                                    <input type="color" id="maturityColor" value="#4c1d95" class="color-input">
+                                    <span class="color-label">Deep Violet</span>
+                                </div>
                             </div>
                         </div>
                     </div>
