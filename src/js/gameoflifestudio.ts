@@ -5,9 +5,9 @@ import type {
     Pattern, 
     MouseEventInfo, 
     TouchEventInfo, 
-    CanvasRenderingContext2DWithReset
+    CanvasRenderingContext2DWithReset,
+    CellShape
 } from '../types/game-types.js';
-import { CellShape } from '../types/game-types.js';
 
 class GameOfLifeStudio {
     // Canvas and rendering
@@ -111,7 +111,7 @@ class GameOfLifeStudio {
     public showMaturity: boolean = false;
     public fadeDuration: number = 1;
     public maturityColors: string[] = ['#ffffff', '#4c1d95'];
-    public cellShape: CellShape = CellShape.Square;
+    public cellShape: string = 'rectangle';
     public availableShapes: string[] = [];
     
     // Missing properties from errors
@@ -164,6 +164,12 @@ class GameOfLifeStudio {
     public cancelPatternSave: HTMLElement | null = null;
     public confirmPatternSave: HTMLElement | null = null;
     public grid: boolean[][] = [];
+    
+    // Session replay properties
+    public sessionHistory: any[] = [];
+    public sessionReplayIndex: number = 0;
+    public isSessionReplaying: boolean = false;
+    public sessionTimelineVisible: boolean = false;
 
     constructor(canvasId: string) {
         const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
@@ -796,23 +802,71 @@ class GameOfLifeStudio {
     toggleSimulation() {
         this.isRunning = !this.isRunning;
         
-        const playIcon = this.startStopBtn.querySelector('.btn-icon');
+        const playIcon = this.startStopBtn?.querySelector('.btn-icon');
         
         if (this.isRunning) {
+            // If we were replaying, jump back to latest generation
+            if (this.isSessionReplaying) {
+                this.exitSessionReplay();
+            }
+            
+            // Automatically start recording for new runs (generation 0)
+            if (this.engine.generation === 0 && !this.recordingManager.isRecording) {
+                this.recordingManager.startRecording();
+                this.showAutoRecordingNotification();
+                // Reset session history for new run
+                this.sessionHistory = [];
+            }
+            
             // Capture initial state when starting simulation
             this.captureInitialState();
             
-            playIcon.setAttribute('data-lucide', 'pause');
-            this.startStopBtn.title = 'Pause Simulation';
-            lucide.createIcons();
+            // Update main play/pause button
+            if (playIcon) {
+                playIcon.setAttribute('data-lucide', 'pause');
+            }
+            if (this.startStopBtn) {
+                this.startStopBtn.title = 'Pause Simulation';
+                this.startStopBtn.classList.add('active');
+            }
+            
+            // Hide session timeline when running
+            this.hideSessionTimeline();
+            
+            // Update icons after changes
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+            
+            // Update floating controls if in fullscreen
+            if (this.isFullscreen) {
+                this.updateFloatingPlayPauseButton();
+            }
+            
             this.animate(0);
         } else {
-            playIcon.setAttribute('data-lucide', 'play');
-            this.startStopBtn.title = 'Start Simulation';
-            lucide.createIcons();
+            // Update main play/pause button
+            if (playIcon) {
+                playIcon.setAttribute('data-lucide', 'play');
+            }
+            if (this.startStopBtn) {
+                this.startStopBtn.title = 'Start Simulation';
+                this.startStopBtn.classList.remove('active');
+            }
+            
             if (this.animationId) {
                 cancelAnimationFrame(this.animationId);
             }
+            
+            // Show session timeline when paused (if we have history)
+            if (this.sessionHistory.length > 1) {
+                this.showSessionTimeline();
+            }
+        }
+        
+        // Update icons after changes
+        if (window.lucide) {
+            lucide.createIcons();
         }
         
         // Update floating controls if in fullscreen
@@ -837,6 +891,9 @@ class GameOfLifeStudio {
     update() {
         // Update game engine
         const result = this.engine.updateGeneration();
+        
+        // Store current state in session history
+        this.addToSessionHistory();
         
         // Update fade effects if fade mode is enabled
         if (this.fadeMode) {
@@ -892,10 +949,27 @@ class GameOfLifeStudio {
     reset() {
         this.isRunning = false;
         
-        const playIcon = this.startStopBtn.querySelector('.btn-icon');
-        playIcon.setAttribute('data-lucide', 'play');
-        this.startStopBtn.title = 'Start Simulation';
-        lucide.createIcons();
+        // Check if there's an unsaved recording and handle it
+        this.handleUnsavedRecording();
+        
+        // Clear session history and hide timeline
+        this.sessionHistory = [];
+        this.hideSessionTimeline();
+        
+        // Update play/pause button
+        const playIcon = this.startStopBtn?.querySelector('.btn-icon');
+        if (playIcon) {
+            playIcon.setAttribute('data-lucide', 'play');
+        }
+        if (this.startStopBtn) {
+            this.startStopBtn.title = 'Start Simulation';
+            this.startStopBtn.classList.remove('active');
+        }
+        
+        // Update icons
+        if (window.lucide) {
+            lucide.createIcons();
+        }
         
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
@@ -922,6 +996,9 @@ class GameOfLifeStudio {
     captureInitialState() {
         // Capture full engine state
         this.initialState = this.engine.getGridSnapshot();
+        
+        // Also add initial state to session history
+        this.addToSessionHistory();
     }
     
     restoreInitialState() {
@@ -933,6 +1010,13 @@ class GameOfLifeStudio {
     
     randomize() {
         if (this.isRunning) return;
+        
+        // Check if there's an unsaved recording and handle it
+        this.handleUnsavedRecording();
+        
+        // Clear session history for new random pattern
+        this.sessionHistory = [];
+        this.hideSessionTimeline();
         
         const density = this.randomDensity / 100;
         
@@ -952,9 +1036,289 @@ class GameOfLifeStudio {
         this.populationDisplay.textContent = this.engine.getPopulation();
     }
     
+    // Recording management methods
+    handleUnsavedRecording() {
+        // Check if there's an unsaved recording with meaningful content
+        if (this.recordingManager.isRecording && 
+            this.recordingManager.recordedGenerations && 
+            this.recordingManager.recordedGenerations.length > 1) {
+            
+            const shouldSave = confirm(
+                `You have an unsaved recording with ${this.recordingManager.recordedGenerations.length} generations.\n\n` +
+                'Do you want to save it before continuing?\n\n' +
+                'Click "OK" to save, or "Cancel" to discard.'
+            );
+            
+            if (shouldSave) {
+                // Open save modal
+                this.recordingManager.openSaveModal();
+                return false; // Indicate operation was cancelled for saving
+            } else {
+                // Discard the recording
+                this.recordingManager.stopRecording();
+            }
+        } else if (this.recordingManager.isRecording) {
+            // Stop recording if it's active but has no meaningful content
+            this.recordingManager.stopRecording();
+        }
+        
+        return true; // Indicate it's safe to continue
+    }
+    
+    showAutoRecordingNotification() {
+        // Create a temporary notification to show auto-recording started
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4ade80;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: slideIn 0.3s ease-out;
+        `;
+        
+        notification.innerHTML = `
+            <span style="font-size: 16px;">🔴</span>
+            Auto-recording started
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Remove notification after 3 seconds
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease-in forwards';
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+        
+        // Add CSS animations if not already present
+        if (!document.getElementById('auto-record-styles')) {
+            const styles = document.createElement('style');
+            styles.id = 'auto-record-styles';
+            styles.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOut {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(styles);
+        }
+    }
+    
+    // Session replay methods
+    addToSessionHistory() {
+        if (!this.isSessionReplaying) {
+            const snapshot = {
+                generation: this.engine.generation,
+                population: this.engine.getPopulation(),
+                grid: this.engine.getGridSnapshot()
+            };
+            this.sessionHistory.push(snapshot);
+            this.sessionReplayIndex = this.sessionHistory.length - 1;
+        }
+    }
+    
+    showSessionTimeline() {
+        if (this.sessionTimelineVisible || this.sessionHistory.length <= 1) return;
+        
+        // Create session timeline UI
+        const timelineHtml = `
+            <div id="sessionTimeline" class="session-timeline" style="
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--bg-secondary);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                padding: 16px 24px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+                z-index: 1000;
+                min-width: 400px;
+                animation: slideUp 0.3s ease-out;
+            ">
+                <span style="font-size: 14px; color: var(--text-secondary); white-space: nowrap;">Gen:</span>
+                <span id="sessionCurrentGen" style="font-weight: 600; color: var(--text-primary); min-width: 30px;">${this.engine.generation}</span>
+                
+                <input 
+                    type="range" 
+                    id="sessionTimelineSlider" 
+                    min="0" 
+                    max="${this.sessionHistory.length - 1}" 
+                    value="${this.sessionReplayIndex}"
+                    style="flex: 1; margin: 0 12px; min-width: 200px; width: 300px;"
+                />
+                
+                <span style="font-size: 12px; color: var(--text-secondary);">
+                    <span id="sessionFrameInfo">1 / ${this.sessionHistory.length}</span>
+                </span>
+                
+                <button id="sessionCloseBtn" style="
+                    background: none;
+                    border: none;
+                    color: var(--text-secondary);
+                    cursor: pointer;
+                    padding: 4px;
+                    border-radius: 4px;
+                " title="Close timeline">×</button>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', timelineHtml);
+        this.sessionTimelineVisible = true;
+        
+        // Add event listeners
+        const slider = document.getElementById('sessionTimelineSlider') as HTMLInputElement;
+        const closeBtn = document.getElementById('sessionCloseBtn');
+        
+        if (slider) {
+            slider.addEventListener('input', (e) => {
+                const index = parseInt((e.target as HTMLInputElement).value);
+                this.seekToSessionFrame(index);
+            });
+        }
+        
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                this.hideSessionTimeline();
+            });
+        }
+        
+        // Add CSS if not present
+        if (!document.getElementById('session-timeline-styles')) {
+            const styles = document.createElement('style');
+            styles.id = 'session-timeline-styles';
+            styles.textContent = `
+                @keyframes slideUp {
+                    from { transform: translate(-50%, 100%); opacity: 0; }
+                    to { transform: translate(-50%, 0); opacity: 1; }
+                }
+                .session-timeline input[type="range"] {
+                    -webkit-appearance: none;
+                    height: 8px;
+                    background: var(--border);
+                    border-radius: 4px;
+                    outline: none;
+                    min-width: 200px;
+                }
+                .session-timeline input[type="range"]::-webkit-slider-thumb {
+                    -webkit-appearance: none;
+                    width: 20px;
+                    height: 20px;
+                    background: var(--primary);
+                    border-radius: 50%;
+                    cursor: pointer;
+                    border: 2px solid white;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                }
+                .session-timeline input[type="range"]::-moz-range-thumb {
+                    width: 20px;
+                    height: 20px;
+                    background: var(--primary);
+                    border-radius: 50%;
+                    cursor: pointer;
+                    border: 2px solid white;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                }
+                .session-timeline button:hover {
+                    background: var(--bg-hover) !important;
+                }
+            `;
+            document.head.appendChild(styles);
+        }
+    }
+    
+    hideSessionTimeline() {
+        const timeline = document.getElementById('sessionTimeline');
+        if (timeline) {
+            timeline.style.animation = 'slideDown 0.3s ease-in forwards';
+            setTimeout(() => {
+                timeline.remove();
+            }, 300);
+        }
+        this.sessionTimelineVisible = false;
+        
+        // Exit replay mode if active
+        if (this.isSessionReplaying) {
+            this.exitSessionReplay();
+        }
+    }
+    
+    seekToSessionFrame(index: number) {
+        if (index < 0 || index >= this.sessionHistory.length) return;
+        
+        this.sessionReplayIndex = index;
+        this.isSessionReplaying = true;
+        
+        const frame = this.sessionHistory[index];
+        
+        // Restore the state
+        this.engine.restoreFromSnapshot(frame.grid);
+        this.engine.generation = frame.generation;
+        
+        // Update display
+        this.draw();
+        this.updateInfo();
+        
+        // Update timeline info
+        const currentGenSpan = document.getElementById('sessionCurrentGen');
+        const frameInfo = document.getElementById('sessionFrameInfo');
+        
+        if (currentGenSpan) {
+            currentGenSpan.textContent = frame.generation.toString();
+        }
+        if (frameInfo) {
+            frameInfo.textContent = `${index + 1} / ${this.sessionHistory.length}`;
+        }
+    }
+    
+    exitSessionReplay() {
+        if (!this.isSessionReplaying) return;
+        
+        // Jump to latest generation
+        if (this.sessionHistory.length > 0) {
+            const latestFrame = this.sessionHistory[this.sessionHistory.length - 1];
+            this.engine.restoreFromSnapshot(latestFrame.grid);
+            this.engine.generation = latestFrame.generation;
+            this.sessionReplayIndex = this.sessionHistory.length - 1;
+        }
+        
+        this.isSessionReplaying = false;
+        
+        // Update display
+        this.draw();
+        this.updateInfo();
+        
+        // Hide timeline
+        this.hideSessionTimeline();
+    }
+    
     // Advanced control methods
     clearAll() {
         if (this.isRunning) return;
+        
+        // Check if there's an unsaved recording and handle it
+        this.handleUnsavedRecording();
+        
+        // Clear session history
+        this.sessionHistory = [];
+        this.hideSessionTimeline();
         
         // Use engine's clear method
         this.engine.clear();
@@ -1572,13 +1936,6 @@ class GameOfLifeStudio {
         }
     }
     
-    toggleGrid() {
-        this.showGrid = !this.showGrid;
-        this.updateGridUI();
-        this.draw(); // Redraw to show/hide grid overlay
-        this.saveSettings();
-    }
-    
     updateGridUI() {
         const text = this.gridToggle.querySelector('.toolbar-label');
         
@@ -1812,32 +2169,6 @@ class GameOfLifeStudio {
     }
     
     // Maturity mode methods
-    toggleMaturityMode() {
-        this.maturityMode = !this.maturityMode;
-        this.updateMaturityUI();
-        
-        // Clear existing maturity grid when toggling mode
-        if (!this.maturityMode) {
-            this.engine.clearStateTracking();
-        }
-        
-        this.draw(); // Redraw to show/hide maturity effects
-        this.saveSettings();
-    }
-    
-    updateMaturityUI() {
-        const text = this.maturityToggle.querySelector('.toolbar-label');
-        
-        if (this.maturityMode) {
-            this.maturityToggle.classList.add('active');
-            text.textContent = 'Mature';
-            this.maturitySettings.style.display = 'block';
-        } else {
-            this.maturityToggle.classList.remove('active');
-            text.textContent = 'Maturity';
-            this.maturitySettings.style.display = 'none';
-        }
-    }
     
     updateColorLabel() {
         const colorLabel = document.querySelector('.color-label');
@@ -2033,55 +2364,6 @@ class GameOfLifeStudio {
         // Cap maturity at 20 for color calculation
         const cappedMaturity = Math.min(maturity, 20);
         
-        // Calculate color intensity (0 to 1)
-        const intensity = cappedMaturity / 20;
-        
-        // Create a gradient from light blue to selected end color
-        const startColor = { r: 144, g: 205, b: 244 }; // Light blue
-        const endColor = this.hexToRgb(this.maturityEndColor);
-        
-        const r = Math.round(startColor.r + (endColor.r - startColor.r) * intensity);
-        const g = Math.round(startColor.g + (endColor.g - startColor.g) * intensity);
-        const b = Math.round(startColor.b + (endColor.b - startColor.b) * intensity);
-        
-        return `rgb(${r}, ${g}, ${b})`;
-    }
-    
-    hexToRgb(hex) {
-        // Convert hex color to RGB object
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? {
-            r: parseInt(result[1], 16),
-            g: parseInt(result[2], 16),
-            b: parseInt(result[3], 16)
-        } : { r: 76, g: 29, b: 149 }; // Default to deep violet if parsing fails
-    }
-    
-    // Inspector mode methods
-    selectInspectorMode() {
-        this.drawingMode = 'inspector';
-        this.inspectorMode = true;
-        this.selectedPattern = null;
-        this.patternRotation = 0;
-        this.clearPatternPreview();
-        this.updateDrawingModeUI();
-        this.updatePatternHints();
-        this.createInspectorTooltip();
-        this.saveSettings();
-    }
-    
-    createInspectorTooltip() {
-        // Remove existing tooltip
-        this.hideInspectorTooltip();
-        
-        // Create new tooltip element
-        this.tooltip = document.createElement('div');
-        this.tooltip.className = 'cell-inspector-tooltip';
-        document.body.appendChild(this.tooltip);
-    }
-    
-    updateInspectorTooltip(e) {
-        if (!this.tooltip) return;
         
         const rect = this.canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
@@ -2132,31 +2414,7 @@ class GameOfLifeStudio {
             this.hideInspectorTooltip();
         }
     }
-    
-    hideInspectorTooltip() {
-        if (this.tooltip) {
-            this.tooltip.classList.remove('show');
-            // Clean up tooltip when not in inspector mode
-            if (!this.inspectorMode) {
-                this.tooltip.remove();
-                this.tooltip = null;
-            }
-        }
-    }
-    
-    getPatternData(patternName) {
-        return GameOfLifePatterns.getPattern(patternName);
-    }
-    
-    // Recording functionality
-    toggleRecording() {
-        if (this.isRecording) {
-            this.stopRecording();
-        } else {
-            this.startRecording();
-        }
-    }
-    
+
     startRecording() {
         if (this.isReplaying) {
             this.stopTimeline();
@@ -2233,17 +2491,11 @@ class GameOfLifeStudio {
     playTimeline() {
         if (!this.replayData || this.replayData.length === 0) return;
         
-        if (this.isRunning) {
-            this.toggleSimulation(); // Stop normal simulation
-        }
-        
         this.isReplaying = true;
         this.playTimelineBtn.style.display = 'none';
         this.pauseTimelineBtn.style.display = 'inline-block';
         
-        // Calculate interval based on speed (higher speed = shorter interval)
-        const interval = Math.max(50, 1000 / this.replaySpeed);
-        
+        const interval = Math.max(100, 1000 / this.replaySpeed);
         this.replayInterval = setInterval(() => {
             if (this.replayIndex < this.replayData.length - 1) {
                 this.replayIndex++;
@@ -3152,35 +3404,7 @@ class GameOfLifeStudio {
         return iconMap[pattern.key || pattern.name] || '🔹';
     }
     
-    setupPatternTreeListeners() {
-        // Category headers
-        this.patternTree.querySelectorAll('.category-header').forEach(header => {
-            header.addEventListener('click', () => {
-                this.toggleCategory(header);
-            });
-        });
-        
-        // Subcategory headers
-        this.patternTree.querySelectorAll('.subcategory-header').forEach(header => {
-            header.addEventListener('click', () => {
-                this.toggleSubcategory(header);
-            });
-        });
-        
-        // Pattern items
-        this.patternTree.querySelectorAll('.pattern-item').forEach(item => {
-            item.addEventListener('click', () => {
-                this.selectPatternFromTree(item);
-            });
-        });
-        
-        // Add keyboard navigation
-        this.patternTree.addEventListener('keydown', (e) => {
-            this.handleTreeKeyNavigation(e);
-        });
-    }
-    
-    toggleCategory(header) {
+    toggleCategory(header: any) {
         const category = header.closest('.tree-category');
         const isCollapsed = category.classList.contains('collapsed');
         
@@ -3510,16 +3734,23 @@ class GameOfLifeStudio {
         const icon = this.fullscreenPlayPauseBtn.querySelector('.btn-icon');
         
         if (this.isRunning) {
-            icon.setAttribute('data-lucide', 'pause');
+            if (icon) {
+                icon.setAttribute('data-lucide', 'pause');
+            }
             this.fullscreenPlayPauseBtn.title = 'Pause Simulation';
             this.fullscreenPlayPauseBtn.classList.add('active');
         } else {
-            icon.setAttribute('data-lucide', 'play');
+            if (icon) {
+                icon.setAttribute('data-lucide', 'play');
+            }
             this.fullscreenPlayPauseBtn.title = 'Start Simulation';
             this.fullscreenPlayPauseBtn.classList.remove('active');
         }
         
-        lucide.createIcons();
+        // Update icons
+        if (window.lucide) {
+            lucide.createIcons();
+        }
     }
     
     // Custom Rules methods
