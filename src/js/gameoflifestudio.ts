@@ -802,8 +802,6 @@ class GameOfLifeStudio {
     toggleSimulation() {
         this.isRunning = !this.isRunning;
         
-        const playIcon = this.startStopBtn?.querySelector('.btn-icon');
-        
         if (this.isRunning) {
             // If we were replaying, jump back to latest generation
             if (this.isSessionReplaying) {
@@ -821,39 +819,11 @@ class GameOfLifeStudio {
             // Capture initial state when starting simulation
             this.captureInitialState();
             
-            // Update main play/pause button
-            if (playIcon) {
-                playIcon.setAttribute('data-lucide', 'pause');
-            }
-            if (this.startStopBtn) {
-                this.startStopBtn.title = 'Pause Simulation';
-                this.startStopBtn.classList.add('active');
-            }
-            
             // Hide session timeline when running
             this.hideSessionTimeline();
             
-            // Update icons after changes
-            if (window.lucide) {
-                lucide.createIcons();
-            }
-            
-            // Update floating controls if in fullscreen
-            if (this.isFullscreen) {
-                this.updateFloatingPlayPauseButton();
-            }
-            
             this.animate(0);
         } else {
-            // Update main play/pause button
-            if (playIcon) {
-                playIcon.setAttribute('data-lucide', 'play');
-            }
-            if (this.startStopBtn) {
-                this.startStopBtn.title = 'Start Simulation';
-                this.startStopBtn.classList.remove('active');
-            }
-            
             if (this.animationId) {
                 cancelAnimationFrame(this.animationId);
             }
@@ -864,14 +834,46 @@ class GameOfLifeStudio {
             }
         }
         
-        // Update icons after changes
-        if (window.lucide) {
-            lucide.createIcons();
+        // Update all play/pause button states
+        this.updatePlayPauseButtonState();
+    }
+    
+    updatePlayPauseButtonState() {
+        // Update main play/pause button
+        const playIcon = this.startStopBtn?.querySelector('.btn-icon');
+        
+        if (this.isRunning) {
+            if (playIcon) {
+                playIcon.setAttribute('data-lucide', 'pause');
+            }
+            if (this.startStopBtn) {
+                this.startStopBtn.title = 'Pause Simulation';
+                this.startStopBtn.classList.add('active');
+            }
+        } else {
+            if (playIcon) {
+                playIcon.setAttribute('data-lucide', 'play');
+            }
+            if (this.startStopBtn) {
+                this.startStopBtn.title = 'Start Simulation';
+                this.startStopBtn.classList.remove('active');
+            }
         }
         
         // Update floating controls if in fullscreen
         if (this.isFullscreen) {
             this.updateFloatingPlayPauseButton();
+        }
+        
+        // Update icons after changes with setTimeout to ensure DOM updates are processed
+        if (window.lucide) {
+            setTimeout(() => {
+                try {
+                    lucide.createIcons();
+                } catch (error) {
+                    console.warn('Error updating Lucide icons:', error);
+                }
+            }, 0);
         }
     }
     
@@ -956,20 +958,8 @@ class GameOfLifeStudio {
         this.sessionHistory = [];
         this.hideSessionTimeline();
         
-        // Update play/pause button
-        const playIcon = this.startStopBtn?.querySelector('.btn-icon');
-        if (playIcon) {
-            playIcon.setAttribute('data-lucide', 'play');
-        }
-        if (this.startStopBtn) {
-            this.startStopBtn.title = 'Start Simulation';
-            this.startStopBtn.classList.remove('active');
-        }
-        
-        // Update icons
-        if (window.lucide) {
-            lucide.createIcons();
-        }
+        // Update play/pause button state
+        this.updatePlayPauseButtonState();
         
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
