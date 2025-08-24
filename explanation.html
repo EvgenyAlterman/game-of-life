@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conway's Game of Life - Complete Explanation</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Game of Life Studio - Complete Guide to Cellular Automata</title>
+    <link rel="stylesheet" href="src/css/style.css">
     <style>
         .explanation-content {
             text-align: left;
@@ -139,8 +139,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>Conway's Game of Life</h1>
-        <h2 style="text-align: center; color: #667eea; margin-bottom: 30px;">Complete Explanation</h2>
+        <h1>Game of Life Studio</h1>
+        <h2 style="text-align: center; color: #667eea; margin-bottom: 30px;">Complete Guide to Cellular Automata</h2>
         
         <div class="back-nav">
             <a href="index.html" class="back-link">← Back to Game</a>
@@ -350,6 +350,167 @@
             </div>
 
             <div class="section">
+                <h2>🧬 Custom Rules & Cellular Automata Variations</h2>
+                <p>
+                    While Conway's Game of Life is the most famous cellular automaton, it's just one of countless possible 
+                    <strong>rule sets</strong> that can govern how cells live, die, and reproduce. Our Game of Life Studio 
+                    lets you explore this vast universe of possibilities through <strong>custom rules</strong>.
+                </p>
+                
+                <h3>Understanding the B/S Notation</h3>
+                <p>
+                    Cellular automaton rules are typically written in <strong>B/S notation</strong> (Born/Survives):
+                </p>
+                <ul>
+                    <li><strong>B (Birth)</strong> - The neighbor counts that cause a dead cell to become alive</li>
+                    <li><strong>S (Survival)</strong> - The neighbor counts that allow a living cell to survive</li>
+                </ul>
+                <p>
+                    For example, Conway's Game of Life is <strong>B3/S23</strong>:
+                </p>
+                <ul>
+                    <li><strong>B3</strong> - Dead cells become alive with exactly 3 neighbors</li>
+                    <li><strong>S23</strong> - Live cells survive with 2 or 3 neighbors</li>
+                </ul>
+                
+                <h3>How Parameters Affect Behavior</h3>
+                
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <div class="rule-number">Birth Rules (B)</div>
+                        <p><strong>Lower numbers</strong> (B0, B1, B2) create <em>explosive growth</em> - patterns spread rapidly and chaotically.</p>
+                        <p><strong>Higher numbers</strong> (B5, B6, B7, B8) create <em>sparse patterns</em> - only dense clusters can reproduce.</p>
+                    </div>
+                    
+                    <div class="rule-card">
+                        <div class="rule-number">Survival Rules (S)</div>
+                        <p><strong>Few survival numbers</strong> (S1, S2) create <em>unstable patterns</em> - most structures quickly die out.</p>
+                        <p><strong>Many survival numbers</strong> (S12345678) create <em>static patterns</em> - once alive, cells rarely die.</p>
+                    </div>
+                </div>
+                
+                <h3>Popular Rule Variations</h3>
+                <p>
+                    Each rule creates a completely different "universe" with unique behaviors:
+                </p>
+                
+                <div class="rules-grid">
+                    <div class="rule-card">
+                        <div class="rule-number">HighLife (B36/S23)</div>
+                        <p>Like Conway's Life but with an extra birth condition. Creates <strong>replicating gliders</strong> 
+                        and more complex growth patterns. Famous for its self-reproducing structures.</p>
+                    </div>
+                    
+                    <div class="rule-card">
+                        <div class="rule-number">Seeds (B2/S)</div>
+                        <p>Pure <strong>explosive chaos</strong>! Every pattern spreads rapidly because cells are born easily 
+                        but never survive. Creates beautiful, organic-looking expanding patterns.</p>
+                    </div>
+                    
+                    <div class="rule-card">
+                        <div class="rule-number">Mazectric (B3/S238)</div>
+                        <p>Creates <strong>maze-like structures</strong> with long corridors and complex pathways. 
+                        Patterns tend to form intricate, interconnected networks.</p>
+                    </div>
+                    
+                    <div class="rule-card">
+                        <div class="rule-number">Move (B368/S245)</div>
+                        <p>Patterns exhibit <strong>flowing, liquid-like behavior</strong>. Structures tend to move 
+                        and reshape themselves constantly, rarely settling into stable forms.</p>
+                    </div>
+                    
+                    <div class="rule-card">
+                        <div class="rule-number">Gnarl (B1/S1)</div>
+                        <p>Creates <strong>fractal, organic patterns</strong> that grow slowly but persistently. 
+                        Known for producing beautiful, tree-like or coral-like structures.</p>
+                    </div>
+                    
+                    <div class="rule-card">
+                        <div class="rule-number">Replicator (B1357/S1357)</div>
+                        <p>Patterns <strong>copy themselves</strong> in all four directions simultaneously, 
+                        creating symmetric, expanding copies. Demonstrates perfect self-replication.</p>
+                    </div>
+                </div>
+                
+                <h3>Experimental Rules to Try</h3>
+                <p>
+                    Beyond the famous presets, countless other combinations await discovery:
+                </p>
+                
+                <div class="applications">
+                    <div class="application">
+                        <h4>B2/S12 (Diamonds)</h4>
+                        <p>Creates diamond-shaped expanding patterns</p>
+                    </div>
+                    
+                    <div class="application">
+                        <h4>B34/S34 (34 Life)</h4>
+                        <p>Similar to Conway's but with different stable patterns</p>
+                    </div>
+                    
+                    <div class="application">
+                        <h4>B3678/S34568</h4>
+                        <p>Day & Night - exhibits inverse symmetries</p>
+                    </div>
+                    
+                    <div class="application">
+                        <h4>B25/S4</h4>
+                        <p>Creates slowly spreading, blob-like patterns</p>
+                    </div>
+                    
+                    <div class="application">
+                        <h4>B/S012345678</h4>
+                        <p>Immortal - once alive, cells never die</p>
+                    </div>
+                    
+                    <div class="application">
+                        <h4>B12345678/S</h4>
+                        <p>Instantaneous explosion - everything becomes alive</p>
+                    </div>
+                </div>
+                
+                <h3>The Science of Rule Discovery</h3>
+                <p>
+                    Researchers continue to discover fascinating behaviors by systematically exploring rule space:
+                </p>
+                <ul>
+                    <li><strong>Stability Analysis</strong> - Some rules create only static patterns, others only chaos</li>
+                    <li><strong>Spaceship Search</strong> - Finding rules that support moving patterns</li>
+                    <li><strong>Garden of Eden</strong> - Patterns that can exist but can never be reached naturally</li>
+                    <li><strong>Universal Construction</strong> - Rules capable of computational universality</li>
+                </ul>
+                
+                <h3>Experimenting with Custom Rules</h3>
+                <p>
+                    Ready to explore? Here's how to experiment effectively:
+                </p>
+                <ul>
+                    <li><strong>Start Simple</strong> - Try changing just one number from Conway's rules (B3/S23)</li>
+                    <li><strong>Observe Patterns</strong> - Watch how different starting patterns behave</li>
+                    <li><strong>Look for Structure</strong> - Some rules create organized patterns, others pure chaos</li>
+                    <li><strong>Test Stability</strong> - Do patterns settle down, oscillate, or grow forever?</li>
+                    <li><strong>Find Your Favorites</strong> - Each rule creates its own aesthetic and behavior</li>
+                </ul>
+                
+                <div class="timeline">
+                    <h3>🎯 Quick Experiment Guide</h3>
+                    <ul>
+                        <li><strong>Want Chaos?</strong> Try rules with low birth numbers (B1, B2)</li>
+                        <li><strong>Want Stability?</strong> Try rules with high survival numbers (S12345)</li>
+                        <li><strong>Want Movement?</strong> Try asymmetric rules like B36/S125</li>
+                        <li><strong>Want Beauty?</strong> Try B1/S1 (Gnarl) or B2/S (Seeds)</li>
+                        <li><strong>Want Weirdness?</strong> Try B1357/S1357 (Replicator)</li>
+                    </ul>
+                </div>
+                
+                <p style="margin-top: 20px;">
+                    <strong>Remember:</strong> There are <strong>2^18 = 262,144</strong> possible rule combinations! 
+                    Most remain unexplored. You might be the first person to discover interesting behaviors 
+                    in your custom rule combinations. 🚀
+                </p>
+            </div>
+
+            <div class="section">
                 <h2>Mathematical Significance</h2>
                 <p>
                     Conway's Game of Life is mathematically significant because it is:
@@ -444,6 +605,8 @@
                 <p>
                     Now that you understand the theory, here are some things to try in the simulation:
                 </p>
+                
+                <h3>Classic Conway's Game of Life</h3>
                 <ul>
                     <li><strong>Create still lifes</strong> - Try to build patterns that don't change</li>
                     <li><strong>Make oscillators</strong> - Build patterns that repeat in cycles</li>
@@ -452,9 +615,29 @@
                     <li><strong>Try different speeds</strong> - Observe how patterns evolve over time</li>
                     <li><strong>Build complex structures</strong> - Combine simple patterns into more complex ones</li>
                 </ul>
+                
+                <h3>🧬 Custom Rules Exploration</h3>
+                <ul>
+                    <li><strong>Start with presets</strong> - Try HighLife, Seeds, or Gnarl to see different behaviors</li>
+                    <li><strong>Create your own rules</strong> - Use the custom rules section to invent new cellular automata</li>
+                    <li><strong>Compare rule effects</strong> - Watch how the same pattern behaves under different rules</li>
+                    <li><strong>Discover new patterns</strong> - Different rules support completely different stable patterns</li>
+                    <li><strong>Study emergent behavior</strong> - See how simple rule changes create vastly different universes</li>
+                    <li><strong>Document your discoveries</strong> - Keep track of interesting rule combinations you find</li>
+                </ul>
+                
+                <h3>Advanced Features</h3>
+                <ul>
+                    <li><strong>Use fullscreen mode</strong> - Expand your canvas for larger, more complex patterns</li>
+                    <li><strong>Live canvas resizing</strong> - Adjust grid size without losing your work</li>
+                    <li><strong>Pattern library</strong> - Explore the built-in collection of famous patterns</li>
+                    <li><strong>Recording & playback</strong> - Save and share your most interesting discoveries</li>
+                </ul>
+                
                 <p>
-                    Remember: there's no goal to "win" - the joy is in exploration, discovery, and 
-                    appreciating the beauty of mathematical patterns!
+                    <strong>Remember:</strong> You're not just playing a game - you're exploring the fundamental principles 
+                    of complex systems, emergence, and mathematical beauty. There's no goal to "win" - the joy is in 
+                    exploration, discovery, and appreciating the infinite variety of patterns that emerge from simple rules! 🌟
                 </p>
             </div>
         </div>

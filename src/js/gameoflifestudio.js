@@ -106,6 +106,19 @@ class GameOfLifeStudio {
         this.fullscreenShuffleBtn = document.getElementById('fullscreenShuffleBtn');
         this.fullscreenClearBtn = document.getElementById('fullscreenClearBtn');
         
+        // UI elements - custom rules
+        this.rulePresets = document.getElementById('rulePresets');
+        this.customRuleInputs = document.getElementById('customRuleInputs');
+        this.currentRuleString = document.getElementById('currentRuleString');
+        this.birthCheckboxes = [];
+        this.survivalCheckboxes = [];
+        
+        // Initialize checkboxes arrays
+        for (let i = 0; i <= 8; i++) {
+            this.birthCheckboxes[i] = document.getElementById(`birth${i}`);
+            this.survivalCheckboxes[i] = document.getElementById(`survive${i}`);
+        }
+        
         // Random generation settings
         this.randomDensity = 30; // percentage
         this.randomSeed = null;
@@ -158,6 +171,7 @@ class GameOfLifeStudio {
         
         this.setupEventListeners();
         this.initializeDarkMode();
+        this.initializeCustomRules();
         this.loadSettings();
         this.draw();
         this.updateInfo();
@@ -281,6 +295,25 @@ class GameOfLifeStudio {
         this.fullscreenClearBtn.addEventListener('click', () => {
             this.clearAll();
         });
+        
+        // Custom Rules controls
+        this.rulePresets.addEventListener('change', (e) => {
+            this.handleRulePresetChange(e.target.value);
+        });
+        
+        // Add listeners for all birth and survival checkboxes
+        for (let i = 0; i <= 8; i++) {
+            if (this.birthCheckboxes[i]) {
+                this.birthCheckboxes[i].addEventListener('change', () => {
+                    this.updateCustomRules();
+                });
+            }
+            if (this.survivalCheckboxes[i]) {
+                this.survivalCheckboxes[i].addEventListener('change', () => {
+                    this.updateCustomRules();
+                });
+            }
+        }
         
         // Advanced controls - Grid settings
         this.gridWidthSlider.addEventListener('input', (e) => {
@@ -1911,6 +1944,11 @@ class GameOfLifeStudio {
             // Grid state
             gridSnapshot: this.engine.getGridSnapshot(),
             
+            // Custom rules
+            customRulePreset: this.rulePresets.value,
+            birthRules: [...this.engine.birthRules],
+            survivalRules: [...this.engine.survivalRules],
+            
             // Sidebar state
             sidebarCollapsed: this.sidebar.classList.contains('collapsed'),
             
@@ -2075,6 +2113,25 @@ class GameOfLifeStudio {
             // Load inspector mode settings
             if (settings.inspectorMode !== undefined && settings.inspectorMode) {
                 this.selectInspectorMode();
+            }
+            
+            // Load custom rules settings
+            if (settings.birthRules !== undefined && settings.survivalRules !== undefined) {
+                this.engine.setBirthRules(settings.birthRules);
+                this.engine.setSurvivalRules(settings.survivalRules);
+                this.updateRuleDisplay();
+                this.updateCheckboxesFromRules();
+                
+                if (settings.customRulePreset !== undefined) {
+                    this.rulePresets.value = settings.customRulePreset;
+                    if (settings.customRulePreset === 'custom') {
+                        this.customRuleInputs.style.opacity = '1';
+                        this.customRuleInputs.style.pointerEvents = 'all';
+                    } else {
+                        this.customRuleInputs.style.opacity = '0.6';
+                        this.customRuleInputs.style.pointerEvents = 'none';
+                    }
+                }
             }
             
             // Load sidebar state
@@ -2608,6 +2665,103 @@ class GameOfLifeStudio {
         }
         
         lucide.createIcons();
+    }
+    
+    // Custom Rules methods
+    handleRulePresetChange(value) {
+        if (value === 'custom') {
+            // Enable custom input interface
+            this.customRuleInputs.style.opacity = '1';
+            this.customRuleInputs.style.pointerEvents = 'all';
+            return;
+        }
+        
+        // Apply preset rules
+        this.engine.setRulesFromString(value);
+        this.updateRuleDisplay();
+        this.updateCheckboxesFromRules();
+        
+        // Fade out custom inputs to show they're not active
+        this.customRuleInputs.style.opacity = '0.6';
+        this.customRuleInputs.style.pointerEvents = 'none';
+        
+        this.saveSettings();
+        
+        console.log(`🧬 Applied rule preset: ${value}`);
+    }
+    
+    updateCustomRules() {
+        // Get birth rules from checkboxes
+        const birthRules = [];
+        for (let i = 0; i <= 8; i++) {
+            if (this.birthCheckboxes[i] && this.birthCheckboxes[i].checked) {
+                birthRules.push(i);
+            }
+        }
+        
+        // Get survival rules from checkboxes
+        const survivalRules = [];
+        for (let i = 0; i <= 8; i++) {
+            if (this.survivalCheckboxes[i] && this.survivalCheckboxes[i].checked) {
+                survivalRules.push(i);
+            }
+        }
+        
+        // Apply rules to engine
+        this.engine.setBirthRules(birthRules);
+        this.engine.setSurvivalRules(survivalRules);
+        
+        // Update display
+        this.updateRuleDisplay();
+        
+        // Set preset to custom
+        this.rulePresets.value = 'custom';
+        this.customRuleInputs.style.opacity = '1';
+        this.customRuleInputs.style.pointerEvents = 'all';
+        
+        this.saveSettings();
+        
+        console.log(`🧬 Custom rules applied: ${this.engine.getRulesAsString()}`);
+    }
+    
+    updateRuleDisplay() {
+        this.currentRuleString.textContent = this.engine.getRulesAsString();
+    }
+    
+    updateCheckboxesFromRules() {
+        // Update birth checkboxes
+        for (let i = 0; i <= 8; i++) {
+            if (this.birthCheckboxes[i]) {
+                this.birthCheckboxes[i].checked = this.engine.birthRules.includes(i);
+            }
+        }
+        
+        // Update survival checkboxes
+        for (let i = 0; i <= 8; i++) {
+            if (this.survivalCheckboxes[i]) {
+                this.survivalCheckboxes[i].checked = this.engine.survivalRules.includes(i);
+            }
+        }
+    }
+    
+    initializeCustomRules() {
+        // Set initial rule string display
+        this.updateRuleDisplay();
+        
+        // Set initial checkbox states
+        this.updateCheckboxesFromRules();
+        
+        // Set initial preset selection
+        const currentRule = this.engine.getRulesAsString();
+        if (this.rulePresets.querySelector(`option[value="${currentRule}"]`)) {
+            this.rulePresets.value = currentRule;
+            this.customRuleInputs.style.opacity = '0.6';
+            this.customRuleInputs.style.pointerEvents = 'none';
+        } else {
+            this.rulePresets.value = 'custom';
+            this.customRuleInputs.style.opacity = '1';
+            this.customRuleInputs.style.pointerEvents = 'all';
+        }
     }
 }
 

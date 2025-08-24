@@ -170,6 +170,78 @@
                     </div>
                 </div>
                 
+                <!-- Custom Rules Section -->
+                <div class="tool-section">
+                    <div class="section-header" data-toggle="rules">
+                        <h3>🧬 Custom Rules</h3>
+                        <i data-lucide="chevron-down" class="section-toggle"></i>
+                    </div>
+                    <div class="section-content">
+                        <div class="rule-presets">
+                            <label>Presets:</label>
+                            <select id="rulePresets" class="rule-preset-select">
+                                <option value="B3/S23">Conway's Life (B3/S23)</option>
+                                <option value="B36/S23">HighLife (B36/S23)</option>
+                                <option value="B3/S238">Mazectric (B3/S238)</option>
+                                <option value="B368/S245">Move (B368/S245)</option>
+                                <option value="B2/S">Seeds (B2/S)</option>
+                                <option value="B1/S1">Gnarl (B1/S1)</option>
+                                <option value="B1357/S1357">Replicator (B1357/S1357)</option>
+                                <option value="custom">Custom...</option>
+                            </select>
+                        </div>
+                        
+                        <div class="custom-rule-inputs" id="customRuleInputs">
+                            <div class="rule-input-group">
+                                <label for="birthRules">Birth (B):</label>
+                                <div class="neighbor-checkboxes">
+                                    <span class="rule-description">Dead cells become alive with</span>
+                                    <div class="checkbox-row">
+                                        <label class="checkbox-label"><input type="checkbox" id="birth0" value="0"> 0</label>
+                                        <label class="checkbox-label"><input type="checkbox" id="birth1" value="1"> 1</label>
+                                        <label class="checkbox-label"><input type="checkbox" id="birth2" value="2"> 2</label>
+                                        <label class="checkbox-label"><input type="checkbox" id="birth3" value="3" checked> 3</label>
+                                        <label class="checkbox-label"><input type="checkbox" id="birth4" value="4"> 4</label>
+                                    </div>
+                                    <div class="checkbox-row">
+                                        <label class="checkbox-label"><input type="checkbox" id="birth5" value="5"> 5</label>
+                                        <label class="checkbox-label"><input type="checkbox" id="birth6" value="6"> 6</label>
+                                        <label class="checkbox-label"><input type="checkbox" id="birth7" value="7"> 7</label>
+                                        <label class="checkbox-label"><input type="checkbox" id="birth8" value="8"> 8</label>
+                                    </div>
+                                    <span class="rule-helper">neighbors</span>
+                                </div>
+                            </div>
+                            
+                            <div class="rule-input-group">
+                                <label for="survivalRules">Survival (S):</label>
+                                <div class="neighbor-checkboxes">
+                                    <span class="rule-description">Live cells survive with</span>
+                                    <div class="checkbox-row">
+                                        <label class="checkbox-label"><input type="checkbox" id="survive0" value="0"> 0</label>
+                                        <label class="checkbox-label"><input type="checkbox" id="survive1" value="1"> 1</label>
+                                        <label class="checkbox-label"><input type="checkbox" id="survive2" value="2" checked> 2</label>
+                                        <label class="checkbox-label"><input type="checkbox" id="survive3" value="3" checked> 3</label>
+                                        <label class="checkbox-label"><input type="checkbox" id="survive4" value="4"> 4</label>
+                                    </div>
+                                    <div class="checkbox-row">
+                                        <label class="checkbox-label"><input type="checkbox" id="survive5" value="5"> 5</label>
+                                        <label class="checkbox-label"><input type="checkbox" id="survive6" value="6"> 6</label>
+                                        <label class="checkbox-label"><input type="checkbox" id="survive7" value="7"> 7</label>
+                                        <label class="checkbox-label"><input type="checkbox" id="survive8" value="8"> 8</label>
+                                    </div>
+                                    <span class="rule-helper">neighbors</span>
+                                </div>
+                            </div>
+                            
+                            <div class="rule-display">
+                                <label>Current Rule:</label>
+                                <div class="rule-string" id="currentRuleString">B3/S23</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Quick Actions Section -->
                 <div class="tool-section">
                     <h3>Quick Actions</h3>

@@ -19,6 +19,10 @@ export class GameOfLifeEngine {
         // Game settings
         this.isRunning = false;
         
+        // Custom rules settings (B3/S23 = Conway's Game of Life)
+        this.birthRules = [3]; // Dead cells become alive with these neighbor counts
+        this.survivalRules = [2, 3]; // Live cells survive with these neighbor counts
+        
         // Initialize grids
         this.initializeGrids();
     }
@@ -131,15 +135,13 @@ export class GameOfLifeEngine {
                 const isAlive = this.grid[row][col];
                 
                 if (isAlive) {
-                    // Rule 1: Any live cell with fewer than two live neighbors dies (underpopulation)
-                    // Rule 2: Any live cell with two or three live neighbors lives on
-                    // Rule 3: Any live cell with more than three live neighbors dies (overpopulation)
-                    if (neighbors === 2 || neighbors === 3) {
+                    // Survival rules: Live cell survives if neighbor count is in survivalRules
+                    if (this.survivalRules.includes(neighbors)) {
                         newGrid[row][col] = true;
                     }
                 } else {
-                    // Rule 4: Any dead cell with exactly three live neighbors becomes a live cell (reproduction)
-                    if (neighbors === 3) {
+                    // Birth rules: Dead cell becomes alive if neighbor count is in birthRules
+                    if (this.birthRules.includes(neighbors)) {
                         newGrid[row][col] = true;
                     }
                 }
@@ -406,7 +408,9 @@ export class GameOfLifeEngine {
             generation: this.generation,
             population: this.getPopulation(),
             rows: this.rows,
-            cols: this.cols
+            cols: this.cols,
+            birthRules: [...this.birthRules], // Include custom rules
+            survivalRules: [...this.survivalRules]
         };
     }
     
@@ -421,5 +425,68 @@ export class GameOfLifeEngine {
         this.deadGrid = snapshot.deadGrid.map(row => [...row]);
         this.fadeGrid = snapshot.fadeGrid.map(row => [...row]);
         this.generation = snapshot.generation;
+        
+        // Restore custom rules if available
+        if (snapshot.birthRules) {
+            this.birthRules = [...snapshot.birthRules];
+        }
+        if (snapshot.survivalRules) {
+            this.survivalRules = [...snapshot.survivalRules];
+        }
+    }
+    
+    /**
+     * Set custom birth rules
+     * @param {Array<number>} rules - Array of neighbor counts that cause birth
+     */
+    setBirthRules(rules) {
+        this.birthRules = [...rules];
+    }
+    
+    /**
+     * Set custom survival rules
+     * @param {Array<number>} rules - Array of neighbor counts that allow survival
+     */
+    setSurvivalRules(rules) {
+        this.survivalRules = [...rules];
+    }
+    
+    /**
+     * Set both birth and survival rules from a rule string (e.g., "B3/S23")
+     * @param {string} ruleString - Standard cellular automaton rule notation
+     */
+    setRulesFromString(ruleString) {
+        try {
+            // Parse rule string like "B3/S23" or "B36/S23"
+            const parts = ruleString.toUpperCase().split('/');
+            
+            if (parts.length !== 2 || !parts[0].startsWith('B') || !parts[1].startsWith('S')) {
+                throw new Error('Invalid rule format');
+            }
+            
+            // Extract birth rules
+            const birthPart = parts[0].substring(1); // Remove 'B'
+            this.birthRules = birthPart ? birthPart.split('').map(n => parseInt(n)).filter(n => !isNaN(n) && n >= 0 && n <= 8) : [];
+            
+            // Extract survival rules
+            const survivalPart = parts[1].substring(1); // Remove 'S'
+            this.survivalRules = survivalPart ? survivalPart.split('').map(n => parseInt(n)).filter(n => !isNaN(n) && n >= 0 && n <= 8) : [];
+            
+        } catch (error) {
+            console.warn('Failed to parse rule string:', ruleString, error);
+            // Fallback to Conway's Game of Life
+            this.birthRules = [3];
+            this.survivalRules = [2, 3];
+        }
+    }
+    
+    /**
+     * Get current rules as a string (e.g., "B3/S23")
+     * @returns {string} Standard cellular automaton rule notation
+     */
+    getRulesAsString() {
+        const birthString = this.birthRules.sort((a, b) => a - b).join('');
+        const survivalString = this.survivalRules.sort((a, b) => a - b).join('');
+        return `B${birthString}/S${survivalString}`;
     }
 }
