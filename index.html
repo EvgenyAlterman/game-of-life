@@ -122,6 +122,12 @@
                             <span>Cell Inspector</span>
                         </button>
                         
+                        <!-- Pattern Selection Tool -->
+                        <button id="patternSelectBtn" class="tool-btn">
+                            <i data-lucide="mouse-pointer-square-dashed" class="tool-icon"></i>
+                            <span>Select Pattern</span>
+                        </button>
+                        
                         <!-- Search Box -->
                         <div class="pattern-search">
                             <input type="text" id="patternSearch" placeholder="Search patterns..." class="search-input">
@@ -376,6 +382,42 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Save Pattern Modal -->
+    <div class="modal-overlay" id="savePatternModal" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>💾 Save Pattern</h3>
+                <button class="modal-close" id="patternModalClose">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <label for="patternName">Pattern Name:</label>
+                <input type="text" id="patternName" placeholder="Enter pattern name..." maxlength="30">
+                <label for="patternCategory">Category:</label>
+                <select id="patternCategory">
+                    <option value="custom">Custom</option>
+                    <option value="oscillators">Oscillators</option>
+                    <option value="spaceships">Spaceships</option>
+                    <option value="still-lifes">Still Lifes</option>
+                    <option value="guns">Guns</option>
+                    <option value="other">Other</option>
+                </select>
+                <div class="pattern-preview">
+                    <canvas id="patternPreviewCanvas" width="100" height="100"></canvas>
+                    <div class="pattern-stats">
+                        <p>Size: <span id="patternSize">0×0</span></p>
+                        <p>Cells: <span id="patternCells">0</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelPatternSave" class="cancel-btn">Cancel</button>
+                <button id="confirmPatternSave" class="save-btn">Save Pattern</button>
             </div>
         </div>
     </div>

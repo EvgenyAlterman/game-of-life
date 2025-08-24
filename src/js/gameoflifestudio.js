@@ -131,6 +131,24 @@ class GameOfLifeStudio {
         this.inspectorMode = false;
         this.tooltip = null;
         
+        // Pattern selection settings
+        this.selectionMode = false;
+        this.selectionStart = null;
+        this.selectionEnd = null;
+        this.isSelecting = false;
+        this.selectedPatternData = null;
+        
+        // Save pattern modal UI elements
+        this.savePatternModal = document.getElementById('savePatternModal');
+        this.patternModalClose = document.getElementById('patternModalClose');
+        this.patternName = document.getElementById('patternName');
+        this.patternCategory = document.getElementById('patternCategory');
+        this.patternPreviewCanvas = document.getElementById('patternPreviewCanvas');
+        this.patternSize = document.getElementById('patternSize');
+        this.patternCells = document.getElementById('patternCells');
+        this.cancelPatternSave = document.getElementById('cancelPatternSave');
+        this.confirmPatternSave = document.getElementById('confirmPatternSave');
+        
 
         
         // Initial state for reset functionality
@@ -366,6 +384,52 @@ class GameOfLifeStudio {
         // Cell inspector button
         document.getElementById('cellInspectorBtn').addEventListener('click', () => {
             this.selectInspectorMode();
+        });
+        
+        // Pattern selection button
+        document.getElementById('patternSelectBtn').addEventListener('click', () => {
+            this.selectPatternSelectionMode();
+        });
+        
+        // Save pattern modal event listeners
+        this.patternModalClose.addEventListener('click', () => {
+            this.closeSavePatternModal();
+        });
+        
+        this.cancelPatternSave.addEventListener('click', () => {
+            this.closeSavePatternModal();
+        });
+        
+        this.confirmPatternSave.addEventListener('click', () => {
+            this.saveSelectedPattern();
+        });
+        
+        // Close modal when clicking outside
+        this.savePatternModal.addEventListener('click', (e) => {
+            if (e.target === this.savePatternModal) {
+                this.closeSavePatternModal();
+            }
+        });
+        
+        // Canvas mouse event listeners
+        this.canvas.addEventListener('mousedown', (e) => {
+            if (this.isRunning) return; // Only allow interaction when stopped
+            this.handleMouseDown(e);
+        });
+        
+        this.canvas.addEventListener('mousemove', (e) => {
+            if (this.isRunning) return;
+            this.handleMouseMove(e);
+        });
+        
+        this.canvas.addEventListener('mouseup', (e) => {
+            if (this.isRunning) return;
+            this.handleMouseUp(e);
+        });
+        
+        this.canvas.addEventListener('mouseleave', (e) => {
+            if (this.isRunning) return;
+            this.handleMouseLeave(e);
         });
         
         // Preset pattern buttons - now work as drawing tool selectors
@@ -638,6 +702,9 @@ class GameOfLifeStudio {
         
         // Draw pattern preview
         this.drawPatternPreview();
+        
+        // Draw selection rectangle
+        this.drawSelection();
     }
     
     reset() {
@@ -886,13 +953,208 @@ class GameOfLifeStudio {
     selectCellDrawingMode() {
         this.drawingMode = 'cell';
         this.inspectorMode = false;
+        this.selectionMode = false;
         this.selectedPattern = null;
         this.patternRotation = 0; // Reset rotation
         this.clearPatternPreview(); // Clear any existing preview
+        this.clearSelection(); // Clear any selection
         this.hideInspectorTooltip();
         this.updateDrawingModeUI();
         this.updatePatternHints(); // Hide pattern controls
         this.saveSettings();
+    }
+    
+    selectInspectorMode() {
+        this.drawingMode = 'inspector';
+        this.inspectorMode = true;
+        this.selectionMode = false;
+        this.selectedPattern = null;
+        this.patternRotation = 0;
+        this.clearPatternPreview();
+        this.clearSelection();
+        this.updateDrawingModeUI();
+        this.updatePatternHints();
+        this.saveSettings();
+    }
+    
+    selectPatternSelectionMode() {
+        this.drawingMode = 'selection';
+        this.inspectorMode = false;
+        this.selectionMode = true;
+        this.selectedPattern = null;
+        this.patternRotation = 0;
+        this.clearPatternPreview();
+        this.clearSelection();
+        this.hideInspectorTooltip();
+        this.updateDrawingModeUI();
+        this.updatePatternHints();
+        this.saveSettings();
+    }
+    
+    // Mouse handling methods
+    handleMouseDown(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const col = Math.floor(x / this.cellSize);
+        const row = Math.floor(y / this.cellSize);
+        
+        if (this.selectionMode) {
+            // Start selection
+            this.isSelecting = true;
+            this.selectionStart = { row, col };
+            this.selectionEnd = { row, col };
+            this.draw(); // Redraw to show selection
+        } else if (this.drawingMode === 'cell') {
+            // Toggle cell
+            this.engine.toggleCell(row, col);
+            this.draw();
+            this.updateInfo();
+        } else if (this.drawingMode === 'inspector') {
+            // Show cell info
+            this.showCellInfo(row, col, e);
+        } else if (this.selectedPattern) {
+            // Place pattern
+            this.placePatternAtClick(e);
+        }
+    }
+    
+    handleMouseMove(e) {
+        if (this.selectionMode && this.isSelecting) {
+            // Update selection end point
+            const rect = this.canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const col = Math.floor(x / this.cellSize);
+            const row = Math.floor(y / this.cellSize);
+            
+            this.selectionEnd = { row, col };
+            this.draw(); // Redraw to show updated selection
+        } else if (this.selectedPattern && !this.selectionMode) {
+            // Update pattern preview
+            this.updatePatternPreview(e);
+        }
+    }
+    
+    handleMouseUp(e) {
+        if (this.selectionMode && this.isSelecting) {
+            this.isSelecting = false;
+            // If we have a valid selection, offer to save it
+            if (this.hasValidSelection()) {
+                this.showSavePatternModal();
+            }
+        }
+    }
+    
+    handleMouseLeave(e) {
+        if (this.selectionMode) {
+            this.isSelecting = false;
+            this.draw();
+        } else if (this.selectedPattern) {
+            this.clearPatternPreview();
+        }
+    }
+    
+    // Selection methods
+    clearSelection() {
+        this.selectionStart = null;
+        this.selectionEnd = null;
+        this.isSelecting = false;
+        this.selectedPatternData = null;
+    }
+    
+    hasValidSelection() {
+        return this.selectionStart && this.selectionEnd && 
+               (this.selectionStart.row !== this.selectionEnd.row || 
+                this.selectionStart.col !== this.selectionEnd.col);
+    }
+    
+    getSelectionBounds() {
+        if (!this.selectionStart || !this.selectionEnd) return null;
+        
+        return {
+            startRow: Math.min(this.selectionStart.row, this.selectionEnd.row),
+            endRow: Math.max(this.selectionStart.row, this.selectionEnd.row),
+            startCol: Math.min(this.selectionStart.col, this.selectionEnd.col),
+            endCol: Math.max(this.selectionStart.col, this.selectionEnd.col)
+        };
+    }
+    
+    extractSelectedPattern() {
+        const bounds = this.getSelectionBounds();
+        if (!bounds) return null;
+        
+        const pattern = [];
+        let activeCells = 0;
+        
+        for (let row = bounds.startRow; row <= bounds.endRow; row++) {
+            const patternRow = [];
+            for (let col = bounds.startCol; col <= bounds.endCol; col++) {
+                const isAlive = this.engine.getCell(row, col);
+                patternRow.push(isAlive ? 1 : 0);
+                if (isAlive) activeCells++;
+            }
+            pattern.push(patternRow);
+        }
+        
+        return {
+            pattern: pattern,
+            width: bounds.endCol - bounds.startCol + 1,
+            height: bounds.endRow - bounds.startRow + 1,
+            activeCells: activeCells
+        };
+    }
+    
+    showCellInfo(row, col, event) {
+        const isAlive = this.engine.getCell(row, col);
+        const neighbors = this.engine.countNeighbors(row, col);
+        const fadeLevel = this.fadeMode ? this.engine.getCellFadeLevel(row, col) : 0;
+        const maturity = this.maturityMode ? this.engine.getCellMaturity(row, col) : 0;
+        
+        let info = `Cell (${row}, ${col})\n`;
+        info += `State: ${isAlive ? 'Alive' : 'Dead'}\n`;
+        info += `Neighbors: ${neighbors}`;
+        if (fadeLevel > 0) info += `\nFade Level: ${fadeLevel}`;
+        if (maturity > 0) info += `\nMaturity: ${maturity}`;
+        
+        // Simple tooltip implementation
+        this.showTooltip(info, event.clientX, event.clientY);
+    }
+    
+    showTooltip(text, x, y) {
+        // Remove existing tooltip
+        this.hideInspectorTooltip();
+        
+        const tooltip = document.createElement('div');
+        tooltip.className = 'inspector-tooltip';
+        tooltip.style.cssText = `
+            position: fixed;
+            left: ${x + 10}px;
+            top: ${y - 10}px;
+            background: var(--bg-tooltip);
+            color: var(--text-tooltip);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: pre-line;
+            z-index: 10000;
+            pointer-events: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        `;
+        tooltip.textContent = text;
+        
+        document.body.appendChild(tooltip);
+        this.tooltip = tooltip;
+        
+        // Auto-hide after 3 seconds
+        setTimeout(() => this.hideInspectorTooltip(), 3000);
+    }
+    
+    hideInspectorTooltip() {
+        if (this.tooltip) {
+            this.tooltip.remove();
+            this.tooltip = null;
+        }
     }
     
     placePatternAtClick(e) {
@@ -2406,6 +2668,117 @@ class GameOfLifeStudio {
         lucide.createIcons();
     }
     
+    // Custom pattern management
+    getCustomPatterns() {
+        try {
+            return JSON.parse(localStorage.getItem('custom-patterns') || '[]');
+        } catch (error) {
+            console.error('Failed to load custom patterns:', error);
+            return [];
+        }
+    }
+    
+    buildCustomPatternCategory(customPatterns) {
+        // Group custom patterns by category
+        const categorizedPatterns = {};
+        customPatterns.forEach(pattern => {
+            const category = pattern.category || 'custom';
+            if (!categorizedPatterns[category]) {
+                categorizedPatterns[category] = [];
+            }
+            categorizedPatterns[category].push(pattern);
+        });
+        
+        const subcategoryHTML = Object.keys(categorizedPatterns).map(categoryKey => {
+            const patterns = categorizedPatterns[categoryKey];
+            const categoryName = this.getCustomCategoryName(categoryKey);
+            const categoryIcon = this.getCustomCategoryIcon(categoryKey);
+            
+            const patternItemsHTML = patterns.map(pattern => `
+                <div class="pattern-item custom-pattern" data-pattern="${pattern.name}" data-custom="true" tabindex="0"
+                     title="${pattern.name} • Custom Pattern (${pattern.width}×${pattern.height}, ${pattern.activeCells} cells)${pattern.created ? ' • Created: ' + new Date(pattern.created).toLocaleDateString() : ''}">
+                    <span class="pattern-icon">🎨</span>
+                    <span class="pattern-name">${pattern.name}</span>
+                    <span class="pattern-info">${pattern.width}×${pattern.height}</span>
+                    <button class="pattern-delete" data-pattern-name="${pattern.name}" title="Delete this pattern">
+                        <i data-lucide="trash-2"></i>
+                    </button>
+                </div>
+            `).join('');
+            
+            return `
+                <div class="subcategory expanded">
+                    <div class="subcategory-header" data-subcategory="custom-${categoryKey}" tabindex="0">
+                        <i data-lucide="chevron-down" class="subcategory-expand-icon"></i>
+                        <span class="subcategory-icon">${categoryIcon}</span>
+                        <span class="subcategory-name">${categoryName} (${patterns.length})</span>
+                    </div>
+                    <div class="subcategory-content">
+                        ${patternItemsHTML}
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        return `
+            <div class="tree-category expanded" data-category="my-patterns">
+                <div class="category-header" tabindex="0">
+                    <i data-lucide="chevron-down" class="expand-icon"></i>
+                    <span class="category-icon">💾</span>
+                    <span class="category-title">My Patterns</span>
+                    <span class="category-count">${customPatterns.length}</span>
+                </div>
+                <div class="category-content">
+                    ${subcategoryHTML}
+                </div>
+            </div>
+        `;
+    }
+    
+    getCustomCategoryName(categoryKey) {
+        const categoryNames = {
+            'custom': 'Custom',
+            'oscillators': 'Oscillators',
+            'spaceships': 'Spaceships',
+            'still-lifes': 'Still Lifes',
+            'guns': 'Guns',
+            'other': 'Other'
+        };
+        return categoryNames[categoryKey] || 'Custom';
+    }
+    
+    getCustomCategoryIcon(categoryKey) {
+        const categoryIcons = {
+            'custom': '🎨',
+            'oscillators': '🔄',
+            'spaceships': '🚀',
+            'still-lifes': '🏠',
+            'guns': '🔫',
+            'other': '✨'
+        };
+        return categoryIcons[categoryKey] || '🎨';
+    }
+    
+    deleteCustomPattern(patternName) {
+        if (!confirm(`Are you sure you want to delete the pattern "${patternName}"?`)) {
+            return;
+        }
+        
+        try {
+            let customPatterns = this.getCustomPatterns();
+            customPatterns = customPatterns.filter(p => p.name !== patternName);
+            localStorage.setItem('custom-patterns', JSON.stringify(customPatterns));
+            
+            // Refresh the pattern tree
+            this.initializePatternTree();
+            
+            console.log(`Pattern "${patternName}" deleted successfully.`);
+        } catch (error) {
+            console.error('Failed to delete pattern:', error);
+            alert('Failed to delete pattern. Please try again.');
+        }
+    }
+
     // Pattern Tree Management
     initializePatternTree() {
         this.buildPatternTree();
@@ -2413,7 +2786,20 @@ class GameOfLifeStudio {
     
     buildPatternTree() {
         const categories = GameOfLifePatterns.categories;
-        const treeHTML = Object.keys(categories).map(categoryKey => {
+        
+        // Get custom patterns from localStorage
+        const customPatterns = this.getCustomPatterns();
+        
+        let treeHTML = '';
+        
+        // Add custom patterns section first if any exist
+        if (customPatterns.length > 0) {
+            const customCategoryHTML = this.buildCustomPatternCategory(customPatterns);
+            treeHTML += customCategoryHTML;
+        }
+        
+        // Add built-in pattern categories
+        treeHTML += Object.keys(categories).map(categoryKey => {
             const category = categories[categoryKey];
             const subcategories = category.subcategories || {};
             const patterns = GameOfLifePatterns.getByCategory(categoryKey);
@@ -2468,6 +2854,85 @@ class GameOfLifeStudio {
         
         // Add event listeners
         this.setupPatternTreeListeners();
+        
+        // Refresh Lucide icons for new pattern tree content
+        lucide.createIcons();
+    }
+    
+    setupPatternTreeListeners() {
+        // Pattern item clicks
+        document.querySelectorAll('.pattern-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                // Check if the clicked element is the delete button
+                if (e.target.closest('.pattern-delete')) {
+                    e.stopPropagation();
+                    const patternName = e.target.closest('.pattern-delete').dataset.patternName;
+                    this.deleteCustomPattern(patternName);
+                    return;
+                }
+                
+                const patternKey = item.dataset.pattern;
+                const isCustom = item.dataset.custom === 'true';
+                
+                if (isCustom) {
+                    this.selectCustomPattern(patternKey);
+                } else {
+                    this.selectDrawingPattern(patternKey);
+                }
+            });
+            
+            item.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    const patternKey = item.dataset.pattern;
+                    const isCustom = item.dataset.custom === 'true';
+                    
+                    if (isCustom) {
+                        this.selectCustomPattern(patternKey);
+                    } else {
+                        this.selectDrawingPattern(patternKey);
+                    }
+                }
+            });
+        });
+        
+        // Category and subcategory expansion
+        document.querySelectorAll('.category-header, .subcategory-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const parent = header.parentElement;
+                parent.classList.toggle('expanded');
+                
+                const icon = header.querySelector('.expand-icon, .subcategory-expand-icon');
+                if (icon) {
+                    icon.setAttribute('data-lucide', 
+                        parent.classList.contains('expanded') ? 'chevron-down' : 'chevron-right'
+                    );
+                    lucide.createIcons();
+                }
+            });
+        });
+    }
+    
+    selectCustomPattern(patternName) {
+        const customPatterns = this.getCustomPatterns();
+        const customPattern = customPatterns.find(p => p.name === patternName);
+        
+        if (!customPattern) {
+            console.error(`Custom pattern "${patternName}" not found`);
+            return;
+        }
+        
+        this.drawingMode = `custom:${patternName}`;
+        this.inspectorMode = false;
+        this.selectionMode = false;
+        this.selectedPattern = customPattern.pattern;
+        this.patternRotation = 0; // Reset rotation when selecting new pattern
+        this.clearPatternPreview(); // Clear any existing preview
+        this.clearSelection(); // Clear any selection
+        this.hideInspectorTooltip();
+        this.updateDrawingModeUI();
+        this.updatePatternHints(); // Show pattern controls
+        this.saveSettings();
     }
     
     getPatternIcon(pattern) {
@@ -2969,6 +3434,173 @@ class GameOfLifeStudio {
             this.rulePresets.value = 'custom';
             this.customRuleInputs.style.opacity = '1';
             this.customRuleInputs.style.pointerEvents = 'all';
+        }
+    }
+    
+    // Selection drawing method
+    drawSelection() {
+        if (!this.selectionMode || !this.selectionStart || !this.selectionEnd) return;
+        
+        const bounds = this.getSelectionBounds();
+        if (!bounds) return;
+        
+        // Draw selection rectangle
+        this.ctx.strokeStyle = 'rgba(74, 144, 226, 0.8)'; // Blue selection
+        this.ctx.lineWidth = 2;
+        this.ctx.setLineDash([5, 5]); // Dashed line
+        
+        const x = bounds.startCol * this.cellSize;
+        const y = bounds.startRow * this.cellSize;
+        const width = (bounds.endCol - bounds.startCol + 1) * this.cellSize;
+        const height = (bounds.endRow - bounds.startRow + 1) * this.cellSize;
+        
+        this.ctx.strokeRect(x, y, width, height);
+        
+        // Fill with semi-transparent overlay
+        this.ctx.fillStyle = 'rgba(74, 144, 226, 0.1)';
+        this.ctx.fillRect(x, y, width, height);
+        
+        // Reset line dash
+        this.ctx.setLineDash([]);
+        this.ctx.lineWidth = 1;
+    }
+    
+    // Save pattern modal methods
+    showSavePatternModal() {
+        const patternData = this.extractSelectedPattern();
+        if (!patternData) return;
+        
+        this.selectedPatternData = patternData;
+        
+        // Update UI with pattern info
+        this.patternSize.textContent = `${patternData.width}×${patternData.height}`;
+        this.patternCells.textContent = patternData.activeCells;
+        
+        // Clear previous values
+        this.patternName.value = '';
+        this.patternCategory.value = 'custom';
+        
+        // Draw pattern preview
+        this.drawPatternPreviewInModal();
+        
+        // Show modal
+        this.savePatternModal.style.display = 'block';
+        setTimeout(() => this.patternName.focus(), 100);
+    }
+    
+    closeSavePatternModal() {
+        this.savePatternModal.style.display = 'none';
+        this.clearSelection();
+        this.draw(); // Redraw to clear selection
+    }
+    
+    drawPatternPreviewInModal() {
+        if (!this.selectedPatternData) return;
+        
+        const canvas = this.patternPreviewCanvas;
+        const ctx = canvas.getContext('2d');
+        const pattern = this.selectedPatternData.pattern;
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Calculate cell size to fit pattern in preview
+        const maxSize = Math.min(canvas.width / pattern[0].length, canvas.height / pattern.length);
+        const cellSize = Math.max(2, Math.floor(maxSize));
+        
+        // Center the pattern
+        const offsetX = (canvas.width - pattern[0].length * cellSize) / 2;
+        const offsetY = (canvas.height - pattern.length * cellSize) / 2;
+        
+        // Draw pattern
+        ctx.fillStyle = '#4a90e2'; // Blue for live cells
+        for (let row = 0; row < pattern.length; row++) {
+            for (let col = 0; col < pattern[row].length; col++) {
+                if (pattern[row][col]) {
+                    ctx.fillRect(
+                        offsetX + col * cellSize,
+                        offsetY + row * cellSize,
+                        cellSize - 1,
+                        cellSize - 1
+                    );
+                }
+            }
+        }
+    }
+    
+    saveSelectedPattern() {
+        const name = this.patternName.value.trim();
+        if (!name || !this.selectedPatternData) {
+            alert('Please enter a pattern name.');
+            return;
+        }
+        
+        const category = this.patternCategory.value;
+        const patternData = this.selectedPatternData;
+        
+        // Create pattern object
+        const customPattern = {
+            name: name,
+            category: category,
+            pattern: patternData.pattern,
+            width: patternData.width,
+            height: patternData.height,
+            activeCells: patternData.activeCells,
+            created: new Date().toISOString()
+        };
+        
+        // Save to localStorage (in a real app, this would be saved to a server)
+        this.saveCustomPattern(customPattern);
+        
+        // Close modal and show success
+        this.closeSavePatternModal();
+        alert(`Pattern "${name}" saved successfully!`);
+        
+        // Refresh pattern tree to show new pattern
+        this.initializePatternTree();
+    }
+    
+    saveCustomPattern(pattern) {
+        try {
+            let customPatterns = JSON.parse(localStorage.getItem('custom-patterns') || '[]');
+            
+            // Check if pattern name already exists
+            const existingIndex = customPatterns.findIndex(p => p.name === pattern.name);
+            if (existingIndex !== -1) {
+                if (!confirm(`Pattern "${pattern.name}" already exists. Overwrite?`)) {
+                    return;
+                }
+                customPatterns[existingIndex] = pattern;
+            } else {
+                customPatterns.push(pattern);
+            }
+            
+            localStorage.setItem('custom-patterns', JSON.stringify(customPatterns));
+        } catch (error) {
+            console.error('Failed to save pattern:', error);
+            alert('Failed to save pattern. Please try again.');
+        }
+    }
+    
+    updateDrawingModeUI() {
+        // Update drawing tool button states
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.classList.remove('selected');
+        });
+        
+        if (this.drawingMode === 'cell') {
+            document.getElementById('cellDrawingBtn')?.classList.add('selected');
+        } else if (this.drawingMode === 'inspector') {
+            document.getElementById('cellInspectorBtn')?.classList.add('selected');
+        } else if (this.drawingMode === 'selection') {
+            document.getElementById('patternSelectBtn')?.classList.add('selected');
+        } else {
+            // Pattern mode - find the pattern button
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                if (btn.dataset.pattern === this.drawingMode) {
+                    btn.classList.add('selected');
+                }
+            });
         }
     }
 }
