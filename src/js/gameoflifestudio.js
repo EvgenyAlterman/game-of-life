@@ -81,7 +81,6 @@ class GameOfLifeStudio {
         this.cellSizeSlider = document.getElementById('cellSize');
         this.cellSizeValue = document.getElementById('cellSizeValue');
         this.cellSizeMax = document.getElementById('cellSizeMax');
-        this.applyGridBtn = document.getElementById('applyGridBtn');
         this.randomDensitySlider = document.getElementById('randomDensity');
         this.randomDensityValue = document.getElementById('randomDensityValue');
         this.randomDensityMax = document.getElementById('randomDensityMax');
@@ -286,6 +285,7 @@ class GameOfLifeStudio {
         // Advanced controls - Grid settings
         this.gridWidthSlider.addEventListener('input', (e) => {
             this.gridWidthValue.textContent = e.target.value;
+            this.liveResizeCanvas();
             this.saveSettings();
         });
         
@@ -296,6 +296,7 @@ class GameOfLifeStudio {
         
         this.gridHeightSlider.addEventListener('input', (e) => {
             this.gridHeightValue.textContent = e.target.value;
+            this.liveResizeCanvas();
             this.saveSettings();
         });
         
@@ -306,16 +307,13 @@ class GameOfLifeStudio {
         
         this.cellSizeSlider.addEventListener('input', (e) => {
             this.cellSizeValue.textContent = e.target.value + 'px';
+            this.liveResizeCanvas();
             this.saveSettings();
         });
         
         this.cellSizeMax.addEventListener('input', (e) => {
             this.updateSliderMax(this.cellSizeSlider, e.target.value);
             this.saveSettings();
-        });
-        
-        this.applyGridBtn.addEventListener('click', () => {
-            this.applyGridSettings();
         });
         
         // Advanced controls - Random settings
@@ -810,6 +808,72 @@ class GameOfLifeStudio {
         this.draw();
         this.updateInfo();
         this.saveSettings();
+    }
+    
+    liveResizeCanvas() {
+        // Skip if in fullscreen mode (handle separately)
+        if (this.isFullscreen) return;
+        
+        const newCols = parseInt(this.gridWidthSlider.value);
+        const newRows = parseInt(this.gridHeightSlider.value);
+        const newCellSize = parseInt(this.cellSizeSlider.value);
+        
+        // Check if anything actually changed
+        if (newCols === this.cols && newRows === this.rows && newCellSize === this.cellSize) {
+            return;
+        }
+        
+        // Save current grid state before resizing
+        const currentGrid = this.engine.getGridSnapshot();
+        
+        // Update canvas size
+        this.canvas.width = newCols * newCellSize;
+        this.canvas.height = newRows * newCellSize;
+        
+        // Update grid properties
+        this.cellSize = newCellSize;
+        this.rows = newRows;
+        this.cols = newCols;
+        
+        // Resize engine (this clears the grid)
+        this.engine.resize(newRows, newCols);
+        
+        // Restore as much of the previous grid as possible
+        this.restoreGridContent(currentGrid, newRows, newCols);
+        
+        // Update initial state if it exists
+        if (this.initialState) {
+            // Clear initial state since grid dimensions changed
+            this.initialState = null;
+        }
+        
+        this.draw();
+        this.updateInfo();
+    }
+    
+    restoreGridContent(savedGrid, newRows, newCols) {
+        if (!savedGrid || !savedGrid.grid) return;
+        
+        const oldGrid = savedGrid.grid;
+        const oldRows = oldGrid.length;
+        const oldCols = oldGrid[0] ? oldGrid[0].length : 0;
+        
+        // Restore cells up to the minimum of old and new dimensions
+        const maxRows = Math.min(oldRows, newRows);
+        const maxCols = Math.min(oldCols, newCols);
+        
+        for (let row = 0; row < maxRows; row++) {
+            for (let col = 0; col < maxCols; col++) {
+                if (oldGrid[row] && oldGrid[row][col] !== undefined) {
+                    this.engine.setCell(row, col, oldGrid[row][col]);
+                }
+            }
+        }
+        
+        // Restore other engine state
+        if (savedGrid.generation !== undefined) {
+            this.engine.generation = savedGrid.generation;
+        }
     }
     
     generateRandomSeed() {
@@ -2455,6 +2519,9 @@ class GameOfLifeStudio {
             // Clear fullscreen flag
             this.isFullscreen = false;
             
+            // Save current grid state before exiting fullscreen
+            const currentGrid = this.engine.getGridSnapshot();
+            
             // Restore original canvas size
             this.canvas.width = this.originalCanvasSize.width;
             this.canvas.height = this.originalCanvasSize.height;
@@ -2465,6 +2532,9 @@ class GameOfLifeStudio {
             
             // Resize engine to match
             this.engine.resize(this.rows, this.cols);
+            
+            // Restore as much of the previous grid as possible
+            this.restoreGridContent(currentGrid, this.rows, this.cols);
             
             // Redraw
             this.draw();
@@ -2485,6 +2555,14 @@ class GameOfLifeStudio {
         const newCols = Math.floor(maxWidth / this.cellSize);
         const newRows = Math.floor(maxHeight / this.cellSize);
         
+        // Check if anything actually changed
+        if (newCols === this.cols && newRows === this.rows) {
+            return;
+        }
+        
+        // Save current grid state before resizing
+        const currentGrid = this.engine.getGridSnapshot();
+        
         // Set canvas dimensions
         this.canvas.width = newCols * this.cellSize;
         this.canvas.height = newRows * this.cellSize;
@@ -2495,6 +2573,9 @@ class GameOfLifeStudio {
         
         // Resize engine
         this.engine.resize(this.rows, this.cols);
+        
+        // Restore as much of the previous grid as possible
+        this.restoreGridContent(currentGrid, newRows, newCols);
         
         // Redraw with new dimensions
         this.draw();
