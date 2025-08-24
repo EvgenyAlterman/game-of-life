@@ -1,5 +1,6 @@
 import { GameOfLifePatterns } from './patterns.js';
 import { GameOfLifeEngine } from './game-engine.js';
+import { RecordingManager } from './recording-manager.js';
 
 class GameOfLifeStudio {
     constructor(canvasId) {
@@ -36,35 +37,11 @@ class GameOfLifeStudio {
         this.maturityToggle = document.getElementById('maturityToggle');
         this.maturitySettings = document.getElementById('maturitySettings');
         this.maturityColor = document.getElementById('maturityColor');
-        this.recordBtn = document.getElementById('recordBtn');
-        this.finishBtn = document.getElementById('finishBtn');
+
         this.generationDisplay = document.getElementById('generation');
         this.populationDisplay = document.getElementById('population');
         
-        // Timeline elements
-        this.timelineSection = document.getElementById('timelineSection');
-        this.playTimelineBtn = document.getElementById('playTimelineBtn');
-        this.pauseTimelineBtn = document.getElementById('pauseTimelineBtn');
-        this.stopTimelineBtn = document.getElementById('stopTimelineBtn');
-        this.timelineSlider = document.getElementById('timelineSlider');
-        this.currentFrame = document.getElementById('currentFrame');
-        this.totalFrames = document.getElementById('totalFrames');
-        this.playbackSpeed = document.getElementById('playbackSpeed');
-        this.speedValue = document.getElementById('speedValue');
-        
-        // Recording management elements
-        this.recordingsSection = document.getElementById('recordingsSection');
-        this.loadRecordingsBtn = document.getElementById('loadRecordingsBtn');
-        this.recordingsList = document.getElementById('recordingsList');
-        
-        // Modal elements
-        this.saveModal = document.getElementById('saveModal');
-        this.modalClose = document.getElementById('modalClose');
-        this.recordingName = document.getElementById('recordingName');
-        this.recordedGenerationsSpan = document.getElementById('recordedGenerations');
-        this.recordingDuration = document.getElementById('recordingDuration');
-        this.cancelSave = document.getElementById('cancelSave');
-        this.confirmSave = document.getElementById('confirmSave');
+        // Recording and timeline UI elements are now handled by RecordingManager
         
         // Pattern tree elements
         this.patternSearch = document.getElementById('patternSearch');
@@ -147,17 +124,7 @@ class GameOfLifeStudio {
         this.inspectorMode = false;
         this.tooltip = null;
         
-        // Recording settings
-        this.isRecording = false;
-        this.recordedGenerations = [];
-        this.recordingStartTime = null;
-        
-        // Timeline settings
-        this.isReplaying = false;
-        this.replayData = null;
-        this.replayIndex = 0;
-        this.replaySpeed = 5;
-        this.replayInterval = null;
+
         
         // Initial state for reset functionality
         this.initialState = null;
@@ -172,6 +139,10 @@ class GameOfLifeStudio {
         this.setupEventListeners();
         this.initializeDarkMode();
         this.initializeCustomRules();
+        
+        // Initialize recording manager after UI setup
+        this.recordingManager = new RecordingManager(this);
+        
         this.loadSettings();
         this.draw();
         this.updateInfo();
@@ -496,61 +467,7 @@ class GameOfLifeStudio {
             }
         });
         
-        // Recording controls
-        this.recordBtn.addEventListener('click', () => {
-            this.toggleRecording();
-        });
-        
-        this.finishBtn.addEventListener('click', () => {
-            this.finishRecording();
-        });
-        
-        // Timeline controls
-        this.playTimelineBtn.addEventListener('click', () => {
-            this.playTimeline();
-        });
-        
-        this.pauseTimelineBtn.addEventListener('click', () => {
-            this.pauseTimeline();
-        });
-        
-        this.stopTimelineBtn.addEventListener('click', () => {
-            this.stopTimeline();
-        });
-        
-        this.timelineSlider.addEventListener('input', (e) => {
-            this.seekTimeline(parseInt(e.target.value));
-        });
-        
-        this.playbackSpeed.addEventListener('input', (e) => {
-            this.replaySpeed = parseInt(e.target.value);
-            this.speedValue.textContent = e.target.value + 'x';
-        });
-        
-        // Recording management
-        this.loadRecordingsBtn.addEventListener('click', () => {
-            this.loadRecordings();
-        });
-        
-        // Modal controls
-        this.modalClose.addEventListener('click', () => {
-            this.closeModal();
-        });
-        
-        this.cancelSave.addEventListener('click', () => {
-            this.closeModal();
-        });
-        
-        this.confirmSave.addEventListener('click', () => {
-            this.saveRecording();
-        });
-        
-        // Close modal on overlay click
-        this.saveModal.addEventListener('click', (e) => {
-            if (e.target === this.saveModal) {
-                this.closeModal();
-            }
-        });
+        // Recording-related event listeners are now handled by RecordingManager
         
         // Pattern search
         this.patternSearch.addEventListener('input', (e) => {
@@ -664,9 +581,7 @@ class GameOfLifeStudio {
         }
         
         // Record generation if recording is active
-        if (this.isRecording) {
-            this.recordGeneration();
-        }
+        this.recordingManager.onGenerationUpdate();
         
         this.draw();
         this.updateInfo();
@@ -2829,7 +2744,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.game.updateColorLabel();
     
     // Load existing recordings
-    window.game.loadRecordings();
+    window.game.recordingManager.loadRecordings();
     
     // Initialize pattern tree
     window.game.initializePatternTree();
