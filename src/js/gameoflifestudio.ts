@@ -44,6 +44,11 @@ class GameOfLifeStudio {
     public maturitySettings: HTMLElement | null;
     public maturityColor: HTMLInputElement | null;
     public cellShapeToggle: HTMLInputElement | null;
+    public autoStopToggle: HTMLInputElement | null;
+    public autoStopSettings: HTMLElement | null;
+    public autoStopDelay: HTMLInputElement | null;
+    public autoStopDelayValue: HTMLElement | null;
+    public autoStopNotification: HTMLInputElement | null;
     public generationDisplay: HTMLElement | null;
     public populationDisplay: HTMLElement | null;
     
@@ -125,6 +130,13 @@ class GameOfLifeStudio {
     public maturityColors: string[] = ['#ffffff', '#4c1d95'];
     public cellShape: string = 'rectangle';
     public availableShapes: string[] = [];
+    
+    // Auto-stop settings
+    public autoStopMode: boolean = false;
+    public autoStopDelaySetting: number = 3;
+    public autoStopShowNotification: boolean = true;
+    public generationHistory: boolean[][][] = [];
+    public stableGenerationCount: number = 0;
     
     // Missing properties from errors
     public randomDensity: number;
@@ -228,6 +240,11 @@ class GameOfLifeStudio {
         this.maturitySettings = document.getElementById('maturitySettings');
         this.maturityColor = document.getElementById('maturityColor') as HTMLInputElement | null;
         this.cellShapeToggle = document.getElementById('cellShapeToggle') as HTMLInputElement | null;
+        this.autoStopToggle = document.getElementById('autoStopToggle') as HTMLInputElement | null;
+        this.autoStopSettings = document.getElementById('autoStopSettings');
+        this.autoStopDelay = document.getElementById('autoStopDelay') as HTMLInputElement | null;
+        this.autoStopDelayValue = document.getElementById('autoStopDelayValue');
+        this.autoStopNotification = document.getElementById('autoStopNotification') as HTMLInputElement | null;
 
         this.generationDisplay = document.getElementById('generation');
         this.populationDisplay = document.getElementById('population');
@@ -470,6 +487,28 @@ class GameOfLifeStudio {
         this.cellShapeToggle.addEventListener('click', () => {
             this.toggleCellShape();
         });
+        
+        // Auto-stop toggle
+        this.autoStopToggle.addEventListener('click', () => {
+            this.toggleAutoStopMode();
+        });
+        
+        // Auto-stop delay slider
+        if (this.autoStopDelay && this.autoStopDelayValue) {
+            this.autoStopDelay.addEventListener('input', (e) => {
+                this.autoStopDelaySetting = parseInt(e.target.value);
+                this.autoStopDelayValue.textContent = e.target.value;
+                this.saveSettings();
+            });
+        }
+        
+        // Auto-stop notification checkbox
+        if (this.autoStopNotification) {
+            this.autoStopNotification.addEventListener('change', (e) => {
+                this.autoStopShowNotification = e.target.checked;
+                this.saveSettings();
+            });
+        }
         
         // Fade max value
         this.fadeMax.addEventListener('input', (e) => {
@@ -930,6 +969,12 @@ class GameOfLifeStudio {
         
         if (currentTime - this.lastTime >= interval) {
             this.update();
+            
+            // Check for auto-stop condition
+            if (this.autoStopMode) {
+                this.checkAutoStopCondition();
+            }
+            
             this.lastTime = currentTime;
         }
         
@@ -1006,6 +1051,9 @@ class GameOfLifeStudio {
         
         // Update play/pause button state
         this.updatePlayPauseButtonState();
+        
+        // Reset auto-stop generation history
+        this.resetGenerationHistory();
         
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
@@ -2961,6 +3009,11 @@ class GameOfLifeStudio {
             // Eraser settings
             eraserBrushSize: this.eraserBrushSize,
             eraserBrushShape: this.eraserBrushShape,
+            
+            // Auto-stop settings
+            autoStopMode: this.autoStopMode,
+            autoStopDelay: this.autoStopDelaySetting,
+            autoStopNotification: this.autoStopShowNotification,
             cellShape: this.cellShape,
             inspectorMode: this.inspectorMode,
             
@@ -3160,6 +3213,29 @@ class GameOfLifeStudio {
                 this.eraserBrushShape = settings.eraserBrushShape;
                 if (this.eraserShape) {
                     this.eraserShape.value = settings.eraserBrushShape;
+                }
+            }
+            
+            // Load auto-stop settings
+            if (settings.autoStopMode !== undefined) {
+                this.autoStopMode = settings.autoStopMode;
+                this.updateAutoStopUI();
+            }
+            
+            if (settings.autoStopDelay !== undefined) {
+                this.autoStopDelaySetting = settings.autoStopDelay;
+                if (this.autoStopDelay) {
+                    this.autoStopDelay.value = settings.autoStopDelay;
+                }
+                if (this.autoStopDelayValue) {
+                    this.autoStopDelayValue.textContent = settings.autoStopDelay;
+                }
+            }
+            
+            if (settings.autoStopNotification !== undefined) {
+                this.autoStopShowNotification = settings.autoStopNotification;
+                if (this.autoStopNotification) {
+                    this.autoStopNotification.checked = settings.autoStopNotification;
                 }
             }
             
@@ -3908,6 +3984,177 @@ class GameOfLifeStudio {
         }
     }
     
+    toggleAutoStopMode() {
+        this.autoStopMode = !this.autoStopMode;
+        this.updateAutoStopUI();
+        this.saveSettings();
+        
+        // Reset generation history when toggling
+        if (this.autoStopMode) {
+            this.resetGenerationHistory();
+        }
+    }
+    
+    updateAutoStopUI() {
+        // Update auto-stop button state
+        const autoStopBtn = this.autoStopToggle;
+        if (autoStopBtn) {
+            const icon = autoStopBtn.querySelector('.toolbar-icon');
+            
+            if (this.autoStopMode) {
+                icon.setAttribute('data-lucide', 'pause-circle');
+                autoStopBtn.classList.add('active');
+            } else {
+                icon.setAttribute('data-lucide', 'play-circle');
+                autoStopBtn.classList.remove('active');
+            }
+            
+            // Show/hide settings panel
+            if (this.autoStopSettings) {
+                this.autoStopSettings.style.display = this.autoStopMode ? 'block' : 'none';
+            }
+            
+            // Update icons
+            if (window.lucide) {
+                setTimeout(() => {
+                    try {
+                        lucide.createIcons();
+                    } catch (error) {
+                        console.warn('Error updating Lucide icons:', error);
+                    }
+                }, 0);
+            }
+        }
+    }
+    
+    resetGenerationHistory() {
+        this.generationHistory = [];
+        this.stableGenerationCount = 0;
+    }
+    
+    captureCurrentGeneration() {
+        // Create a deep copy of the current grid state
+        const currentGrid = [];
+        for (let row = 0; row < this.rows; row++) {
+            currentGrid[row] = [];
+            for (let col = 0; col < this.cols; col++) {
+                currentGrid[row][col] = this.engine.grid[row][col];
+            }
+        }
+        return currentGrid;
+    }
+    
+    compareGenerations(grid1, grid2) {
+        if (!grid1 || !grid2) return false;
+        if (grid1.length !== grid2.length) return false;
+        
+        for (let row = 0; row < grid1.length; row++) {
+            if (!grid1[row] || !grid2[row]) return false;
+            if (grid1[row].length !== grid2[row].length) return false;
+            
+            for (let col = 0; col < grid1[row].length; col++) {
+                if (grid1[row][col] !== grid2[row][col]) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    
+    checkAutoStopCondition() {
+        // Capture current generation
+        const currentGrid = this.captureCurrentGeneration();
+        this.generationHistory.push(currentGrid);
+        
+        // Keep only the last 10 generations to prevent memory issues
+        if (this.generationHistory.length > 10) {
+            this.generationHistory.shift();
+        }
+        
+        // We need at least the delay setting + 2 generations to compare
+        const requiredGenerations = this.autoStopDelaySetting + 2;
+        if (this.generationHistory.length < requiredGenerations) {
+            return;
+        }
+        
+        // Compare current generation with generation from delay+2 steps back
+        const compareIndex = this.generationHistory.length - (this.autoStopDelaySetting + 2);
+        if (compareIndex >= 0) {
+            const gridToCompare = this.generationHistory[compareIndex];
+            
+            if (this.compareGenerations(currentGrid, gridToCompare)) {
+                this.stableGenerationCount++;
+                
+                // If we've seen stability for the required number of checks, auto-stop
+                if (this.stableGenerationCount >= 2) {
+                    this.autoStop();
+                }
+            } else {
+                this.stableGenerationCount = 0;
+            }
+        }
+    }
+    
+    autoStop() {
+        this.isRunning = false;
+        this.updatePlayPauseButtonState();
+        
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+        }
+        
+        // Show notification if enabled
+        if (this.autoStopShowNotification) {
+            this.showAutoStopNotification();
+        }
+        
+        // Reset for next time
+        this.resetGenerationHistory();
+    }
+    
+    showAutoStopNotification() {
+        // Create a temporary notification to show auto-stop triggered
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            z-index: 10000;
+            animation: slideIn 0.3s ease-out;
+            max-width: 300px;
+            border: 2px solid rgba(255,255,255,0.2);
+        `;
+        
+        notification.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 18px;">⏸️</span>
+                <div>
+                    <div style="font-weight: 700; margin-bottom: 4px;">Auto-Stop Triggered</div>
+                    <div style="font-size: 12px; opacity: 0.9;">Stable state detected - only pulsars and static patterns remain</div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Remove notification after 4 seconds
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease-in forwards';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    document.body.removeChild(notification);
+                }
+            }, 300);
+        }, 4000);
+    }
+    
     // Custom Rules methods
     handleRulePresetChange(value) {
         if (value === 'custom') {
@@ -4241,6 +4488,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Initialize cell shape UI
     window.game.updateCellShapeUI();
+    
+    // Initialize auto-stop UI
+    window.game.updateAutoStopUI();
     
     // Load existing recordings
     window.game.recordingManager.loadRecordings();

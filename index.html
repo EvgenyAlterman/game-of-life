@@ -75,6 +75,11 @@
                                 <i data-lucide="square" class="toolbar-icon"></i>
                                 <span class="toolbar-label">Shape</span>
                             </button>
+                            
+                            <button id="autoStopToggle" class="toolbar-btn" title="Toggle Auto-Stop Mode">
+                                <i data-lucide="pause-circle" class="toolbar-icon"></i>
+                                <span class="toolbar-label">Auto-Stop</span>
+                            </button>
                         </div>
                     </div>
                     
@@ -100,6 +105,25 @@
                                     <input type="color" id="maturityColor" value="#4c1d95" class="color-input">
                                     <span class="color-label">Deep Violet</span>
                                 </div>
+                            </div>
+                        </div>
+                        
+                        <div class="autostop-settings panel-settings" id="autoStopSettings" style="display: none;">
+                            <h4>Auto-Stop Settings</h4>
+                            <div class="setting-row">
+                                <label for="autoStopDelay">Detection Delay:</label>
+                                <div class="slider-group">
+                                    <input type="range" id="autoStopDelay" min="2" max="10" value="3">
+                                    <span id="autoStopDelayValue">3</span>
+                                    <span class="unit-label">generations</span>
+                                </div>
+                            </div>
+                            <div class="setting-row">
+                                <label class="checkbox-container">
+                                    <input type="checkbox" id="autoStopNotification" checked>
+                                    <span class="checkmark"></span>
+                                    Show notification when stopping
+                                </label>
                             </div>
                         </div>
                     </div>

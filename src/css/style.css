@@ -716,6 +716,17 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.toolbar-btn.active {
+    background: var(--accent-primary);
+    color: white;
+    box-shadow: 0 2px 8px var(--accent-shadow);
+}
+
+.toolbar-btn.active .toolbar-icon,
+.toolbar-btn.active .toolbar-label {
+    color: white;
+}
+
 .toolbar-btn:active {
     transform: translateY(0);
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -768,6 +779,73 @@ body {
     .toolbar-label {
         font-size: 0.6rem;
     }
+}
+
+/* Auto-Stop Settings Styles */
+.autostop-settings {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 12px;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.autostop-settings h4 {
+    color: white;
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.autostop-settings .setting-row {
+    margin-bottom: 12px;
+}
+
+.autostop-settings .setting-row:last-child {
+    margin-bottom: 0;
+}
+
+.autostop-settings label {
+    color: white;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 6px;
+}
+
+.autostop-settings .slider-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.autostop-settings input[type="range"] {
+    flex: 1;
+    accent-color: white;
+}
+
+.autostop-settings .unit-label {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 12px;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.checkbox-container input[type="checkbox"] {
+    accent-color: white;
+    transform: scale(1.1);
+}
+
+.checkmark {
+    display: inline-block;
 }
 
 /* Save Pattern Modal Styles */
