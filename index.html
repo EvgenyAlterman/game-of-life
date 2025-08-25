@@ -128,6 +128,12 @@
                             <span>Select Pattern</span>
                         </button>
                         
+                        <!-- Eraser Tool -->
+                        <button id="eraserBtn" class="tool-btn">
+                            <i data-lucide="eraser" class="tool-icon"></i>
+                            <span>Eraser</span>
+                        </button>
+                        
                         <!-- Search Box -->
                         <div class="pattern-search">
                             <input type="text" id="patternSearch" placeholder="Search patterns..." class="search-input">
@@ -143,6 +149,25 @@
                         <div class="search-results" id="searchResults" style="display: none;">
                             <h4>Search Results</h4>
                             <div class="search-results-list"></div>
+                        </div>
+                        
+                        <!-- Eraser Settings Panel (Hidden by default) -->
+                        <div class="eraser-settings panel-settings" id="eraserSettings" style="display: none;">
+                            <h4>Eraser Settings</h4>
+                            <div class="setting-row">
+                                <label for="eraserSize">Brush Size:</label>
+                                <div class="slider-group">
+                                    <input type="range" id="eraserSize" min="1" max="10" value="1">
+                                    <span id="eraserSizeValue">1</span>
+                                </div>
+                            </div>
+                            <div class="setting-row">
+                                <label for="eraserShape">Brush Shape:</label>
+                                <select id="eraserShape" class="shape-select">
+                                    <option value="circle">Circle</option>
+                                    <option value="square">Square</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>

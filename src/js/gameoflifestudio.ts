@@ -52,6 +52,13 @@ class GameOfLifeStudio {
     public patternTree: HTMLElement | null;
     public searchResults: HTMLElement | null;
     
+    // Eraser tool elements
+    public eraserBtn: HTMLElement | null;
+    public eraserSettings: HTMLElement | null;
+    public eraserSize: HTMLInputElement | null;
+    public eraserSizeValue: HTMLElement | null;
+    public eraserShape: HTMLSelectElement | null;
+    
     // Advanced control elements
     public gridWidthSlider: HTMLInputElement | null;
     public gridWidthValue: HTMLElement | null;
@@ -91,6 +98,11 @@ class GameOfLifeStudio {
     public currentRuleString: HTMLElement | null;
     public birthCheckboxes: (HTMLInputElement | null)[];
     public survivalCheckboxes: (HTMLInputElement | null)[];
+    
+    // Eraser tool properties
+    public eraserBrushSize: number;
+    public eraserBrushShape: string;
+    public isDrawing: boolean;
     
     // Other properties
     public recordingManager: RecordingManager;
@@ -227,6 +239,13 @@ class GameOfLifeStudio {
         this.patternTree = document.getElementById('patternTree');
         this.searchResults = document.getElementById('searchResults');
         
+        // Eraser tool elements
+        this.eraserBtn = document.getElementById('eraserBtn');
+        this.eraserSettings = document.getElementById('eraserSettings');
+        this.eraserSize = document.getElementById('eraserSize') as HTMLInputElement | null;
+        this.eraserSizeValue = document.getElementById('eraserSizeValue');
+        this.eraserShape = document.getElementById('eraserShape') as HTMLSelectElement | null;
+        
         // UI elements - advanced controls
         this.gridWidthSlider = document.getElementById('gridWidth') as HTMLInputElement | null;
         this.gridWidthValue = document.getElementById('gridWidthValue');
@@ -281,6 +300,11 @@ class GameOfLifeStudio {
         
         // Drawing tool settings (already initialized above)
         this.drawingMode = 'cell'; // 'cell' or pattern name
+        
+        // Eraser tool settings
+        this.eraserBrushSize = 1;
+        this.eraserBrushShape = 'circle';
+        this.isDrawing = false;
         
         // Initialize missing properties
         this.inspectorMode = false;
@@ -411,6 +435,23 @@ class GameOfLifeStudio {
             this.fadeValue.textContent = this.fadeDuration;
             this.saveSettings();
         });
+        
+        // Eraser size slider
+        if (this.eraserSize && this.eraserSizeValue) {
+            this.eraserSize.addEventListener('input', (e) => {
+                this.eraserBrushSize = parseInt(e.target.value);
+                this.eraserSizeValue.textContent = e.target.value;
+                this.saveSettings();
+            });
+        }
+        
+        // Eraser shape selector
+        if (this.eraserShape) {
+            this.eraserShape.addEventListener('change', (e) => {
+                this.eraserBrushShape = e.target.value;
+                this.saveSettings();
+            });
+        }
         
         // Maturity toggle
         this.maturityToggle.addEventListener('click', () => {
@@ -577,6 +618,11 @@ class GameOfLifeStudio {
         // Pattern selection button
         document.getElementById('patternSelectBtn').addEventListener('click', () => {
             this.selectPatternSelectionMode();
+        });
+        
+        // Eraser button
+        document.getElementById('eraserBtn').addEventListener('click', () => {
+            this.selectEraserMode();
         });
         
         // Save pattern modal event listeners
@@ -1497,6 +1543,12 @@ class GameOfLifeStudio {
         this.hideInspectorTooltip();
         this.updateDrawingModeUI();
         this.updatePatternHints(); // Hide pattern controls
+        
+        // Hide eraser settings panel
+        if (this.eraserSettings) {
+            this.eraserSettings.style.display = 'none';
+        }
+        
         this.saveSettings();
     }
     
@@ -1510,6 +1562,12 @@ class GameOfLifeStudio {
         this.clearSelection();
         this.updateDrawingModeUI();
         this.updatePatternHints();
+        
+        // Hide eraser settings panel
+        if (this.eraserSettings) {
+            this.eraserSettings.style.display = 'none';
+        }
+        
         this.saveSettings();
     }
     
@@ -1524,7 +1582,33 @@ class GameOfLifeStudio {
         this.hideInspectorTooltip();
         this.updateDrawingModeUI();
         this.updatePatternHints();
+        
+        // Hide eraser settings panel
+        if (this.eraserSettings) {
+            this.eraserSettings.style.display = 'none';
+        }
+        
         this.saveSettings();
+    }
+    
+    selectEraserMode() {
+        this.drawingMode = 'eraser';
+        this.inspectorMode = false;
+        this.selectionMode = false;
+        this.selectedPattern = null;
+        this.patternRotation = 0;
+        this.clearPatternPreview();
+        this.clearSelection();
+        this.hideInspectorTooltip();
+        this.updateDrawingModeUI();
+        this.updatePatternHints();
+        this.canvas.style.cursor = 'grab';
+        this.saveSettings();
+        
+        // Show eraser settings panel
+        if (this.eraserSettings) {
+            this.eraserSettings.style.display = 'block';
+        }
     }
     
     // Mouse handling methods
@@ -1546,6 +1630,10 @@ class GameOfLifeStudio {
             this.engine.toggleCell(row, col);
             this.draw();
             this.updateInfo();
+        } else if (this.drawingMode === 'eraser') {
+            // Erase cells with brush
+            this.isDrawing = true;
+            this.eraseCellsAtPosition(row, col);
         } else if (this.drawingMode === 'inspector') {
             // Show cell info
             this.showCellInfo(row, col, e);
@@ -1566,6 +1654,15 @@ class GameOfLifeStudio {
             
             this.selectionEnd = { row, col };
             this.draw(); // Redraw to show updated selection
+        } else if (this.drawingMode === 'eraser' && this.isDrawing) {
+            // Continue erasing while dragging
+            const rect = this.canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const col = Math.floor(x / this.cellSize);
+            const row = Math.floor(y / this.cellSize);
+            
+            this.eraseCellsAtPosition(row, col);
         } else if (this.selectedPattern && !this.selectionMode) {
             // Update pattern preview
             this.updatePatternPreview(e);
@@ -1579,16 +1676,62 @@ class GameOfLifeStudio {
             if (this.hasValidSelection()) {
                 this.showSavePatternModal();
             }
+        } else if (this.drawingMode === 'eraser') {
+            this.isDrawing = false;
         }
     }
     
     handleMouseLeave(e) {
+        if (this.drawingMode === 'eraser') {
+            this.isDrawing = false;
+        }
         if (this.selectionMode) {
             this.isSelecting = false;
             this.draw();
         } else if (this.selectedPattern) {
             this.clearPatternPreview();
         }
+    }
+    
+    // Eraser functionality
+    eraseCellsAtPosition(centerRow, centerCol) {
+        const size = this.eraserBrushSize;
+        const shape = this.eraserBrushShape;
+        
+        if (shape === 'circle') {
+            // Circular brush
+            const radius = size;
+            for (let dr = -radius; dr <= radius; dr++) {
+                for (let dc = -radius; dc <= radius; dc++) {
+                    const distance = Math.sqrt(dr * dr + dc * dc);
+                    if (distance <= radius) {
+                        const row = centerRow + dr;
+                        const col = centerCol + dc;
+                        
+                        if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
+                            this.engine.grid[row][col] = false;
+                        }
+                    }
+                }
+            }
+        } else if (shape === 'square') {
+            // Square brush
+            const halfSize = Math.floor(size / 2);
+            for (let dr = -halfSize; dr <= halfSize; dr++) {
+                for (let dc = -halfSize; dc <= halfSize; dc++) {
+                    const row = centerRow + dr;
+                    const col = centerCol + dc;
+                    
+                    if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
+                        this.engine.grid[row][col] = false;
+                    }
+                }
+            }
+        }
+        
+        // Redraw and update info
+        this.draw();
+        this.updateInfo();
     }
     
     // Selection methods
@@ -2814,6 +2957,10 @@ class GameOfLifeStudio {
             fadeDuration: this.fadeDuration,
             maturityMode: this.maturityMode,
             maturityEndColor: this.maturityEndColor,
+            
+            // Eraser settings
+            eraserBrushSize: this.eraserBrushSize,
+            eraserBrushShape: this.eraserBrushShape,
             cellShape: this.cellShape,
             inspectorMode: this.inspectorMode,
             
@@ -2996,6 +3143,24 @@ class GameOfLifeStudio {
                 this.maturityEndColor = settings.maturityEndColor;
                 this.maturityColor.value = settings.maturityEndColor;
                 this.updateColorLabel();
+            }
+            
+            // Load eraser settings
+            if (settings.eraserBrushSize !== undefined) {
+                this.eraserBrushSize = settings.eraserBrushSize;
+                if (this.eraserSize) {
+                    this.eraserSize.value = settings.eraserBrushSize;
+                }
+                if (this.eraserSizeValue) {
+                    this.eraserSizeValue.textContent = settings.eraserBrushSize;
+                }
+            }
+            
+            if (settings.eraserBrushShape !== undefined) {
+                this.eraserBrushShape = settings.eraserBrushShape;
+                if (this.eraserShape) {
+                    this.eraserShape.value = settings.eraserBrushShape;
+                }
             }
             
             // Load cell shape settings
@@ -3997,6 +4162,8 @@ class GameOfLifeStudio {
             document.getElementById('cellInspectorBtn')?.classList.add('selected');
         } else if (this.drawingMode === 'selection') {
             document.getElementById('patternSelectBtn')?.classList.add('selected');
+        } else if (this.drawingMode === 'eraser') {
+            document.getElementById('eraserBtn')?.classList.add('selected');
         } else {
             // Pattern mode - find the pattern button
             document.querySelectorAll('.preset-btn').forEach(btn => {
