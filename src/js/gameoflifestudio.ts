@@ -129,7 +129,7 @@ class GameOfLifeStudio {
     public fadeDuration: number = 1;
     public maturityColors: string[] = ['#ffffff', '#4c1d95'];
     public cellShape: string = 'rectangle';
-    public availableShapes: string[] = [];
+    public availableShapes: string[] = ['rectangle', 'circle', 'triangle', 'diamond', 'pentagon', 'hexagon', 'star'];
     
     // Auto-stop settings
     public autoStopMode: boolean = false;
@@ -2545,55 +2545,11 @@ class GameOfLifeStudio {
         // Cap maturity at 20 for color calculation
         const cappedMaturity = Math.min(maturity, 20);
         
+        // Calculate maturity ratio (0 = newest, 1 = most mature)
+        const maturityRatio = cappedMaturity / 20;
         
-        const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        
-        const col = Math.floor(x / this.cellSize);
-        const row = Math.floor(y / this.cellSize);
-        
-        // Check if coordinates are within grid bounds
-        if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
-            const isAlive = this.engine.getCell(row, col);
-            const maturity = this.engine.getCellMaturity(row, col);
-            const deadTime = this.engine.getCellDeadTime(row, col);
-            
-            let tooltipContent = `
-                <div class="tooltip-cell-info">
-                    <span class="tooltip-label">Position:</span> 
-                    <span class="tooltip-value">(${col}, ${row})</span>
-                </div>
-                <div class="tooltip-cell-info">
-                    <span class="tooltip-label">State:</span> 
-                    <span class="tooltip-value">${isAlive ? 'Alive' : 'Dead'}</span>
-                </div>
-            `;
-            
-            if (isAlive) {
-                tooltipContent += `
-                    <div class="tooltip-cell-info">
-                        <span class="tooltip-label">Alive for:</span> 
-                        <span class="tooltip-value">${maturity + 1} generation${maturity === 0 ? '' : 's'}</span>
-                    </div>
-                `;
-            } else {
-                tooltipContent += `
-                    <div class="tooltip-cell-info">
-                        <span class="tooltip-label">Dead for:</span> 
-                        <span class="tooltip-value">${deadTime + 1} generation${deadTime === 0 ? '' : 's'}</span>
-                    </div>
-                `;
-            }
-            
-            // Show tooltip
-            this.tooltip.innerHTML = tooltipContent;
-            this.tooltip.style.left = (e.clientX) + 'px';
-            this.tooltip.style.top = (e.clientY - 10) + 'px';
-            this.tooltip.classList.add('show');
-        } else {
-            this.hideInspectorTooltip();
-        }
+        // Use the existing interpolateMaturityColor method
+        return this.interpolateMaturityColor(maturityRatio);
     }
 
     startRecording() {
@@ -4062,6 +4018,11 @@ class GameOfLifeStudio {
     }
     
     checkAutoStopCondition() {
+        // Skip auto-stop check if auto-stop mode is not enabled
+        if (!this.autoStopMode) {
+            return;
+        }
+        
         // Capture current generation
         const currentGrid = this.captureCurrentGeneration();
         this.generationHistory.push(currentGrid);
