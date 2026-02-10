@@ -2305,24 +2305,6 @@ class GameOfLifeStudio {
         }
     }
     
-    drawMatureCells() {
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                const maturityLevel = this.engine.getCellMaturity(row, col);
-                const isAlive = this.engine.getCell(row, col);
-                
-                if (maturityLevel > 0 && isAlive) {
-                    // Calculate color interpolation based on maturity level
-                    const maturityRatio = Math.min(maturityLevel / 10, 1); // Max at 10 generations
-                    const maturityColor = this.interpolateMaturityColor(maturityRatio);
-                    
-                    this.ctx.fillStyle = maturityColor;
-                    this.drawSingleCell(row, col);
-                }
-            }
-        }
-    }
-    
     interpolateMaturityColor(ratio) {
         // Interpolate between the base cell color and maturity end color
         const rootStyles = getComputedStyle(document.documentElement);
@@ -2866,46 +2848,6 @@ class GameOfLifeStudio {
         } catch (error) {
             console.error('Error deleting recording:', error);
             alert('Failed to delete recording: ' + error.message);
-        }
-    }
-    
-    updateDrawingModeUI() {
-        // Update button visual states
-        document.querySelectorAll('.preset-btn').forEach(btn => {
-            if (btn.dataset.pattern === this.drawingMode) {
-                btn.classList.add('selected');
-            } else {
-                btn.classList.remove('selected');
-            }
-        });
-        
-        // Update cell drawing button if it exists
-        const cellBtn = document.getElementById('cellDrawingBtn');
-        if (cellBtn) {
-            if (this.drawingMode === 'cell') {
-                cellBtn.classList.add('selected');
-            } else {
-                cellBtn.classList.remove('selected');
-            }
-        }
-        
-        // Update inspector button if it exists
-        const inspectorBtn = document.getElementById('cellInspectorBtn');
-        if (inspectorBtn) {
-            if (this.inspectorMode) {
-                inspectorBtn.classList.add('selected');
-            } else {
-                inspectorBtn.classList.remove('selected');
-            }
-        }
-        
-        // Update cursor style based on drawing mode
-        if (this.drawingMode === 'cell') {
-            this.canvas.style.cursor = 'crosshair';
-        } else if (this.inspectorMode) {
-            this.canvas.style.cursor = 'help';
-        } else {
-            this.canvas.style.cursor = 'crosshair'; // Changed from 'copy' to 'crosshair' for better precision
         }
     }
     
