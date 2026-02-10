@@ -188,3 +188,56 @@ export enum PlaybackState {
   Paused = 'paused',
   Recording = 'recording'
 }
+
+// Drawing mode
+export type DrawingMode =
+  | 'cell'
+  | 'inspector'
+  | 'selection'
+  | 'eraser'
+  | `pattern:${string}`
+  | `custom:${string}`;
+
+// Module state interfaces — used by SettingsPersistence to gather/distribute state
+export interface VisualSettingsState {
+  showGrid: boolean;
+  showPixelGrid: boolean;
+  showFade: boolean;
+  showMaturity: boolean;
+  fadeDuration: number;
+  maturityColor: string;
+  cellShape: string;
+}
+
+export interface SimulationState {
+  speed: number;
+  isRunning: boolean;
+}
+
+export interface GridState {
+  rows: number;
+  cols: number;
+  cellSize: number;
+}
+
+export interface CustomPattern {
+  name: string;
+  category: string;
+  pattern: number[][];
+}
+
+export interface SelectionBounds {
+  startRow: number;
+  startCol: number;
+  endRow: number;
+  endCol: number;
+}
+
+export interface PatternPreviewData {
+  pattern: number[][];
+  row: number;
+  col: number;
+}
+
+// Re-export EventMap from event-bus for convenience
+export type { EventMap } from '../core/event-bus';

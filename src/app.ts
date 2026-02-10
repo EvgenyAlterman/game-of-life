@@ -1,0 +1,329 @@
+/**
+ * App — DI composer that wires all modules together.
+ *
+ * This replaces the monolithic GameOfLifeStudio class.
+ * Each module is small (<300 lines), focused, and independently testable.
+ */
+
+import { EventBus } from './core/event-bus';
+import { StorageService } from './core/storage-service';
+import { DomRegistry } from './core/dom-registry';
+
+import { GameOfLifeEngine } from './js/game-engine';
+import { GameOfLifePatterns } from './js/patterns';
+
+import { CanvasRenderer } from './modules/canvas-renderer';
+import { ThemeManager } from './modules/theme';
+import { SidebarManager } from './modules/sidebar';
+import { VisualSettingsManager } from './modules/visual-settings';
+import { DrawingToolsManager } from './modules/drawing-tools';
+import { InspectorManager } from './modules/inspector';
+import { InputHandler } from './modules/input-handler';
+import { PatternManager } from './modules/pattern-manager';
+import { SelectionManager } from './modules/selection-manager';
+import { AutoStopManager } from './modules/auto-stop';
+import { CustomRulesManager } from './modules/custom-rules';
+import { GridSettingsManager } from './modules/grid-settings';
+import { SessionHistoryManager } from './modules/session-history';
+import { FullscreenManager } from './modules/fullscreen';
+import { SimulationController } from './modules/simulation-controller';
+import { SettingsPersistence } from './modules/settings-persistence';
+import { RecordingManager } from './recording-manager';
+
+export class App {
+  // Core
+  public bus: EventBus;
+  public storage: StorageService;
+  public dom: DomRegistry;
+
+  // Engine
+  public engine: GameOfLifeEngine;
+
+  // Modules
+  public renderer: CanvasRenderer;
+  public theme: ThemeManager;
+  public sidebar: SidebarManager;
+  public visual: VisualSettingsManager;
+  public tools: DrawingToolsManager;
+  public inspector: InspectorManager;
+  public input: InputHandler;
+  public patterns: PatternManager;
+  public selection: SelectionManager;
+  public autoStop: AutoStopManager;
+  public customRules: CustomRulesManager;
+  public gridSettings: GridSettingsManager;
+  public session: SessionHistoryManager;
+  public fullscreen: FullscreenManager;
+  public sim: SimulationController;
+  public persistence: SettingsPersistence;
+  public recordingManager: RecordingManager;
+
+  // Convenience proxies used by RecordingManager host interface
+  public get cellSize() { return this.gridSettings.cellSize; }
+  public get rows() { return this.gridSettings.rows; }
+  public get cols() { return this.gridSettings.cols; }
+  public get speed() { return this.sim.speed; }
+  public get isRunning() { return this.sim.isRunning; }
+
+  constructor(canvasId: string) {
+    // ---- Core ----
+    this.bus = new EventBus();
+    this.storage = new StorageService();
+    this.dom = new DomRegistry();
+
+    const canvas = this.dom.require<HTMLCanvasElement>(canvasId);
+    const cellSize = 10;
+    const rows = Math.floor(canvas.height / cellSize);
+    const cols = Math.floor(canvas.width / cellSize);
+
+    // ---- Engine ----
+    this.engine = new GameOfLifeEngine(rows, cols);
+
+    // ---- Renderer ----
+    this.renderer = new CanvasRenderer(canvas, this.engine, this.bus, rows, cols, cellSize);
+
+    // ---- UI chrome ----
+    this.theme = new ThemeManager(this.bus, this.storage, this.dom);
+    this.sidebar = new SidebarManager(this.bus, this.storage, this.dom);
+    this.visual = new VisualSettingsManager(this.bus, this.dom);
+
+    // ---- Tools + input ----
+    this.tools = new DrawingToolsManager(this.bus, this.dom);
+    this.inspector = new InspectorManager(this.engine as any);
+    this.input = new InputHandler(this.bus, this.renderer as any, this.tools, this.inspector, this.engine as any);
+    this.patterns = new PatternManager(this.bus, this.storage, this.dom);
+    this.selection = new SelectionManager(this.bus, this.dom, this.engine as any, this.renderer as any, this.patterns);
+
+    // ---- Settings managers ----
+    this.autoStop = new AutoStopManager(this.bus, this.dom, this.engine);
+    this.customRules = new CustomRulesManager(this.bus, this.dom, this.engine as any);
+    this.gridSettings = new GridSettingsManager(this.bus, this.dom, this.engine as any, canvas, rows, cols, cellSize);
+    this.session = new SessionHistoryManager(this.bus, this.engine as any);
+    this.fullscreen = new FullscreenManager(this.bus, this.dom, this.engine as any, canvas, rows, cols, cellSize);
+
+    // ---- Simulation controller ----
+    this.sim = new SimulationController({ bus: this.bus, dom: this.dom, engine: this.engine as any, canvas }, rows, cols);
+
+    // ---- Recording ----
+    this.recordingManager = new RecordingManager(this.bus, this.dom, this.engine as any, this as any);
+
+    // ---- Persistence ----
+    this.persistence = new SettingsPersistence(
+      this.bus, this.storage, this.dom,
+      {
+        gridSettings: this.gridSettings,
+        visualSettings: this.visual,
+        autoStop: this.autoStop,
+        customRules: this.customRules,
+        drawingTools: this.tools,
+      },
+      this.engine as any,
+      canvas,
+    );
+
+    // ---- Wire callbacks ----
+    this.wireCallbacks();
+  }
+
+  private wireCallbacks(): void {
+    // SimulationController hooks
+    this.sim.onDraw = () => this.draw();
+    this.sim.onUpdateInfo = () => {};
+    this.sim.onSaveSettings = () => this.persistence.save();
+    this.sim.onAutoStopCheck = () => this.autoStop.check();
+    this.sim.onRecordingUpdate = () => this.recordingManager.onGenerationUpdate();
+    this.sim.onSessionCapture = () => this.session.addFrame();
+    this.sim.onSessionClear = () => this.session.clear();
+    this.sim.onHandleUnsavedRecording = () => this.handleUnsavedRecording();
+    this.sim.onUpdateFullscreenButton = () => this.fullscreen.updatePlayPauseButton();
+
+    // AutoStop hooks
+    this.autoStop.onStop = () => {
+      this.sim.isRunning = false;
+      if (this.sim.animationId != null) cancelAnimationFrame(this.sim.animationId);
+      this.sim.updatePlayPauseUI();
+    };
+
+    // Grid settings
+    this.gridSettings.onResize = (r, c, cs) => {
+      this.renderer.resize(r, c, cs);
+      this.sim.rows = r;
+      this.sim.cols = c;
+      this.fullscreen.rows = r;
+      this.fullscreen.cols = c;
+      this.fullscreen.cellSize = cs;
+      this.draw();
+      this.sim.updateInfo();
+    };
+
+    // Fullscreen
+    this.fullscreen.onResize = (r, c, cs) => {
+      this.renderer.resize(r, c, cs);
+      this.sim.rows = r;
+      this.sim.cols = c;
+      this.gridSettings.rows = r;
+      this.gridSettings.cols = c;
+      this.gridSettings.cellSize = cs;
+      this.draw();
+      this.sim.updateInfo();
+    };
+
+    // Session history
+    this.session.onStateRestored = () => {
+      this.draw();
+      this.sim.updateInfo();
+    };
+
+    // InputHandler hooks
+    this.input.onUpdateInfo = () => this.sim.updateInfo();
+    this.input.onSaveSettings = () => this.persistence.save();
+    this.input.onShowSavePatternModal = () => {
+      this.selection.showSaveModal(this.input.getSelectionStart(), this.input.getSelectionEnd());
+    };
+    this.input.onHasValidSelection = () => {
+      return this.selection.hasValidSelection(this.input.getSelectionStart(), this.input.getSelectionEnd());
+    };
+    this.input.onGetRotatedPattern = (p: number[][], deg: number) => PatternManager.rotatePattern(p, deg);
+
+    // PatternManager hooks
+    this.patterns.onSelectDrawingPattern = (name: string) => {
+      const pat = GameOfLifePatterns.getPattern(name);
+      if (pat) this.tools.selectPattern(name, pat);
+    };
+    this.patterns.onSelectCustomPattern = (name: string) => {
+      const customs = this.storage.getCustomPatterns();
+      const found = customs.find((c: any) => c.name === name);
+      if (found) this.tools.selectCustomPattern(name, found.pattern);
+    };
+
+    // Visual settings → renderer sync
+    this.bus.on('visual:gridToggled', () => this.syncVisuals());
+    this.bus.on('visual:pixelGridToggled', () => this.syncVisuals());
+    this.bus.on('visual:fadeToggled', () => this.syncVisuals());
+    this.bus.on('visual:maturityToggled', () => this.syncVisuals());
+    this.bus.on('visual:cellShapeChanged', () => this.syncVisuals());
+    this.bus.on('visual:maturityColorChanged', () => this.syncVisuals());
+
+    // Simulation state → input handler
+    this.bus.on('simulation:start', () => { this.input.isRunning = true; this.fullscreen.isRunning = true; });
+    this.bus.on('simulation:stop', () => { this.input.isRunning = false; this.fullscreen.isRunning = false; });
+  }
+
+  private syncVisuals(): void {
+    const vs = this.visual.getState();
+    this.renderer.setVisualFlags({
+      showGrid: vs.showGrid,
+      showPixelGrid: vs.showPixelGrid,
+      fadeMode: vs.showFade,
+      maturityMode: vs.showMaturity,
+      cellShape: vs.cellShape,
+      maturityEndColor: vs.maturityColor,
+    });
+    this.sim.fadeMode = vs.showFade;
+    this.sim.fadeDuration = vs.fadeDuration;
+    this.inspector.fadeMode = vs.showFade;
+    this.inspector.maturityMode = vs.showMaturity;
+  }
+
+  private handleUnsavedRecording(): void {
+    if (this.recordingManager.isRecording &&
+        this.recordingManager.recordedGenerations.length > 1) {
+      const shouldSave = confirm(
+        `You have an unsaved recording with ${this.recordingManager.recordedGenerations.length} generations.\n` +
+        'Save it before continuing?',
+      );
+      if (shouldSave) {
+        this.recordingManager.closeModal(); // will open save modal internally
+        return;
+      }
+      this.recordingManager.stopRecording();
+    } else if (this.recordingManager.isRecording) {
+      this.recordingManager.stopRecording();
+    }
+  }
+
+  // ---- Public API ----
+
+  draw(): void {
+    this.renderer.draw();
+  }
+
+  updateInfo(): void {
+    this.sim.updateInfo();
+  }
+
+  toggleSimulation(): void {
+    this.sim.toggleSimulation();
+  }
+
+  saveSettings(): void {
+    this.persistence.save();
+  }
+
+  updateRuleDisplay(): void {
+    this.customRules.updateRuleDisplay();
+  }
+
+  updateCheckboxesFromRules(): void {
+    this.customRules.updateCheckboxesFromRules();
+  }
+
+  // ---- Initialisation ----
+
+  initialize(): void {
+    // Theme + sidebar
+    this.theme.initialize();
+    this.sidebar.setupCollapsibleSections();
+
+    // Load persisted settings
+    this.persistence.load();
+
+    // Sync visual settings to renderer
+    this.syncVisuals();
+
+    // Custom rules
+    this.customRules.initialize();
+
+    // Pattern tree
+    this.patterns.initializePatternTree(GameOfLifePatterns);
+
+    // Initial UI state
+    this.tools.updateUI();
+    this.tools.updatePatternHints();
+    this.autoStop.updateUI();
+    this.draw();
+    this.sim.updateInfo();
+
+    // Load existing recordings
+    this.recordingManager.loadRecordings();
+  }
+
+  placeDemoGlider(): void {
+    const centerRow = Math.floor(this.rows / 2);
+    const centerCol = Math.floor(this.cols / 2);
+    const pattern = GameOfLifePatterns.getPattern('glider');
+    if (pattern) {
+      this.engine.placePattern(pattern, centerRow, centerCol);
+      this.draw();
+      this.sim.updateInfo();
+      this.persistence.save();
+    }
+  }
+}
+
+// ---- Entry point ----
+
+document.addEventListener('DOMContentLoaded', () => {
+  if ((window as any).lucide) (window as any).lucide.createIcons();
+
+  const app = new App('gameCanvas');
+  app.initialize();
+
+  // Global reference for recording list inline handlers
+  (window as any).game = app;
+
+  // Demo glider if no saved settings
+  if (!localStorage.getItem('gameoflife-settings')) {
+    setTimeout(() => app.placeDemoGlider(), 100);
+  }
+});
