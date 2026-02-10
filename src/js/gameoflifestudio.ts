@@ -1,13 +1,17 @@
+import { createIcons, icons } from 'lucide';
 import { GameOfLifePatterns } from './patterns.js';
 import { GameOfLifeEngine } from './game-engine.js';
 import { RecordingManager } from './recording-manager.js';
-import type { 
-    Pattern, 
-    MouseEventInfo, 
-    TouchEventInfo, 
+import type {
+    Pattern,
+    MouseEventInfo,
+    TouchEventInfo,
     CanvasRenderingContext2DWithReset,
     CellShape
 } from '../types/game-types.js';
+
+// Make lucide available globally for dynamic icon updates
+window.lucide = { createIcons: () => createIcons({ icons }) };
 
 class GameOfLifeStudio {
     // Canvas and rendering
