@@ -770,7 +770,7 @@ class GameOfLifeStudio {
                 if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
                     // If cell is currently dead, we'll be drawing (making alive)
                     // If cell is currently alive, we'll be erasing (making dead)
-                    drawingState = !this.grid[row][col];
+                    drawingState = !this.engine.grid[row][col];
                 }
                 
                 this.toggleCell(e);
@@ -954,7 +954,7 @@ class GameOfLifeStudio {
         if (window.lucide) {
             setTimeout(() => {
                 try {
-                    lucide.createIcons();
+                    if (window.lucide) lucide.createIcons();
                 } catch (error) {
                     console.warn('Error updating Lucide icons:', error);
                 }
@@ -1571,7 +1571,7 @@ class GameOfLifeStudio {
     selectDrawingPattern(patternName) {
         this.drawingMode = patternName;
         this.inspectorMode = false;
-        this.selectedPattern = this.getPatternData(patternName);
+        this.selectedPattern = GameOfLifePatterns.getPattern(patternName);
         this.patternRotation = 0; // Reset rotation when selecting new pattern
         this.updateDrawingModeUI();
         this.clearPatternPreview(); // Clear any existing preview
@@ -2386,7 +2386,7 @@ class GameOfLifeStudio {
         text.textContent = config.text;
         
         // Update the icon
-        lucide.createIcons();
+        if (window.lucide) lucide.createIcons();
     }
     
     drawCells() {
@@ -2805,7 +2805,7 @@ class GameOfLifeStudio {
         `).join('');
         
         // Re-create Lucide icons for the dynamically added buttons
-        lucide.createIcons();
+        if (window.lucide) lucide.createIcons();
     }
     
     async playRecording(recordingId) {
@@ -3114,6 +3114,15 @@ class GameOfLifeStudio {
             if (settings.drawingMode !== undefined) {
                 if (settings.drawingMode === 'cell') {
                     this.selectCellDrawingMode();
+                } else if (settings.drawingMode === 'inspector') {
+                    this.selectInspectorMode();
+                } else if (settings.drawingMode === 'selection') {
+                    this.selectPatternSelectionMode();
+                } else if (settings.drawingMode === 'eraser') {
+                    this.selectEraserMode();
+                } else if (settings.drawingMode.startsWith('custom:')) {
+                    const customName = settings.drawingMode.slice(7);
+                    this.selectCustomPattern(customName);
                 } else {
                     this.selectDrawingPattern(settings.drawingMode);
                 }
@@ -3286,7 +3295,7 @@ class GameOfLifeStudio {
         } else {
             icon.setAttribute('data-lucide', 'moon');
         }
-        lucide.createIcons();
+        if (window.lucide) lucide.createIcons();
     }
     
     // Custom pattern management
@@ -3477,7 +3486,7 @@ class GameOfLifeStudio {
         this.setupPatternTreeListeners();
         
         // Refresh Lucide icons for new pattern tree content
-        lucide.createIcons();
+        if (window.lucide) lucide.createIcons();
     }
     
     setupPatternTreeListeners() {
@@ -3528,7 +3537,7 @@ class GameOfLifeStudio {
                     icon.setAttribute('data-lucide', 
                         parent.classList.contains('expanded') ? 'chevron-down' : 'chevron-right'
                     );
-                    lucide.createIcons();
+                    if (window.lucide) lucide.createIcons();
                 }
             });
         });
@@ -3604,7 +3613,7 @@ class GameOfLifeStudio {
         }
         
         // Re-initialize Lucide icons after DOM changes
-        setTimeout(() => lucide.createIcons(), 0);
+        setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 0);
     }
     
     toggleSubcategory(header) {
@@ -3618,7 +3627,7 @@ class GameOfLifeStudio {
         }
         
         // Re-initialize Lucide icons after DOM changes
-        setTimeout(() => lucide.createIcons(), 0);
+        setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 0);
     }
     
     handleTreeKeyNavigation(e) {
@@ -3807,7 +3816,7 @@ class GameOfLifeStudio {
             this.fullscreenBtn.title = 'Exit Fullscreen';
             const fullscreenIcon = this.fullscreenBtn.querySelector('.btn-icon');
             fullscreenIcon.setAttribute('data-lucide', 'minimize');
-            lucide.createIcons();
+            if (window.lucide) lucide.createIcons();
             
             // Set fullscreen flag
             this.isFullscreen = true;
@@ -3837,7 +3846,7 @@ class GameOfLifeStudio {
             this.fullscreenBtn.title = 'Enter Fullscreen';
             const fullscreenIcon = this.fullscreenBtn.querySelector('.btn-icon');
             fullscreenIcon.setAttribute('data-lucide', 'maximize');
-            lucide.createIcons();
+            if (window.lucide) lucide.createIcons();
             
             // Clear fullscreen flag
             this.isFullscreen = false;
@@ -3936,7 +3945,7 @@ class GameOfLifeStudio {
         
         // Update icons
         if (window.lucide) {
-            lucide.createIcons();
+            if (window.lucide) lucide.createIcons();
         }
     }
     
@@ -3974,7 +3983,7 @@ class GameOfLifeStudio {
             if (window.lucide) {
                 setTimeout(() => {
                     try {
-                        lucide.createIcons();
+                        if (window.lucide) lucide.createIcons();
                     } catch (error) {
                         console.warn('Error updating Lucide icons:', error);
                     }
@@ -4425,7 +4434,7 @@ function setupCollapsibleSections() {
 // Initialize the game when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize Lucide icons
-    lucide.createIcons();
+    if (window.lucide) lucide.createIcons();
     
     // Setup collapsible sections
     setupCollapsibleSections();
@@ -4463,19 +4472,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const hasSavedSettings = localStorage.getItem('gameoflife-settings');
     if (!hasSavedSettings) {
         setTimeout(() => {
-            const startRow = Math.floor(game.rows / 2);
-            const startCol = Math.floor(game.cols / 2);
-            
+            const centerRow = Math.floor(game.rows / 2);
+            const centerCol = Math.floor(game.cols / 2);
+
             const pattern = GameOfLifePatterns.getPattern('glider');
             if (pattern) {
-                for (let i = 0; i < pattern.length; i++) {
-                    for (let j = 0; j < pattern[i].length; j++) {
-                        if (startRow + i < game.rows && startCol + j < game.cols) {
-                            game.grid[startRow + i][startCol + j] = pattern[i][j] === 1;
-                        }
-                    }
-                }
-                
+                game.engine.placePattern(pattern, centerRow, centerCol);
+
                 game.draw();
                 game.updateInfo();
                 game.saveSettings(); // Save initial demo state
