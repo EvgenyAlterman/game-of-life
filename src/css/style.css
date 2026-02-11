@@ -635,10 +635,14 @@ body {
     padding: 8px 10px;
     border-radius: 6px;
     border: 1px solid var(--border-sidebar-secondary);
+    max-width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .slider-group input[type="range"] {
     flex: 1;
+    min-width: 0;
     height: 4px;
     background: var(--border-sidebar-secondary);
     outline: none;
