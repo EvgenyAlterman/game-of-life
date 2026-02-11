@@ -319,6 +319,26 @@ body {
     overflow-y: auto;
 }
 
+/* Recordings panel: full-height list */
+.sidebar-panel-content--recordings {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 0;
+}
+
+.sidebar-panel-content--recordings .recordings-controls {
+    flex-shrink: 0;
+    margin-bottom: 12px;
+}
+
+.sidebar-panel-content--recordings .recordings-list {
+    flex: 1;
+    max-height: none;
+    overflow-y: auto;
+    margin-bottom: 0;
+    padding-bottom: 12px;
+}
+
 /* Tool Sections */
 .tool-section {
     margin-bottom: 5px;
@@ -1705,44 +1725,51 @@ body {
 
 /* Recordings Section */
 .recordings-controls {
-    padding: 0 20px 15px 20px;
-}
-
-.recordings-controls .load-btn {
-    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 12px 8px 12px;
 }
 
 .load-btn {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    background: var(--accent-primary);
-    color: white;
-    border: none;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-primary);
     border-radius: 6px;
     cursor: pointer;
-    font-size: 0.9rem;
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 .load-btn:hover {
-    background: var(--accent-secondary);
+    background: var(--bg-button-hover);
+    color: var(--text-primary);
+    border-color: var(--accent-primary);
+}
+
+.load-btn .btn-icon {
+    width: 14px;
+    height: 14px;
 }
 
 .recordings-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 0 20px;
+    gap: 6px;
+    padding: 0 12px;
     max-height: 200px;
     overflow-y: auto;
 }
 
 .no-recordings {
     text-align: center;
-    color: var(--text-secondary);
+    color: var(--text-tertiary);
     font-style: italic;
+    font-size: 0.8rem;
     margin: 20px 0;
 }
 
@@ -1750,48 +1777,65 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 15px;
+    padding: 8px 10px;
     background: var(--bg-tertiary);
     border: 1px solid var(--border-primary);
-    border-radius: 8px;
+    border-radius: 6px;
     transition: all 0.2s ease;
+    gap: 8px;
 }
 
 .recording-item:hover {
     background: var(--bg-button-hover);
-    border-color: var(--accent-primary);
+    border-color: var(--border-secondary);
 }
 
 .recording-info {
     flex: 1;
+    min-width: 0;
 }
 
 .recording-name {
-    font-weight: 600;
+    font-weight: 500;
+    font-size: 0.85rem;
     color: var(--text-primary);
-    margin-bottom: 4px;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .recording-details {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .recording-actions {
     display: flex;
-    gap: 8px;
+    gap: 4px;
+    flex-shrink: 0;
 }
 
 .play-recording-btn, .delete-recording-btn {
-    padding: 6px 10px;
+    width: 26px;
+    height: 26px;
+    padding: 0;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 0.8rem;
     display: flex;
     align-items: center;
-    gap: 4px;
+    justify-content: center;
     transition: all 0.2s ease;
+}
+
+.play-recording-btn .btn-icon,
+.delete-recording-btn .btn-icon {
+    width: 14px;
+    height: 14px;
 }
 
 .play-recording-btn {
@@ -1804,12 +1848,15 @@ body {
 }
 
 .delete-recording-btn {
-    background: #ef4444;
-    color: white;
+    background: transparent;
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-primary);
 }
 
 .delete-recording-btn:hover {
-    background: #dc2626;
+    background: #ef4444;
+    color: white;
+    border-color: #ef4444;
 }
 
 /* Recordings section in main content area */

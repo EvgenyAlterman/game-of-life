@@ -356,15 +356,12 @@ export class RecordingManager {
         (r) => `
       <div class="recording-item">
         <div class="recording-info">
-          <div class="recording-name">${r.name}</div>
-          <div class="recording-details">
-            ${r.totalGenerations} generations &bull; ${r.date} ${r.time}
-            ${r.ruleString ? `&bull; ${r.ruleString}` : ''}
-          </div>
+          <div class="recording-name" title="${r.name}">${r.name}</div>
+          <div class="recording-details">${r.totalGenerations} gen &bull; ${r.date}</div>
         </div>
         <div class="recording-actions">
-          <button class="play-recording-btn" onclick="game.recordingManager.playRecording('${r.id}')">Play</button>
-          <button class="delete-recording-btn" onclick="game.recordingManager.deleteRecording('${r.id}', '${r.name}')">Delete</button>
+          <button class="play-recording-btn" title="Play recording" onclick="game.recordingManager.playRecording('${r.id}')"><i data-lucide="play" class="btn-icon"></i></button>
+          <button class="delete-recording-btn" title="Delete recording" onclick="game.recordingManager.deleteRecording('${r.id}', '${r.name}')"><i data-lucide="trash-2" class="btn-icon"></i></button>
         </div>
       </div>`,
       )

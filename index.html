@@ -39,6 +39,9 @@
                     <button class="sidebar-nav-btn" data-tab="patterns" title="Patterns">
                         <i data-lucide="layout-grid"></i>
                     </button>
+                    <button class="sidebar-nav-btn" data-tab="recordings" title="Recordings">
+                        <i data-lucide="video"></i>
+                    </button>
                     <div class="sidebar-nav-spacer"></div>
                     <button id="sidebarToggle" class="sidebar-nav-btn sidebar-toggle-btn" title="Collapse Sidebar">
                         <i data-lucide="panel-left-close"></i>
@@ -318,6 +321,21 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Recordings Tab -->
+                    <div class="sidebar-panel" data-panel="recordings">
+                        <div class="sidebar-panel-header"><h2>Recordings</h2></div>
+                        <div class="sidebar-panel-content sidebar-panel-content--recordings">
+                            <div class="recordings-controls">
+                                <button id="loadRecordingsBtn" class="load-btn" title="Refresh recordings from server">
+                                    <i data-lucide="refresh-cw" class="btn-icon"></i>
+                                </button>
+                            </div>
+                            <div class="recordings-list" id="recordingsList">
+                                <p class="no-recordings">No recordings available. Start recording to save your simulations!</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -406,24 +424,6 @@
                     </div>
                 </div>
                 
-                <!-- Recording Management -->
-                <div class="tool-section collapsed" id="recordingsSection">
-                    <div class="section-header" data-toggle="recordings">
-                        <h3>💾 Saved Recordings</h3>
-                        <i data-lucide="chevron-down" class="toggle-icon"></i>
-                    </div>
-                    <div class="section-content" id="recordingsContent">
-                        <div class="recordings-controls">
-                            <button id="loadRecordingsBtn" class="load-btn" title="Load Recordings">
-                                <i data-lucide="folder-open" class="btn-icon"></i>
-                                Load
-                            </button>
-                        </div>
-                        <div class="recordings-list" id="recordingsList">
-                            <p class="no-recordings">No recordings available. Start recording to save your simulations!</p>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
