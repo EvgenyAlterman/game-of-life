@@ -176,4 +176,12 @@ export class AutoStopManager {
     if (s.showNotification !== undefined) this.showNotification = s.showNotification;
     this.updateUI();
   }
+
+  setDelay(value: number): void {
+    this.delaySetting = value;
+  }
+
+  setShowNotification(value: boolean): void {
+    this.showNotification = value;
+  }
 }

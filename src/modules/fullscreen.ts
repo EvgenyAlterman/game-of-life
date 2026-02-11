@@ -155,6 +155,11 @@ export class FullscreenManager {
     }
   }
 
+  /** Alias for handleFullscreenChange for event wiring */
+  handleChange(): void {
+    this.handleFullscreenChange();
+  }
+
   updatePlayPauseButton(): void {
     const btn = this.dom.get<HTMLElement>('fullscreenPlayPauseBtn');
     if (!btn) return;

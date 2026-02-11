@@ -26,7 +26,13 @@ export interface SettingsSnapshot {
   generation?: number;
   sliderMaxes?: Record<string, string>;
   sidebarCollapsed?: boolean;
+  activeTab?: string;
   timestamp?: number;
+}
+
+export interface SidebarModule {
+  getActiveTab(): string;
+  setActiveTab(tabId: string): void;
 }
 
 export interface PersistenceModules {
@@ -35,6 +41,7 @@ export interface PersistenceModules {
   autoStop?: ModuleWithState<any>;
   customRules?: ModuleWithState<any>;
   drawingTools?: ModuleWithState<any>;
+  sidebar?: SidebarModule;
 }
 
 export interface PersistenceEngine {
@@ -120,6 +127,11 @@ export class SettingsPersistence {
     const sidebar = this.dom.query<HTMLElement>('.sidebar');
     if (sidebar) snapshot.sidebarCollapsed = sidebar.classList.contains('collapsed');
 
+    // Active tab
+    if (this.modules.sidebar) {
+      snapshot.activeTab = this.modules.sidebar.getActiveTab();
+    }
+
     this.storage.saveSettings(snapshot as any);
   }
 
@@ -199,6 +211,11 @@ export class SettingsPersistence {
     if (settings.sidebarCollapsed) {
       const sidebar = this.dom.query<HTMLElement>('.sidebar');
       if (sidebar) sidebar.classList.add('collapsed');
+    }
+
+    // Active tab
+    if (settings.activeTab && this.modules.sidebar) {
+      this.modules.sidebar.setActiveTab(settings.activeTab);
     }
 
     this.bus.emit('settings:loaded');

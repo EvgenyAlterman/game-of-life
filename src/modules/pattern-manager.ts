@@ -200,17 +200,28 @@ export class PatternManager {
     `;
   }
 
+  // ─── Pattern Selection ─────────────────────────────────
+
+  selectPattern(name: string): void {
+    this.onSelectDrawingPattern(name);
+  }
+
   // ─── Search ─────────────────────────────────────────────
 
-  handleSearch(
-    query: string,
-    searchFn: (q: string) => any[],
-  ): void {
+  private searchFn: ((q: string) => any[]) | null = null;
+
+  setSearchFunction(fn: (q: string) => any[]): void {
+    this.searchFn = fn;
+  }
+
+  handleSearch(query: string, searchFn?: (q: string) => any[]): void {
     if (!query.trim()) {
       this.clearSearch();
       return;
     }
-    const results = searchFn(query);
+    const fn = searchFn || this.searchFn;
+    if (!fn) return;
+    const results = fn(query);
     this.displaySearchResults(results);
   }
 

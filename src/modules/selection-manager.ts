@@ -124,4 +124,14 @@ export class SelectionManager {
     this.closeSaveModal();
     return true;
   }
+
+  /** Alias for closeSaveModal */
+  closeModal(): void {
+    this.closeSaveModal();
+  }
+
+  /** Alias for saveSelectedPattern */
+  savePattern(): boolean {
+    return this.saveSelectedPattern();
+  }
 }

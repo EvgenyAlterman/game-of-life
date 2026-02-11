@@ -5,6 +5,8 @@
  * Each module is small (<300 lines), focused, and independently testable.
  */
 
+import { createIcons, icons } from 'lucide';
+
 import { EventBus } from './core/event-bus';
 import { StorageService } from './core/storage-service';
 import { DomRegistry } from './core/dom-registry';
@@ -29,6 +31,7 @@ import { FullscreenManager } from './modules/fullscreen';
 import { SimulationController } from './modules/simulation-controller';
 import { SettingsPersistence } from './modules/settings-persistence';
 import { RecordingManager } from './recording-manager';
+import { EventWiring } from './modules/event-wiring';
 
 export class App {
   // Core
@@ -57,6 +60,10 @@ export class App {
   public sim: SimulationController;
   public persistence: SettingsPersistence;
   public recordingManager: RecordingManager;
+  public wiring: EventWiring;
+
+  // Canvas reference for EventWiring
+  private canvas: HTMLCanvasElement;
 
   // Convenience proxies used by RecordingManager host interface
   public get cellSize() { return this.gridSettings.cellSize; }
@@ -71,16 +78,16 @@ export class App {
     this.storage = new StorageService();
     this.dom = new DomRegistry();
 
-    const canvas = this.dom.require<HTMLCanvasElement>(canvasId);
+    this.canvas = this.dom.require<HTMLCanvasElement>(canvasId);
     const cellSize = 10;
-    const rows = Math.floor(canvas.height / cellSize);
-    const cols = Math.floor(canvas.width / cellSize);
+    const rows = Math.floor(this.canvas.height / cellSize);
+    const cols = Math.floor(this.canvas.width / cellSize);
 
     // ---- Engine ----
     this.engine = new GameOfLifeEngine(rows, cols);
 
     // ---- Renderer ----
-    this.renderer = new CanvasRenderer(canvas, this.engine, this.bus, rows, cols, cellSize);
+    this.renderer = new CanvasRenderer(this.canvas, this.engine, this.bus, rows, cols, cellSize);
 
     // ---- UI chrome ----
     this.theme = new ThemeManager(this.bus, this.storage, this.dom);
@@ -97,12 +104,12 @@ export class App {
     // ---- Settings managers ----
     this.autoStop = new AutoStopManager(this.bus, this.dom, this.engine);
     this.customRules = new CustomRulesManager(this.bus, this.dom, this.engine as any);
-    this.gridSettings = new GridSettingsManager(this.bus, this.dom, this.engine as any, canvas, rows, cols, cellSize);
+    this.gridSettings = new GridSettingsManager(this.bus, this.dom, this.engine as any, this.canvas, rows, cols, cellSize);
     this.session = new SessionHistoryManager(this.bus, this.engine as any);
-    this.fullscreen = new FullscreenManager(this.bus, this.dom, this.engine as any, canvas, rows, cols, cellSize);
+    this.fullscreen = new FullscreenManager(this.bus, this.dom, this.engine as any, this.canvas, rows, cols, cellSize);
 
     // ---- Simulation controller ----
-    this.sim = new SimulationController({ bus: this.bus, dom: this.dom, engine: this.engine as any, canvas }, rows, cols);
+    this.sim = new SimulationController({ bus: this.bus, dom: this.dom, engine: this.engine as any, canvas: this.canvas }, rows, cols);
 
     // ---- Recording ----
     this.recordingManager = new RecordingManager(this.bus, this.dom, this.engine as any, this as any);
@@ -116,10 +123,33 @@ export class App {
         autoStop: this.autoStop,
         customRules: this.customRules,
         drawingTools: this.tools,
+        sidebar: this.sidebar,
       },
       this.engine as any,
-      canvas,
+      this.canvas,
     );
+
+    // ---- Event Wiring ----
+    this.wiring = new EventWiring({
+      bus: this.bus,
+      dom: this.dom,
+      sim: this.sim,
+      sidebar: this.sidebar,
+      theme: this.theme,
+      visual: this.visual,
+      tools: this.tools,
+      gridSettings: this.gridSettings,
+      autoStop: this.autoStop,
+      customRules: this.customRules,
+      fullscreen: this.fullscreen,
+      patterns: this.patterns,
+      selection: this.selection,
+      input: this.input,
+      canvas: this.canvas,
+      engine: this.engine,
+      patternsLib: GameOfLifePatterns,
+      onSaveSettings: () => this.persistence.save(),
+    });
 
     // ---- Wire callbacks ----
     this.wireCallbacks();
@@ -275,6 +305,12 @@ export class App {
     this.theme.initialize();
     this.sidebar.setupCollapsibleSections();
 
+    // Wire all event listeners (buttons, sliders, canvas, keyboard)
+    this.wiring.setupAll();
+
+    // Set up pattern search function
+    this.patterns.setSearchFunction((q: string) => GameOfLifePatterns.search(q));
+
     // Load persisted settings
     this.persistence.load();
 
@@ -285,7 +321,7 @@ export class App {
     this.customRules.initialize();
 
     // Pattern tree
-    this.patterns.initializePatternTree(GameOfLifePatterns);
+    this.patterns.initializePatternTree(GameOfLifePatterns as any);
 
     // Initial UI state
     this.tools.updateUI();
@@ -314,10 +350,17 @@ export class App {
 // ---- Entry point ----
 
 document.addEventListener('DOMContentLoaded', () => {
-  if ((window as any).lucide) (window as any).lucide.createIcons();
+  // Initialize Lucide icons
+  createIcons({ icons });
 
   const app = new App('gameCanvas');
   app.initialize();
+
+  // Re-initialize icons after dynamic content is created
+  createIcons({ icons });
+
+  // Make lucide available globally for dynamic icon updates
+  (window as any).lucide = { createIcons: () => createIcons({ icons }) };
 
   // Global reference for recording list inline handlers
   (window as any).game = app;
