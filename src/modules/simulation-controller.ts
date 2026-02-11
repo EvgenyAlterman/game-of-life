@@ -45,6 +45,7 @@ export class SimulationController {
   public onSaveSettings: (() => void) | null = null;
   public onAutoStopCheck: (() => void) | null = null;
   public onRecordingUpdate: (() => void) | null = null;
+  public onRecordingClear: (() => void) | null = null;
   public onSessionCapture: (() => void) | null = null;
   public onSessionClear: (() => void) | null = null;
   public onHandleUnsavedRecording: (() => void) | null = null;

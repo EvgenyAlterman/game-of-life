@@ -163,6 +163,7 @@ export class App {
     this.sim.onSaveSettings = () => this.persistence.save();
     this.sim.onAutoStopCheck = () => this.autoStop.check();
     this.sim.onRecordingUpdate = () => this.recordingManager.onGenerationUpdate();
+    this.sim.onRecordingClear = () => this.recordingManager.clearRecording();
     this.sim.onSessionCapture = () => this.session.addFrame();
     this.sim.onSessionClear = () => this.session.clear();
     this.sim.onHandleUnsavedRecording = () => this.handleUnsavedRecording();
@@ -257,22 +258,8 @@ export class App {
   }
 
   private async handleUnsavedRecording(): Promise<void> {
-    if (this.recordingManager.isRecording &&
-        this.recordingManager.recordedGenerations.length > 1) {
-      const shouldSave = await Modal.confirm(
-        'Unsaved Recording',
-        `You have an unsaved recording with ${this.recordingManager.recordedGenerations.length} generations. Save it before continuing?`,
-        'Save',
-        'Discard',
-      );
-      if (shouldSave) {
-        this.recordingManager.finishRecording();
-        return;
-      }
-      this.recordingManager.stopRecording();
-    } else if (this.recordingManager.isRecording) {
-      this.recordingManager.stopRecording();
-    }
+    // With auto-recording, we don't need to prompt - users can save anytime via the timeline
+    // The recording buffer persists until explicitly cleared via the reset button
   }
 
   // ---- Public API ----

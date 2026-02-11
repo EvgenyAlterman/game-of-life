@@ -37,15 +37,25 @@ export class RecordingManager {
   private engine: RecordingEngine;
   private host: RecordingHost;
 
+  // Auto-recording is always active when simulation runs
   public isRecording = false;
   public recordedGenerations: RecordingFrame[] = [];
   public recordingStartTime: number | null = null;
+
+  // Range selection for saving
+  public rangeStart = 0;
+  public rangeEnd = 0;
 
   public isReplaying = false;
   public replayData: RecordingFrame[] | null = null;
   public replayIndex = 0;
   public replaySpeed = 5;
   public replayInterval: ReturnType<typeof setInterval> | null = null;
+
+  // Playback mode (when playing a saved recording)
+  public isInPlaybackMode = false;
+  public currentPlaybackName: string | null = null;
+  public currentPlaybackDate: string | null = null;
 
   constructor(bus: EventBus, dom: DomRegistry, engine: RecordingEngine, host: RecordingHost) {
     this.bus = bus;
@@ -62,19 +72,18 @@ export class RecordingManager {
   }
 
   private initializeUI(): void {
-    // nothing to cache — we look up elements as needed via dom.get
+    // Ensure Lucide icons are created for timeline buttons after DOM is ready
+    setTimeout(() => this.tryCreateIcons(), 100);
   }
 
   private setupEventListeners(): void {
-    this.el('recordBtn')?.addEventListener('click', () => this.toggleRecording());
-    this.el('finishBtn')?.addEventListener('click', () => this.finishRecording());
-    this.el('playTimelineBtn')?.addEventListener('click', () => this.playTimeline());
-    this.el('pauseTimelineBtn')?.addEventListener('click', () => this.pauseTimeline());
-    this.el('stopTimelineBtn')?.addEventListener('click', () => this.stopTimeline());
-
-    const slider = this.dom.get<HTMLInputElement>('timelineSlider');
-    slider?.addEventListener('input', (e) => {
-      this.seekTimeline(parseInt((e.target as HTMLInputElement).value, 10));
+    // Timeline play/pause button (compact bar)
+    this.el('timelinePlayBtn')?.addEventListener('click', () => {
+      if (this.isReplaying) {
+        this.pauseTimeline();
+      } else {
+        this.playTimeline();
+      }
     });
 
     // Compact timeline bar slider
@@ -89,21 +98,10 @@ export class RecordingManager {
       target.style.setProperty('--progress', `${progress}%`);
     });
 
-    // Compact timeline bar play button
-    this.el('timelinePlayBtn')?.addEventListener('click', () => {
-      if (this.isReplaying) {
-        this.pauseTimeline();
-      } else {
-        this.playTimeline();
-      }
-    });
-
-    const speed = this.dom.get<HTMLInputElement>('playbackSpeed');
-    speed?.addEventListener('input', (e) => {
-      this.replaySpeed = parseInt((e.target as HTMLInputElement).value, 10);
-      const sv = this.el('speedValue');
-      if (sv) sv.textContent = (e.target as HTMLInputElement).value + 'x';
-    });
+    // New buttons: Save, Reset, and Close playback
+    this.el('saveRecordingBtn')?.addEventListener('click', () => this.openSaveModal());
+    this.el('resetTimelineBtn')?.addEventListener('click', () => this.clearRecording());
+    this.el('closePlaybackBtn')?.addEventListener('click', () => this.exitPlaybackMode());
 
     this.el('loadRecordingsBtn')?.addEventListener('click', () => this.loadRecordings());
     this.el('modalClose')?.addEventListener('click', () => this.closeModal());
@@ -115,33 +113,83 @@ export class RecordingManager {
       if (e.target === modal) this.closeModal();
     });
 
-    // Listen for simulation stop to show compact timeline if we have replay data
-    this.bus.on('simulation:stop', () => this.updateCompactTimelineVisibility());
-    this.bus.on('simulation:start', () => this.hideCompactTimeline());
+    // Range selector inputs
+    this.setupRangeSelectors();
+
+    // Listen for simulation events - auto-recording integration
+    this.bus.on('simulation:stop', () => this.onSimulationStop());
+    this.bus.on('simulation:start', () => this.onSimulationStart());
   }
 
-  // ---- Recording ----
+  private setupRangeSelectors(): void {
+    const rangeStart = this.dom.get<HTMLInputElement>('rangeStart');
+    const rangeEnd = this.dom.get<HTMLInputElement>('rangeEnd');
+    const sliderStart = this.dom.get<HTMLInputElement>('rangeSliderStart');
+    const sliderEnd = this.dom.get<HTMLInputElement>('rangeSliderEnd');
 
-  toggleRecording(): void {
-    if (this.isRecording) this.stopRecording();
-    else this.startRecording();
+    // Sync number inputs with sliders
+    rangeStart?.addEventListener('input', () => {
+      const val = parseInt(rangeStart.value, 10) || 1;
+      this.rangeStart = Math.max(0, val - 1);
+      if (sliderStart) sliderStart.value = String(val);
+      this.updateRangeStats();
+    });
+
+    rangeEnd?.addEventListener('input', () => {
+      const val = parseInt(rangeEnd.value, 10) || 1;
+      this.rangeEnd = Math.max(0, val - 1);
+      if (sliderEnd) sliderEnd.value = String(val);
+      this.updateRangeStats();
+    });
+
+    sliderStart?.addEventListener('input', () => {
+      const val = parseInt(sliderStart.value, 10) || 1;
+      this.rangeStart = Math.max(0, val - 1);
+      if (rangeStart) rangeStart.value = String(val);
+      this.updateRangeStats();
+    });
+
+    sliderEnd?.addEventListener('input', () => {
+      const val = parseInt(sliderEnd.value, 10) || 1;
+      this.rangeEnd = Math.max(0, val - 1);
+      if (rangeEnd) rangeEnd.value = String(val);
+      this.updateRangeStats();
+    });
   }
 
-  startRecording(): void {
+  private updateRangeStats(): void {
+    const frameCount = Math.max(0, this.rangeEnd - this.rangeStart + 1);
+    const genEl = this.el('recordedGenerations');
+    if (genEl) genEl.textContent = String(frameCount);
+
+    // Estimate duration
+    const data = this.getTimelineData();
+    if (data && data.length > 0 && this.rangeEnd < data.length && this.rangeStart < data.length) {
+      const startTime = data[this.rangeStart]?.timestamp ?? 0;
+      const endTime = data[this.rangeEnd]?.timestamp ?? 0;
+      const duration = (endTime - startTime) / 1000;
+      const durEl = this.el('recordingDuration');
+      if (durEl) durEl.textContent = `${duration.toFixed(1)}s`;
+    }
+  }
+
+  // ---- Auto Recording (always on during simulation) ----
+
+  startAutoRecording(): void {
     if (this.isRecording) return;
-    this.isRecording = true;
+    // Clear any previous recording when starting fresh
     this.recordedGenerations = [];
+    this.isRecording = true;
     this.recordingStartTime = Date.now();
     this.recordGeneration();
-    this.updateRecordingUI();
+    this.updateTimelineUI();
     this.bus.emit('recording:started');
   }
 
-  stopRecording(): void {
+  stopAutoRecording(): void {
     if (!this.isRecording) return;
     this.isRecording = false;
     this.recordingStartTime = null;
-    this.updateRecordingUI();
     this.bus.emit('recording:stopped');
   }
 
@@ -154,46 +202,95 @@ export class RecordingManager {
       grid: snapshot.grid.map(row => [...row]),
       population: snapshot.population ?? 0,
     });
+    // Update live counter in timeline
+    this.updateLiveFrameCounter();
   }
 
-  finishRecording(): void {
-    if (!this.isRecording) return;
-    this.stopRecording();
-    if (this.recordedGenerations.length === 0) return;
-    this.openSaveModal();
-  }
-
-  private updateRecordingUI(): void {
-    const recordBtn = this.el('recordBtn');
-    const finishBtn = this.el('finishBtn');
-    if (!recordBtn || !finishBtn) return;
-
-    if (this.isRecording) {
-      recordBtn.classList.add('recording');
-      recordBtn.title = 'Stop Recording';
-      const icon = recordBtn.querySelector('.btn-icon');
-      if (icon) icon.setAttribute('data-lucide', 'square');
-      finishBtn.style.display = 'block';
-      (finishBtn as HTMLButtonElement).disabled = false;
-    } else {
-      recordBtn.classList.remove('recording');
-      recordBtn.title = 'Start Recording';
-      const icon = recordBtn.querySelector('.btn-icon');
-      if (icon) icon.setAttribute('data-lucide', 'circle');
-      if (this.recordedGenerations.length > 0) {
-        finishBtn.style.display = 'block';
-        (finishBtn as HTMLButtonElement).disabled = false;
-      } else {
-        finishBtn.style.display = 'none';
-        (finishBtn as HTMLButtonElement).disabled = true;
-      }
-    }
-
-    this.tryCreateIcons();
+  clearRecording(): void {
+    this.recordedGenerations = [];
+    this.replayData = null;
+    this.replayIndex = 0;
+    this.rangeStart = 0;
+    this.rangeEnd = 0;
+    this.updateTimelineState();
+    this.bus.emit('recording:cleared');
   }
 
   onGenerationUpdate(): void {
     if (this.isRecording) this.recordGeneration();
+  }
+
+  private onSimulationStart(): void {
+    // Auto-start recording when simulation starts
+    this.startAutoRecording();
+    // Disable timeline controls while running
+    this.setTimelineControlsEnabled(false);
+  }
+
+  private onSimulationStop(): void {
+    // Stop recording
+    this.stopAutoRecording();
+    // Set up replay data from recorded generations
+    if (this.recordedGenerations.length > 0) {
+      this.replayData = this.recordedGenerations;
+      this.replayIndex = this.recordedGenerations.length - 1;
+    }
+    // Enable timeline controls
+    this.updateTimelineState();
+  }
+
+  private updateLiveFrameCounter(): void {
+    const frameEl = this.el('timelineBarFrame');
+    if (frameEl) {
+      frameEl.textContent = `${this.recordedGenerations.length} / ${this.recordedGenerations.length}`;
+    }
+  }
+
+  private setTimelineControlsEnabled(enabled: boolean): void {
+    const playBtn = this.el('timelinePlayBtn') as HTMLButtonElement;
+    const saveBtn = this.el('saveRecordingBtn') as HTMLButtonElement;
+    const resetBtn = this.el('resetTimelineBtn') as HTMLButtonElement;
+    const slider = this.dom.get<HTMLInputElement>('timelineBarSlider');
+
+    if (playBtn) playBtn.disabled = !enabled;
+    if (saveBtn) saveBtn.disabled = !enabled;
+    if (resetBtn) resetBtn.disabled = !enabled;
+    if (slider) slider.disabled = !enabled;
+  }
+
+  private updateTimelineState(): void {
+    // In playback mode, use replayData; otherwise use recordedGenerations
+    const data = this.isInPlaybackMode ? this.replayData : this.recordedGenerations;
+    const hasData = data && data.length > 0;
+    const isRunning = this.host.isRunning;
+
+    // Enable/disable based on state (always enable in playback mode if we have data)
+    const shouldEnable = hasData && (!isRunning || this.isInPlaybackMode);
+    this.setTimelineControlsEnabled(shouldEnable);
+
+    // Update slider range
+    const slider = this.dom.get<HTMLInputElement>('timelineBarSlider');
+    if (slider && data) {
+      slider.min = '0';
+      slider.max = String(Math.max(0, data.length - 1));
+      slider.value = String(this.replayIndex);
+      const progress = data.length > 1
+        ? (this.replayIndex / (data.length - 1)) * 100
+        : 0;
+      slider.style.setProperty('--progress', `${progress}%`);
+    }
+
+    // Update frame counter
+    const frameEl = this.el('timelineBarFrame');
+    if (frameEl) {
+      if (hasData && data) {
+        frameEl.textContent = `${this.replayIndex + 1} / ${data.length}`;
+      } else {
+        frameEl.textContent = '0 / 0';
+      }
+    }
+
+    this.tryCreateIcons();
   }
 
   // ---- Timeline / replay ----
@@ -201,22 +298,21 @@ export class RecordingManager {
   setupTimeline(): void {
     if (!this.replayData || this.replayData.length === 0) return;
 
-    const section = this.el('timelineSection');
-    if (section) section.style.display = 'block';
-
-    const slider = this.dom.get<HTMLInputElement>('timelineSlider');
+    // Use the compact timeline bar for all playback
+    const slider = this.dom.get<HTMLInputElement>('timelineBarSlider');
     if (slider) {
       slider.min = '0';
       slider.max = String(this.replayData.length - 1);
       slider.value = '0';
+      slider.style.setProperty('--progress', '0%');
     }
 
     this.replayIndex = 0;
     this.updateTimelineInfo();
     this.showReplayFrame(0);
 
-    // Show compact timeline bar
-    this.showCompactTimeline();
+    // Update timeline state
+    this.updateTimelineState();
   }
 
   playTimeline(): void {
@@ -284,33 +380,38 @@ export class RecordingManager {
     this.host.draw();
     this.host.updateInfo();
 
-    const slider = this.dom.get<HTMLInputElement>('timelineSlider');
-    if (slider) slider.value = String(idx);
+    // Update compact timeline slider
+    const slider = this.dom.get<HTMLInputElement>('timelineBarSlider');
+    if (slider) {
+      slider.value = String(idx);
+      const max = parseInt(slider.max, 10) || 1;
+      const progress = max > 0 ? (idx / max) * 100 : 0;
+      slider.style.setProperty('--progress', `${progress}%`);
+    }
   }
 
   private updateTimelineUI(): void {
-    const play = this.el('playTimelineBtn');
-    const pause = this.el('pauseTimelineBtn');
-    if (play && pause) {
-      play.style.display = this.isReplaying ? 'none' : 'block';
-      pause.style.display = this.isReplaying ? 'block' : 'none';
-    }
-
-    // Update compact timeline play button
+    // Update play/pause button icon
     this.updateCompactPlayButton();
   }
 
   private updateTimelineInfo(): void {
-    const cf = this.el('currentFrame');
-    if (cf) cf.textContent = String(this.replayIndex + 1);
-    const tf = this.el('totalFrames');
-    if (tf && this.replayData) tf.textContent = String(this.replayData.length);
+    const data = this.getTimelineData();
+    const frameEl = this.el('timelineBarFrame');
+    if (frameEl && data) {
+      frameEl.textContent = `${this.replayIndex + 1} / ${data.length}`;
+    }
 
-    // Update compact timeline bar
-    this.updateCompactTimelineInfo();
+    // Update slider
+    const slider = this.dom.get<HTMLInputElement>('timelineBarSlider');
+    if (slider && data) {
+      slider.value = String(this.replayIndex);
+      const progress = data.length > 1 ? (this.replayIndex / (data.length - 1)) * 100 : 0;
+      slider.style.setProperty('--progress', `${progress}%`);
+    }
   }
 
-  // ---- Compact Timeline Bar ----
+  // ---- Timeline Data ----
 
   private getTimelineData(): RecordingFrame[] | null {
     // Use replayData if available (from loaded recording), otherwise use recordedGenerations
@@ -321,62 +422,6 @@ export class RecordingManager {
       return this.recordedGenerations;
     }
     return null;
-  }
-
-  private updateCompactTimelineVisibility(): void {
-    const data = this.getTimelineData();
-    if (data && data.length > 0) {
-      // If we have recorded generations but no replay data, set up replay from recordings
-      if (!this.replayData && this.recordedGenerations.length > 0) {
-        this.replayData = this.recordedGenerations;
-        this.replayIndex = this.recordedGenerations.length - 1; // Start at end
-      }
-      this.showCompactTimeline();
-    }
-  }
-
-  private showCompactTimeline(): void {
-    const bar = this.el('timelineBarCompact');
-    if (bar) bar.style.display = 'flex';
-    this.setupCompactTimeline();
-  }
-
-  private hideCompactTimeline(): void {
-    const bar = this.el('timelineBarCompact');
-    if (bar) bar.style.display = 'none';
-  }
-
-  private setupCompactTimeline(): void {
-    const data = this.getTimelineData();
-    if (!data || data.length === 0) return;
-
-    const slider = this.dom.get<HTMLInputElement>('timelineBarSlider');
-    if (slider) {
-      slider.min = '0';
-      slider.max = String(data.length - 1);
-      slider.value = String(this.replayIndex);
-    }
-
-    this.updateCompactTimelineInfo();
-  }
-
-  private updateCompactTimelineInfo(): void {
-    const data = this.getTimelineData();
-    const frameEl = this.el('timelineBarFrame');
-    if (frameEl && data) {
-      frameEl.textContent = `${this.replayIndex + 1} / ${data.length}`;
-    }
-
-    // Sync slider position and progress line
-    const slider = this.dom.get<HTMLInputElement>('timelineBarSlider');
-    if (slider && data) {
-      slider.value = String(this.replayIndex);
-      const progress = data.length > 1 ? (this.replayIndex / (data.length - 1)) * 100 : 0;
-      slider.style.setProperty('--progress', `${progress}%`);
-    }
-
-    // Update play button icon
-    this.updateCompactPlayButton();
   }
 
   private updateCompactPlayButton(): void {
@@ -392,6 +437,42 @@ export class RecordingManager {
   // ---- Save / Load ----
 
   private openSaveModal(): void {
+    const data = this.getTimelineData();
+    if (!data || data.length === 0) return;
+
+    // Initialize range selectors to full range
+    this.rangeStart = 0;
+    this.rangeEnd = data.length - 1;
+
+    const rangeStart = this.dom.get<HTMLInputElement>('rangeStart');
+    const rangeEnd = this.dom.get<HTMLInputElement>('rangeEnd');
+    const sliderStart = this.dom.get<HTMLInputElement>('rangeSliderStart');
+    const sliderEnd = this.dom.get<HTMLInputElement>('rangeSliderEnd');
+
+    if (rangeStart) {
+      rangeStart.min = '1';
+      rangeStart.max = String(data.length);
+      rangeStart.value = '1';
+    }
+    if (rangeEnd) {
+      rangeEnd.min = '1';
+      rangeEnd.max = String(data.length);
+      rangeEnd.value = String(data.length);
+    }
+    if (sliderStart) {
+      sliderStart.min = '1';
+      sliderStart.max = String(data.length);
+      sliderStart.value = '1';
+    }
+    if (sliderEnd) {
+      sliderEnd.min = '1';
+      sliderEnd.max = String(data.length);
+      sliderEnd.value = String(data.length);
+    }
+
+    // Update stats display
+    this.updateRangeStats();
+
     const modal = this.el('saveModal');
     if (!modal) return;
     modal.style.display = 'flex';
@@ -409,10 +490,18 @@ export class RecordingManager {
   async saveRecording(): Promise<void> {
     const nameEl = this.dom.get<HTMLInputElement>('recordingName');
     const name = nameEl?.value?.trim();
-    if (!name || this.recordedGenerations.length === 0) return;
+    const sourceData = this.getTimelineData();
+    if (!name || !sourceData || sourceData.length === 0) return;
+
+    // Use range selection to get subset of frames
+    const startIdx = Math.max(0, this.rangeStart);
+    const endIdx = Math.min(sourceData.length - 1, this.rangeEnd);
+    const selectedFrames = sourceData.slice(startIdx, endIdx + 1);
+
+    if (selectedFrames.length === 0) return;
 
     const data = {
-      generations: this.recordedGenerations,
+      generations: selectedFrames,
       settings: {
         cellSize: this.host.cellSize,
         rows: this.host.rows,
@@ -424,8 +513,8 @@ export class RecordingManager {
         },
       },
       metadata: {
-        totalGenerations: this.recordedGenerations.length,
-        duration: this.recordedGenerations[this.recordedGenerations.length - 1]?.timestamp ?? 0,
+        totalGenerations: selectedFrames.length,
+        duration: selectedFrames[selectedFrames.length - 1]?.timestamp - (selectedFrames[0]?.timestamp ?? 0),
         ruleString: this.engine.getRulesAsString(),
       },
     };
@@ -440,8 +529,7 @@ export class RecordingManager {
       if (resp.ok) {
         this.closeModal();
         this.loadRecordings();
-        this.recordedGenerations = [];
-        this.updateRecordingUI();
+        // Don't clear recordings - user might want to save another range
       } else {
         throw new Error(result.error || 'Failed to save recording');
       }
@@ -480,7 +568,7 @@ export class RecordingManager {
           <div class="recording-details">${r.totalGenerations} gen &bull; ${r.date}</div>
         </div>
         <div class="recording-actions">
-          <button class="play-recording-btn" title="Play recording" onclick="game.recordingManager.playRecording('${r.id}')"><i data-lucide="play" class="btn-icon"></i></button>
+          <button class="play-recording-btn" title="Play recording" onclick="game.recordingManager.playRecording('${r.id}', '${r.name}', '${r.date}')"><i data-lucide="play" class="btn-icon"></i></button>
           <button class="delete-recording-btn" title="Delete recording" onclick="game.recordingManager.deleteRecording('${r.id}', '${r.name}')"><i data-lucide="trash-2" class="btn-icon"></i></button>
         </div>
       </div>`,
@@ -490,7 +578,7 @@ export class RecordingManager {
     this.tryCreateIcons();
   }
 
-  async playRecording(recordingId: string): Promise<void> {
+  async playRecording(recordingId: string, name?: string, date?: string): Promise<void> {
     try {
       const resp = await fetch(`/api/recordings/${recordingId}`);
       const recording = await resp.json();
@@ -507,11 +595,106 @@ export class RecordingManager {
       }
 
       this.replayData = recording.generations;
-      this.setupTimeline();
-      setTimeout(() => this.playTimeline(), 500);
+      this.replayIndex = 0;
+
+      // Enter playback mode with recording info
+      this.enterPlaybackMode(name || recording.name || 'Recording', date || '');
+
+      // Setup timeline and start playback
+      this.updatePlaybackTimeline();
+      setTimeout(() => this.playTimeline(), 300);
     } catch (err: any) {
       console.error('Error playing recording:', err);
     }
+  }
+
+  // ---- Playback Mode ----
+
+  private enterPlaybackMode(name: string, date: string): void {
+    this.isInPlaybackMode = true;
+    this.currentPlaybackName = name;
+    this.currentPlaybackDate = date;
+
+    // Show recording info
+    const infoEl = this.el('timelineRecordingInfo');
+    const nameEl = this.el('playbackRecordingName');
+    const dateEl = this.el('playbackRecordingDate');
+    if (infoEl) infoEl.style.display = 'flex';
+    if (nameEl) nameEl.textContent = name;
+    if (dateEl) dateEl.textContent = date;
+
+    // Hide normal controls, show close button
+    const normalControls = this.el('timelineNormalControls');
+    const closeBtn = this.el('closePlaybackBtn');
+    if (normalControls) normalControls.style.display = 'none';
+    if (closeBtn) closeBtn.style.display = 'flex';
+
+    // Enable timeline controls for playback
+    this.setTimelineControlsEnabled(true);
+
+    // Disable simulation controls
+    this.setSimulationControlsEnabled(false);
+
+    this.bus.emit('playback:started');
+  }
+
+  exitPlaybackMode(): void {
+    if (!this.isInPlaybackMode) return;
+
+    // Stop any active playback
+    if (this.isReplaying) this.pauseTimeline();
+
+    this.isInPlaybackMode = false;
+    this.currentPlaybackName = null;
+    this.currentPlaybackDate = null;
+    this.replayData = null;
+    this.replayIndex = 0;
+
+    // Hide recording info
+    const infoEl = this.el('timelineRecordingInfo');
+    if (infoEl) infoEl.style.display = 'none';
+
+    // Show normal controls, hide close button
+    const normalControls = this.el('timelineNormalControls');
+    const closeBtn = this.el('closePlaybackBtn');
+    if (normalControls) normalControls.style.display = 'flex';
+    if (closeBtn) closeBtn.style.display = 'none';
+
+    // Re-enable simulation controls
+    this.setSimulationControlsEnabled(true);
+
+    // Update timeline state (will disable controls if no recorded data)
+    this.updateTimelineState();
+
+    this.bus.emit('playback:ended');
+  }
+
+  private updatePlaybackTimeline(): void {
+    if (!this.replayData || this.replayData.length === 0) return;
+
+    const slider = this.dom.get<HTMLInputElement>('timelineBarSlider');
+    if (slider) {
+      slider.min = '0';
+      slider.max = String(this.replayData.length - 1);
+      slider.value = '0';
+      slider.style.setProperty('--progress', '0%');
+    }
+
+    const frameEl = this.el('timelineBarFrame');
+    if (frameEl) {
+      frameEl.textContent = `1 / ${this.replayData.length}`;
+    }
+
+    // Show first frame
+    this.showReplayFrame(0);
+  }
+
+  private setSimulationControlsEnabled(enabled: boolean): void {
+    const controls = ['startStopBtn', 'resetBtn', 'randomBtn', 'clearBtn'];
+    controls.forEach(id => {
+      const btn = this.el(id) as HTMLButtonElement;
+      if (btn) btn.disabled = !enabled;
+    });
   }
 
   async deleteRecording(recordingId: string, name: string): Promise<void> {

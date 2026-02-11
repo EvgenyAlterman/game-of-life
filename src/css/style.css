@@ -1989,6 +1989,103 @@ body {
     text-align: right;
 }
 
+/* Timeline button variants */
+.timeline-bar-btn.timeline-save-btn {
+    background: linear-gradient(45deg, #10b981, #059669);
+}
+
+.timeline-bar-btn.timeline-save-btn:hover:not(:disabled) {
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+.timeline-bar-btn.timeline-reset-btn {
+    background: linear-gradient(45deg, #ef4444, #dc2626);
+}
+
+.timeline-bar-btn.timeline-reset-btn:hover:not(:disabled) {
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+}
+
+/* Disabled states for timeline controls */
+.timeline-bar-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.timeline-bar-slider:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.timeline-bar-slider:disabled::-webkit-slider-thumb {
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.timeline-bar-slider:disabled::-moz-range-thumb {
+    cursor: not-allowed;
+}
+
+/* Timeline compact bar always visible but styled when disabled */
+.timeline-bar-compact.disabled {
+    opacity: 0.6;
+}
+
+/* Timeline normal controls container */
+.timeline-normal-controls {
+    display: flex;
+    gap: 6px;
+}
+
+/* Close playback button */
+.timeline-bar-btn.close-btn {
+    background: linear-gradient(45deg, #6b7280, #4b5563);
+}
+
+.timeline-bar-btn.close-btn:hover:not(:disabled) {
+    box-shadow: 0 2px 8px rgba(107, 114, 128, 0.4);
+}
+
+/* Recording info in playback mode */
+.timeline-recording-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    border-radius: 4px;
+    margin-right: 4px;
+}
+
+.timeline-recording-info .recording-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: white;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.timeline-recording-info .recording-date {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.8);
+    white-space: nowrap;
+}
+
+/* Disabled simulation controls during playback */
+.control-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.control-btn:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
 /* Recordings Section */
 .recordings-list {
     display: flex;
@@ -2185,6 +2282,108 @@ body {
     color: var(--text-primary);
     font-size: 0.9rem;
     box-sizing: border-box;
+}
+
+/* Range Selector in Save Modal */
+.range-selector {
+    margin: 16px 0;
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+}
+
+.range-selector > label {
+    margin-bottom: 12px;
+}
+
+.range-inputs {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.range-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.range-input-group label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.range-input-group input[type="number"] {
+    width: 70px;
+    padding: 6px 8px;
+    border: 1px solid var(--border-primary);
+    border-radius: 4px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.range-separator {
+    color: var(--text-tertiary);
+    font-size: 0.85rem;
+}
+
+.range-slider-container {
+    position: relative;
+    height: 20px;
+    margin-top: 8px;
+}
+
+.range-slider {
+    position: absolute;
+    width: 100%;
+    height: 6px;
+    background: transparent;
+    pointer-events: none;
+    appearance: none;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.range-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    cursor: pointer;
+    pointer-events: auto;
+    box-shadow: 0 1px 4px var(--shadow-light);
+}
+
+.range-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--accent-primary);
+    border-radius: 50%;
+    cursor: pointer;
+    pointer-events: auto;
+    border: none;
+    box-shadow: 0 1px 4px var(--shadow-light);
+}
+
+.range-slider-start::-webkit-slider-thumb {
+    background: #10b981;
+}
+
+.range-slider-end::-webkit-slider-thumb {
+    background: #f59e0b;
+}
+
+.range-slider-start::-moz-range-thumb {
+    background: #10b981;
+}
+
+.range-slider-end::-moz-range-thumb {
+    background: #f59e0b;
 }
 
 .recording-stats {

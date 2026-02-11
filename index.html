@@ -387,15 +387,36 @@
                     </div>
                 </div>
 
-                <!-- Compact Timeline Bar (shown when game stopped) -->
-                <div class="timeline-bar-compact" id="timelineBarCompact" style="display: none;">
-                    <button id="timelinePlayBtn" class="timeline-bar-btn" title="Play">
+                <!-- Timeline Bar (always visible, disabled when running or empty) -->
+                <div class="timeline-bar-compact" id="timelineBarCompact">
+                    <!-- Recording info (shown during playback of saved recording) -->
+                    <div class="timeline-recording-info" id="timelineRecordingInfo" style="display: none;">
+                        <span class="recording-label" id="playbackRecordingName">Recording Name</span>
+                        <span class="recording-date" id="playbackRecordingDate"></span>
+                    </div>
+
+                    <button id="timelinePlayBtn" class="timeline-bar-btn" title="Play Recording" disabled>
                         <i data-lucide="play" class="timeline-bar-icon"></i>
                     </button>
                     <div class="timeline-bar-track">
-                        <input type="range" id="timelineBarSlider" min="0" max="0" value="0" class="timeline-bar-slider">
+                        <input type="range" id="timelineBarSlider" min="0" max="0" value="0" class="timeline-bar-slider" disabled>
                     </div>
                     <span class="timeline-bar-frame" id="timelineBarFrame">0 / 0</span>
+
+                    <!-- Normal mode buttons -->
+                    <div class="timeline-normal-controls" id="timelineNormalControls">
+                        <button id="saveRecordingBtn" class="timeline-bar-btn timeline-save-btn" title="Save Recording" disabled>
+                            <i data-lucide="save" class="timeline-bar-icon"></i>
+                        </button>
+                        <button id="resetTimelineBtn" class="timeline-bar-btn timeline-reset-btn" title="Clear Recording" disabled>
+                            <i data-lucide="rotate-ccw" class="timeline-bar-icon"></i>
+                        </button>
+                    </div>
+
+                    <!-- Playback mode button -->
+                    <button id="closePlaybackBtn" class="timeline-bar-btn close-btn" title="Close Recording" style="display: none;">
+                        <i data-lucide="x" class="timeline-bar-icon"></i>
+                    </button>
                 </div>
 
                 <div class="info">
@@ -413,12 +434,6 @@
                                 <button id="clearBtn" class="control-btn" title="Clear All Cells">
                                     <i data-lucide="trash-2" class="btn-icon"></i>
                                 </button>
-                                <button id="recordBtn" class="control-btn record-btn" title="Start/Stop Recording">
-                                    <i data-lucide="circle" class="btn-icon"></i>
-                                </button>
-                                <button id="finishBtn" class="control-btn finish-btn" title="Finish & Save Recording" style="display: none;">
-                                    <i data-lucide="save" class="btn-icon"></i>
-                                </button>
                                 <button id="fullscreenBtn" class="control-btn" title="Enter Fullscreen">
                                     <i data-lucide="maximize" class="btn-icon"></i>
                                 </button>
@@ -427,37 +442,6 @@
                     <div class="info-right">
                         <p>Generation: <span id="generation">0</span></p>
                         <p>Population: <span id="population">0</span></p>
-                    </div>
-                </div>
-                
-                <!-- Timeline Section -->
-                <div class="timeline-section" id="timelineSection" style="display: none;">
-                    <div class="timeline-header">
-                        <h3>🎬 Recording Timeline</h3>
-                        <div class="timeline-controls">
-                            <button id="playTimelineBtn" class="timeline-btn" title="Play Timeline">
-                                <i data-lucide="play" class="timeline-icon"></i>
-                            </button>
-                            <button id="pauseTimelineBtn" class="timeline-btn" title="Pause Timeline" style="display: none;">
-                                <i data-lucide="pause" class="timeline-icon"></i>
-                            </button>
-                            <button id="stopTimelineBtn" class="timeline-btn" title="Stop Timeline">
-                                <i data-lucide="stop" class="timeline-icon"></i>
-                            </button>
-                            <span class="timeline-info">
-                                <span id="currentFrame">0</span> / <span id="totalFrames">0</span>
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="timeline-bar">
-                        <input type="range" id="timelineSlider" min="0" max="0" value="0" class="timeline-slider">
-                    </div>
-                    
-                    <div class="timeline-settings">
-                        <label for="playbackSpeed">Playback Speed:</label>
-                        <input type="range" id="playbackSpeed" min="1" max="40" value="20" class="speed-slider">
-                        <span id="playbackSpeedValue">20x</span>
                     </div>
                 </div>
                 
@@ -513,8 +497,28 @@
             <div class="modal-body">
                 <label for="recordingName">Recording Name:</label>
                 <input type="text" id="recordingName" placeholder="Enter recording name..." maxlength="50">
+
+                <div class="range-selector">
+                    <label>Frame Range:</label>
+                    <div class="range-inputs">
+                        <div class="range-input-group">
+                            <label for="rangeStart">From:</label>
+                            <input type="number" id="rangeStart" min="1" value="1">
+                        </div>
+                        <span class="range-separator">to</span>
+                        <div class="range-input-group">
+                            <label for="rangeEnd">To:</label>
+                            <input type="number" id="rangeEnd" min="1" value="1">
+                        </div>
+                    </div>
+                    <div class="range-slider-container">
+                        <input type="range" id="rangeSliderStart" min="1" value="1" class="range-slider range-slider-start">
+                        <input type="range" id="rangeSliderEnd" min="1" value="1" class="range-slider range-slider-end">
+                    </div>
+                </div>
+
                 <div class="recording-stats">
-                    <p>Generations recorded: <span id="recordedGenerations">0</span></p>
+                    <p>Frames to save: <span id="recordedGenerations">0</span></p>
                     <p>Duration: <span id="recordingDuration">0s</span></p>
                 </div>
             </div>
