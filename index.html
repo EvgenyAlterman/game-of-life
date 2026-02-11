@@ -324,13 +324,15 @@
 
                     <!-- Recordings Tab -->
                     <div class="sidebar-panel" data-panel="recordings">
-                        <div class="sidebar-panel-header"><h2>Recordings</h2></div>
-                        <div class="sidebar-panel-content sidebar-panel-content--recordings">
-                            <div class="recordings-controls">
-                                <button id="loadRecordingsBtn" class="load-btn" title="Refresh recordings from server">
-                                    <i data-lucide="refresh-cw" class="btn-icon"></i>
+                        <div class="sidebar-panel-header sidebar-panel-header--with-actions">
+                            <h2>Recordings</h2>
+                            <div class="panel-header-actions">
+                                <button id="loadRecordingsBtn" class="panel-header-btn" title="Refresh recordings from server">
+                                    <i data-lucide="refresh-cw" class="panel-header-icon"></i>
                                 </button>
                             </div>
+                        </div>
+                        <div class="sidebar-panel-content sidebar-panel-content--recordings">
                             <div class="recordings-list" id="recordingsList">
                                 <p class="no-recordings">No recordings available. Start recording to save your simulations!</p>
                             </div>
@@ -360,7 +362,18 @@
                         </button>
                     </div>
                 </div>
-                
+
+                <!-- Compact Timeline Bar (shown when game stopped) -->
+                <div class="timeline-bar-compact" id="timelineBarCompact" style="display: none;">
+                    <button id="timelinePlayBtn" class="timeline-bar-btn" title="Play">
+                        <i data-lucide="play" class="timeline-bar-icon"></i>
+                    </button>
+                    <div class="timeline-bar-track">
+                        <input type="range" id="timelineBarSlider" min="0" max="0" value="0" class="timeline-bar-slider">
+                    </div>
+                    <span class="timeline-bar-frame" id="timelineBarFrame">0 / 0</span>
+                </div>
+
                 <div class="info">
                                             <div class="info-left">
                             <div class="control-buttons">

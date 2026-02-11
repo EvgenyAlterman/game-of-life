@@ -76,6 +76,27 @@ export class RecordingManager {
       this.seekTimeline(parseInt((e.target as HTMLInputElement).value, 10));
     });
 
+    // Compact timeline bar slider
+    const compactSlider = this.dom.get<HTMLInputElement>('timelineBarSlider');
+    compactSlider?.addEventListener('input', (e) => {
+      const target = e.target as HTMLInputElement;
+      const value = parseInt(target.value, 10);
+      this.seekTimeline(value);
+      // Update progress line immediately for smooth dragging
+      const max = parseInt(target.max, 10) || 1;
+      const progress = max > 0 ? (value / max) * 100 : 0;
+      target.style.setProperty('--progress', `${progress}%`);
+    });
+
+    // Compact timeline bar play button
+    this.el('timelinePlayBtn')?.addEventListener('click', () => {
+      if (this.isReplaying) {
+        this.pauseTimeline();
+      } else {
+        this.playTimeline();
+      }
+    });
+
     const speed = this.dom.get<HTMLInputElement>('playbackSpeed');
     speed?.addEventListener('input', (e) => {
       this.replaySpeed = parseInt((e.target as HTMLInputElement).value, 10);
@@ -92,6 +113,10 @@ export class RecordingManager {
     modal?.addEventListener('click', (e) => {
       if (e.target === modal) this.closeModal();
     });
+
+    // Listen for simulation stop to show compact timeline if we have replay data
+    this.bus.on('simulation:stop', () => this.updateCompactTimelineVisibility());
+    this.bus.on('simulation:start', () => this.hideCompactTimeline());
   }
 
   // ---- Recording ----
@@ -188,10 +213,18 @@ export class RecordingManager {
     this.replayIndex = 0;
     this.updateTimelineInfo();
     this.showReplayFrame(0);
+
+    // Show compact timeline bar
+    this.showCompactTimeline();
   }
 
   playTimeline(): void {
+    // Ensure we have replay data (use recorded generations if needed)
+    if (!this.replayData && this.recordedGenerations.length > 0) {
+      this.replayData = this.recordedGenerations;
+    }
     if (!this.replayData || this.replayData.length === 0) return;
+
     this.isReplaying = true;
     this.updateTimelineUI();
 
@@ -257,9 +290,13 @@ export class RecordingManager {
   private updateTimelineUI(): void {
     const play = this.el('playTimelineBtn');
     const pause = this.el('pauseTimelineBtn');
-    if (!play || !pause) return;
-    play.style.display = this.isReplaying ? 'none' : 'block';
-    pause.style.display = this.isReplaying ? 'block' : 'none';
+    if (play && pause) {
+      play.style.display = this.isReplaying ? 'none' : 'block';
+      pause.style.display = this.isReplaying ? 'block' : 'none';
+    }
+
+    // Update compact timeline play button
+    this.updateCompactPlayButton();
   }
 
   private updateTimelineInfo(): void {
@@ -267,6 +304,88 @@ export class RecordingManager {
     if (cf) cf.textContent = String(this.replayIndex + 1);
     const tf = this.el('totalFrames');
     if (tf && this.replayData) tf.textContent = String(this.replayData.length);
+
+    // Update compact timeline bar
+    this.updateCompactTimelineInfo();
+  }
+
+  // ---- Compact Timeline Bar ----
+
+  private getTimelineData(): RecordingFrame[] | null {
+    // Use replayData if available (from loaded recording), otherwise use recordedGenerations
+    if (this.replayData && this.replayData.length > 0) {
+      return this.replayData;
+    }
+    if (this.recordedGenerations && this.recordedGenerations.length > 0) {
+      return this.recordedGenerations;
+    }
+    return null;
+  }
+
+  private updateCompactTimelineVisibility(): void {
+    const data = this.getTimelineData();
+    if (data && data.length > 0) {
+      // If we have recorded generations but no replay data, set up replay from recordings
+      if (!this.replayData && this.recordedGenerations.length > 0) {
+        this.replayData = this.recordedGenerations;
+        this.replayIndex = this.recordedGenerations.length - 1; // Start at end
+      }
+      this.showCompactTimeline();
+    }
+  }
+
+  private showCompactTimeline(): void {
+    const bar = this.el('timelineBarCompact');
+    if (bar) bar.style.display = 'flex';
+    this.setupCompactTimeline();
+  }
+
+  private hideCompactTimeline(): void {
+    const bar = this.el('timelineBarCompact');
+    if (bar) bar.style.display = 'none';
+  }
+
+  private setupCompactTimeline(): void {
+    const data = this.getTimelineData();
+    if (!data || data.length === 0) return;
+
+    const slider = this.dom.get<HTMLInputElement>('timelineBarSlider');
+    if (slider) {
+      slider.min = '0';
+      slider.max = String(data.length - 1);
+      slider.value = String(this.replayIndex);
+    }
+
+    this.updateCompactTimelineInfo();
+  }
+
+  private updateCompactTimelineInfo(): void {
+    const data = this.getTimelineData();
+    const frameEl = this.el('timelineBarFrame');
+    if (frameEl && data) {
+      frameEl.textContent = `${this.replayIndex + 1} / ${data.length}`;
+    }
+
+    // Sync slider position and progress line
+    const slider = this.dom.get<HTMLInputElement>('timelineBarSlider');
+    if (slider && data) {
+      slider.value = String(this.replayIndex);
+      const progress = data.length > 1 ? (this.replayIndex / (data.length - 1)) * 100 : 0;
+      slider.style.setProperty('--progress', `${progress}%`);
+    }
+
+    // Update play button icon
+    this.updateCompactPlayButton();
+  }
+
+  private updateCompactPlayButton(): void {
+    const btn = this.el('timelinePlayBtn');
+    if (!btn) return;
+    const icon = btn.querySelector('.timeline-bar-icon');
+    if (icon) {
+      icon.setAttribute('data-lucide', this.isReplaying ? 'pause' : 'play');
+      this.tryCreateIcons();
+    }
   }
 
   // ---- Save / Load ----
