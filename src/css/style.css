@@ -2113,6 +2113,49 @@ body {
     background: var(--accent-secondary);
 }
 
+.save-btn--danger {
+    background: #e53e3e;
+}
+
+.save-btn--danger:hover {
+    background: #c53030;
+}
+
+/* Modal Type Variants */
+.modal--info .modal-header h3::before,
+.modal--success .modal-header h3::before,
+.modal--warning .modal-header h3::before,
+.modal--error .modal-header h3::before,
+.modal--confirm .modal-header h3::before {
+    margin-right: 8px;
+}
+
+.modal--success .modal-header h3 {
+    color: #38a169;
+}
+
+.modal--error .modal-header h3 {
+    color: #e53e3e;
+}
+
+.modal--warning .modal-header h3 {
+    color: #d69e2e;
+}
+
+.modal--info .modal-header h3 {
+    color: var(--accent-primary);
+}
+
+.modal--confirm .modal-header h3 {
+    color: var(--accent-primary);
+}
+
+#modalMessage {
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+}
+
 /* Pattern Search */
 .pattern-search {
     position: relative;

@@ -10,6 +10,7 @@ import { createIcons, icons } from 'lucide';
 import { EventBus } from './core/event-bus';
 import { StorageService } from './core/storage-service';
 import { DomRegistry } from './core/dom-registry';
+import { Modal } from './core/modal';
 
 import { GameOfLifeEngine } from './js/game-engine';
 import { GameOfLifePatterns } from './js/patterns';
@@ -255,15 +256,17 @@ export class App {
     this.inspector.maturityMode = vs.showMaturity;
   }
 
-  private handleUnsavedRecording(): void {
+  private async handleUnsavedRecording(): Promise<void> {
     if (this.recordingManager.isRecording &&
         this.recordingManager.recordedGenerations.length > 1) {
-      const shouldSave = confirm(
-        `You have an unsaved recording with ${this.recordingManager.recordedGenerations.length} generations.\n` +
-        'Save it before continuing?',
+      const shouldSave = await Modal.confirm(
+        'Unsaved Recording',
+        `You have an unsaved recording with ${this.recordingManager.recordedGenerations.length} generations. Save it before continuing?`,
+        'Save',
+        'Discard',
       );
       if (shouldSave) {
-        this.recordingManager.closeModal(); // will open save modal internally
+        this.recordingManager.finishRecording();
         return;
       }
       this.recordingManager.stopRecording();

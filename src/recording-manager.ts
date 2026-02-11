@@ -5,6 +5,7 @@ import type {
 
 import { EventBus } from './core/event-bus';
 import { DomRegistry } from './core/dom-registry';
+import { Modal } from './core/modal';
 
 export interface RecordingEngine {
   grid: boolean[][];
@@ -514,7 +515,13 @@ export class RecordingManager {
   }
 
   async deleteRecording(recordingId: string, name: string): Promise<void> {
-    if (!confirm(`Delete "${name}"?`)) return;
+    const confirmed = await Modal.confirm(
+      'Delete Recording',
+      `Are you sure you want to delete "${name}"?`,
+      'Delete',
+      'Cancel',
+    );
+    if (!confirmed) return;
     try {
       const resp = await fetch(`/api/recordings/${recordingId}`, { method: 'DELETE' });
       if (resp.ok) this.loadRecordings();

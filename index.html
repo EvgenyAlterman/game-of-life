@@ -500,7 +500,26 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- Notification/Confirmation Modal -->
+    <div class="modal-overlay" id="notificationModal" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Notification</h3>
+                <button class="modal-close" id="notificationModalClose">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="modalMessage">Message goes here</p>
+            </div>
+            <div class="modal-footer">
+                <button id="modalCancelBtn" class="cancel-btn">Cancel</button>
+                <button id="modalConfirmBtn" class="save-btn">OK</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="/src/app.ts"></script>
 </body>
 </html>
