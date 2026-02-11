@@ -28,303 +28,297 @@
             
             <!-- Left Sidebar -->
             <div class="sidebar">
-            <div class="sidebar-header">
-                <h2>🔧 Controls</h2>
-                <button id="sidebarToggle" class="sidebar-toggle">‹</button>
-            </div>
-            
-            <div class="sidebar-content">
-                <!-- Main Controls Section -->
-                <div class="tool-section">
-                    <h3>Simulation</h3>
+                <!-- Icon Nav Bar -->
+                <div class="sidebar-nav">
+                    <button class="sidebar-nav-btn active" data-tab="controls" title="Controls">
+                        <i data-lucide="settings"></i>
+                    </button>
+                    <button class="sidebar-nav-btn" data-tab="tools" title="Drawing Tools">
+                        <i data-lucide="pen-tool"></i>
+                    </button>
+                    <button class="sidebar-nav-btn" data-tab="patterns" title="Patterns">
+                        <i data-lucide="layout-grid"></i>
+                    </button>
+                    <div class="sidebar-nav-spacer"></div>
+                    <button id="sidebarToggle" class="sidebar-nav-btn sidebar-toggle-btn" title="Collapse Sidebar">
+                        <i data-lucide="panel-left-close"></i>
+                    </button>
+                </div>
 
-                    <div class="speed-control">
-                        <label for="speedSlider">Speed:</label>
-                        <div class="slider-group">
-                            <input type="range" id="speedSlider" min="1" max="20" value="10">
-                            <span id="speedValue">10</span>
-                            <input type="number" id="speedMax" class="max-input" value="20" min="10" placeholder="Max">
-                        </div>
-                    </div>
-                    
-                    <!-- Visual Controls Toolbar -->
-                    <div class="visual-toolbar">
-                        <div class="toolbar-group">
-                            <button id="pixelGridToggle" class="toolbar-btn" title="Toggle Pixel Grid">
-                                <i data-lucide="hash" class="toolbar-icon"></i>
-                                <span class="toolbar-label">Pixels</span>
-                            </button>
-                            
-                            <button id="gridToggle" class="toolbar-btn" title="Toggle Grid Overlay">
-                                <i data-lucide="grid-3x3" class="toolbar-icon"></i>
-                                <span class="toolbar-label">Grid</span>
-                            </button>
-                            
-                            <button id="fadeToggle" class="toolbar-btn" title="Toggle Ghost Trail Mode">
-                                <i data-lucide="ghost" class="toolbar-icon"></i>
-                                <span class="toolbar-label">Trail</span>
-                            </button>
-                            
-                            <button id="maturityToggle" class="toolbar-btn" title="Toggle Cell Maturity Mode">
-                                <i data-lucide="timer" class="toolbar-icon"></i>
-                                <span class="toolbar-label">Maturity</span>
-                            </button>
-                            
-                            <button id="cellShapeToggle" class="toolbar-btn" title="Toggle Cell Shape">
-                                <i data-lucide="square" class="toolbar-icon"></i>
-                                <span class="toolbar-label">Shape</span>
-                            </button>
-                            
-                            <button id="autoStopToggle" class="toolbar-btn" title="Toggle Auto-Stop Mode">
-                                <i data-lucide="pause-circle" class="toolbar-icon"></i>
-                                <span class="toolbar-label">Auto-Stop</span>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- Settings Panels (Hidden by default) -->
-                    <div class="settings-panels">
-                        <div class="fade-settings panel-settings" id="fadeSettings" style="display: none;">
-                            <h4>Ghost Trail Settings</h4>
-                            <div class="setting-row">
-                                <label for="fadeSlider">Trail Duration:</label>
-                                <div class="slider-group">
-                                    <input type="range" id="fadeSlider" min="1" max="10" value="1">
-                                    <span id="fadeValue">1</span>
-                                    <input type="number" id="fadeMax" class="max-input" value="10" min="5" placeholder="Max">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="maturity-settings panel-settings" id="maturitySettings" style="display: none;">
-                            <h4>Maturity Settings</h4>
-                            <div class="setting-row">
-                                <label for="maturityColor">Mature Color:</label>
-                                <div class="color-group">
-                                    <input type="color" id="maturityColor" value="#4c1d95" class="color-input">
-                                    <span class="color-label">Deep Violet</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="autostop-settings panel-settings" id="autoStopSettings" style="display: none;">
-                            <h4>Auto-Stop Settings</h4>
-                            <div class="setting-row">
-                                <label for="autoStopDelay">Detection Delay:</label>
-                                <div class="slider-group">
-                                    <input type="range" id="autoStopDelay" min="2" max="10" value="3">
-                                    <span id="autoStopDelayValue">3</span>
-                                    <span class="unit-label">generations</span>
-                                </div>
-                            </div>
-                            <div class="setting-row">
-                                <label class="checkbox-container">
-                                    <input type="checkbox" id="autoStopNotification" checked>
-                                    <span class="checkmark"></span>
-                                    Show notification when stopping
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Drawing Tools Section -->
-                <div class="tool-section">
-                    <h3>Drawing Tools</h3>
-                    <p class="section-desc">Select a tool, then click on the grid</p>
-                    <div class="drawing-tools">
-                        <!-- Single Cell Drawing -->
-                        <button id="cellDrawingBtn" class="tool-btn selected">
-                            <i data-lucide="pen-tool" class="tool-icon"></i>
-                            <span>Single Cell</span>
-                        </button>
-                        
-                        <!-- Cell Inspector -->
-                        <button id="cellInspectorBtn" class="tool-btn">
-                            <i data-lucide="search" class="tool-icon"></i>
-                            <span>Cell Inspector</span>
-                        </button>
-                        
-                        <!-- Pattern Selection Tool -->
-                        <button id="patternSelectBtn" class="tool-btn">
-                            <i data-lucide="mouse-pointer-square-dashed" class="tool-icon"></i>
-                            <span>Select Pattern</span>
-                        </button>
-                        
-                        <!-- Eraser Tool -->
-                        <button id="eraserBtn" class="tool-btn">
-                            <i data-lucide="eraser" class="tool-icon"></i>
-                            <span>Eraser</span>
-                        </button>
-                        
-                        <!-- Search Box -->
-                        <div class="pattern-search">
-                            <input type="text" id="patternSearch" placeholder="Search patterns..." class="search-input">
-                            <i data-lucide="search" class="search-icon"></i>
-                        </div>
-                        
-                        <!-- Pattern Tree -->
-                        <div class="pattern-tree" id="patternTree">
-                            <!-- Tree will be dynamically populated by JavaScript -->
-                        </div>
-                        
-                        <!-- Search Results -->
-                        <div class="search-results" id="searchResults" style="display: none;">
-                            <h4>Search Results</h4>
-                            <div class="search-results-list"></div>
-                        </div>
-                        
-                        <!-- Eraser Settings Panel (Hidden by default) -->
-                        <div class="eraser-settings panel-settings" id="eraserSettings" style="display: none;">
-                            <h4>Eraser Settings</h4>
-                            <div class="setting-row">
-                                <label for="eraserSize">Brush Size:</label>
-                                <div class="slider-group">
-                                    <input type="range" id="eraserSize" min="1" max="10" value="1">
-                                    <span id="eraserSizeValue">1</span>
-                                </div>
-                            </div>
-                            <div class="setting-row">
-                                <label for="eraserShape">Brush Shape:</label>
-                                <select id="eraserShape" class="shape-select">
-                                    <option value="circle">Circle</option>
-                                    <option value="square">Square</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Grid Settings Section -->
-                <div class="tool-section">
-                    <h3>Grid Settings</h3>
-                    <div class="slider-control">
-                        <label for="gridWidth">Width:</label>
-                        <div class="slider-group">
-                            <input type="range" id="gridWidth" min="30" max="120" value="60">
-                            <span id="gridWidthValue">60</span>
-                            <input type="number" id="gridWidthMax" class="max-input" value="120" min="60" placeholder="Max">
-                        </div>
-                    </div>
-                    <div class="slider-control">
-                        <label for="gridHeight">Height:</label>
-                        <div class="slider-group">
-                            <input type="range" id="gridHeight" min="20" max="80" value="40">
-                            <span id="gridHeightValue">40</span>
-                            <input type="number" id="gridHeightMax" class="max-input" value="80" min="40" placeholder="Max">
-                        </div>
-                    </div>
-                    <div class="slider-control">
-                        <label for="cellSize">Cell Size:</label>
-                        <div class="slider-group">
-                            <input type="range" id="cellSize" min="3" max="20" value="10">
-                            <span id="cellSizeValue">10px</span>
-                            <input type="number" id="cellSizeMax" class="max-input" value="20" min="10" placeholder="Max">
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Random Generation Section -->
-                <div class="tool-section">
-                    <h3>Random Generation</h3>
-                    <div class="slider-control">
-                        <label for="randomDensity">Density:</label>
-                        <div class="slider-group">
-                            <input type="range" id="randomDensity" min="5" max="80" value="30">
-                            <span id="randomDensityValue">30%</span>
-                            <input type="number" id="randomDensityMax" class="max-input" value="80" min="30" placeholder="Max">
-                        </div>
-                    </div>
-                    <div class="control-row">
-                        <label for="randomSeed">Seed:</label>
-                        <input type="number" id="randomSeed" value="" placeholder="Random">
-                        <button id="generateSeedBtn" class="seed-btn">🎲</button>
-                    </div>
-                </div>
-                
-                <!-- Custom Rules Section -->
-                <div class="tool-section">
-                    <div class="section-header" data-toggle="rules">
-                        <h3>🧬 Custom Rules</h3>
-                        <i data-lucide="chevron-down" class="section-toggle"></i>
-                    </div>
-                    <div class="section-content">
-                        <div class="rule-presets">
-                            <label>Presets:</label>
-                            <select id="rulePresets" class="rule-preset-select">
-                                <option value="B3/S23">Conway's Life (B3/S23)</option>
-                                <option value="B36/S23">HighLife (B36/S23)</option>
-                                <option value="B3/S238">Mazectric (B3/S238)</option>
-                                <option value="B368/S245">Move (B368/S245)</option>
-                                <option value="B2/S">Seeds (B2/S)</option>
-                                <option value="B1/S1">Gnarl (B1/S1)</option>
-                                <option value="B1357/S1357">Replicator (B1357/S1357)</option>
-                                <option value="custom">Custom...</option>
-                            </select>
-                        </div>
-                        
-                        <div class="custom-rule-inputs" id="customRuleInputs">
-                            <div class="rule-input-group">
-                                <label for="birthRules">Birth (B):</label>
-                                <div class="neighbor-checkboxes">
-                                    <span class="rule-description">Dead cells become alive with</span>
-                                    <div class="checkbox-row">
-                                        <label class="checkbox-label"><input type="checkbox" id="birth0" value="0"> 0</label>
-                                        <label class="checkbox-label"><input type="checkbox" id="birth1" value="1"> 1</label>
-                                        <label class="checkbox-label"><input type="checkbox" id="birth2" value="2"> 2</label>
-                                        <label class="checkbox-label"><input type="checkbox" id="birth3" value="3" checked> 3</label>
-                                        <label class="checkbox-label"><input type="checkbox" id="birth4" value="4"> 4</label>
+                <!-- Tab Panels -->
+                <div class="sidebar-panels">
+                    <!-- Controls Tab -->
+                    <div class="sidebar-panel active" data-panel="controls">
+                        <div class="sidebar-panel-header"><h2>Controls</h2></div>
+                        <div class="sidebar-panel-content">
+                            <!-- Simulation Section -->
+                            <div class="tool-section">
+                                <h3>Simulation</h3>
+                                <div class="speed-control">
+                                    <label for="speedSlider">Speed:</label>
+                                    <div class="slider-group">
+                                        <input type="range" id="speedSlider" min="1" max="20" value="10">
+                                        <span id="speedValue">10</span>
+                                        <input type="number" id="speedMax" class="max-input" value="20" min="10" placeholder="Max">
                                     </div>
-                                    <div class="checkbox-row">
-                                        <label class="checkbox-label"><input type="checkbox" id="birth5" value="5"> 5</label>
-                                        <label class="checkbox-label"><input type="checkbox" id="birth6" value="6"> 6</label>
-                                        <label class="checkbox-label"><input type="checkbox" id="birth7" value="7"> 7</label>
-                                        <label class="checkbox-label"><input type="checkbox" id="birth8" value="8"> 8</label>
+                                </div>
+                                <div class="visual-toolbar">
+                                    <div class="toolbar-group">
+                                        <button id="pixelGridToggle" class="toolbar-btn" title="Toggle Pixel Grid">
+                                            <i data-lucide="hash" class="toolbar-icon"></i>
+                                            <span class="toolbar-label">Pixels</span>
+                                        </button>
+                                        <button id="gridToggle" class="toolbar-btn" title="Toggle Grid Overlay">
+                                            <i data-lucide="grid-3x3" class="toolbar-icon"></i>
+                                            <span class="toolbar-label">Grid</span>
+                                        </button>
+                                        <button id="fadeToggle" class="toolbar-btn" title="Toggle Ghost Trail Mode">
+                                            <i data-lucide="ghost" class="toolbar-icon"></i>
+                                            <span class="toolbar-label">Trail</span>
+                                        </button>
+                                        <button id="maturityToggle" class="toolbar-btn" title="Toggle Cell Maturity Mode">
+                                            <i data-lucide="timer" class="toolbar-icon"></i>
+                                            <span class="toolbar-label">Maturity</span>
+                                        </button>
+                                        <button id="cellShapeToggle" class="toolbar-btn" title="Toggle Cell Shape">
+                                            <i data-lucide="square" class="toolbar-icon"></i>
+                                            <span class="toolbar-label">Shape</span>
+                                        </button>
+                                        <button id="autoStopToggle" class="toolbar-btn" title="Toggle Auto-Stop Mode">
+                                            <i data-lucide="pause-circle" class="toolbar-icon"></i>
+                                            <span class="toolbar-label">Auto-Stop</span>
+                                        </button>
                                     </div>
-                                    <span class="rule-helper">neighbors</span>
+                                </div>
+                                <div class="settings-panels">
+                                    <div class="fade-settings panel-settings" id="fadeSettings" style="display: none;">
+                                        <h4>Ghost Trail Settings</h4>
+                                        <div class="setting-row">
+                                            <label for="fadeSlider">Trail Duration:</label>
+                                            <div class="slider-group">
+                                                <input type="range" id="fadeSlider" min="1" max="10" value="1">
+                                                <span id="fadeValue">1</span>
+                                                <input type="number" id="fadeMax" class="max-input" value="10" min="5" placeholder="Max">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="maturity-settings panel-settings" id="maturitySettings" style="display: none;">
+                                        <h4>Maturity Settings</h4>
+                                        <div class="setting-row">
+                                            <label for="maturityColor">Mature Color:</label>
+                                            <div class="color-group">
+                                                <input type="color" id="maturityColor" value="#4c1d95" class="color-input">
+                                                <span class="color-label">Deep Violet</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="autostop-settings panel-settings" id="autoStopSettings" style="display: none;">
+                                        <h4>Auto-Stop Settings</h4>
+                                        <div class="setting-row">
+                                            <label for="autoStopDelay">Detection Delay:</label>
+                                            <div class="slider-group">
+                                                <input type="range" id="autoStopDelay" min="2" max="10" value="3">
+                                                <span id="autoStopDelayValue">3</span>
+                                                <span class="unit-label">generations</span>
+                                            </div>
+                                        </div>
+                                        <div class="setting-row">
+                                            <label class="checkbox-container">
+                                                <input type="checkbox" id="autoStopNotification" checked>
+                                                <span class="checkmark"></span>
+                                                Show notification when stopping
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            
-                            <div class="rule-input-group">
-                                <label for="survivalRules">Survival (S):</label>
-                                <div class="neighbor-checkboxes">
-                                    <span class="rule-description">Live cells survive with</span>
-                                    <div class="checkbox-row">
-                                        <label class="checkbox-label"><input type="checkbox" id="survive0" value="0"> 0</label>
-                                        <label class="checkbox-label"><input type="checkbox" id="survive1" value="1"> 1</label>
-                                        <label class="checkbox-label"><input type="checkbox" id="survive2" value="2" checked> 2</label>
-                                        <label class="checkbox-label"><input type="checkbox" id="survive3" value="3" checked> 3</label>
-                                        <label class="checkbox-label"><input type="checkbox" id="survive4" value="4"> 4</label>
+                            <!-- Grid Settings Section -->
+                            <div class="tool-section">
+                                <h3>Grid Settings</h3>
+                                <div class="slider-control">
+                                    <label for="gridWidth">Width:</label>
+                                    <div class="slider-group">
+                                        <input type="range" id="gridWidth" min="30" max="120" value="60">
+                                        <span id="gridWidthValue">60</span>
+                                        <input type="number" id="gridWidthMax" class="max-input" value="120" min="60" placeholder="Max">
                                     </div>
-                                    <div class="checkbox-row">
-                                        <label class="checkbox-label"><input type="checkbox" id="survive5" value="5"> 5</label>
-                                        <label class="checkbox-label"><input type="checkbox" id="survive6" value="6"> 6</label>
-                                        <label class="checkbox-label"><input type="checkbox" id="survive7" value="7"> 7</label>
-                                        <label class="checkbox-label"><input type="checkbox" id="survive8" value="8"> 8</label>
+                                </div>
+                                <div class="slider-control">
+                                    <label for="gridHeight">Height:</label>
+                                    <div class="slider-group">
+                                        <input type="range" id="gridHeight" min="20" max="80" value="40">
+                                        <span id="gridHeightValue">40</span>
+                                        <input type="number" id="gridHeightMax" class="max-input" value="80" min="40" placeholder="Max">
                                     </div>
-                                    <span class="rule-helper">neighbors</span>
+                                </div>
+                                <div class="slider-control">
+                                    <label for="cellSize">Cell Size:</label>
+                                    <div class="slider-group">
+                                        <input type="range" id="cellSize" min="3" max="20" value="10">
+                                        <span id="cellSizeValue">10px</span>
+                                        <input type="number" id="cellSizeMax" class="max-input" value="20" min="10" placeholder="Max">
+                                    </div>
                                 </div>
                             </div>
-                            
-                            <div class="rule-display">
-                                <label>Current Rule:</label>
-                                <div class="rule-string" id="currentRuleString">B3/S23</div>
+                            <!-- Random Generation Section -->
+                            <div class="tool-section">
+                                <h3>Random Generation</h3>
+                                <div class="slider-control">
+                                    <label for="randomDensity">Density:</label>
+                                    <div class="slider-group">
+                                        <input type="range" id="randomDensity" min="5" max="80" value="30">
+                                        <span id="randomDensityValue">30%</span>
+                                        <input type="number" id="randomDensityMax" class="max-input" value="80" min="30" placeholder="Max">
+                                    </div>
+                                </div>
+                                <div class="control-row">
+                                    <label for="randomSeed">Seed:</label>
+                                    <input type="number" id="randomSeed" value="" placeholder="Random">
+                                    <button id="generateSeedBtn" class="seed-btn">🎲</button>
+                                </div>
+                            </div>
+                            <!-- Custom Rules Section -->
+                            <div class="tool-section">
+                                <div class="section-header" data-toggle="rules">
+                                    <h3>🧬 Custom Rules</h3>
+                                    <i data-lucide="chevron-down" class="section-toggle"></i>
+                                </div>
+                                <div class="section-content">
+                                    <div class="rule-presets">
+                                        <label>Presets:</label>
+                                        <select id="rulePresets" class="rule-preset-select">
+                                            <option value="B3/S23">Conway's Life (B3/S23)</option>
+                                            <option value="B36/S23">HighLife (B36/S23)</option>
+                                            <option value="B3/S238">Mazectric (B3/S238)</option>
+                                            <option value="B368/S245">Move (B368/S245)</option>
+                                            <option value="B2/S">Seeds (B2/S)</option>
+                                            <option value="B1/S1">Gnarl (B1/S1)</option>
+                                            <option value="B1357/S1357">Replicator (B1357/S1357)</option>
+                                            <option value="custom">Custom...</option>
+                                        </select>
+                                    </div>
+                                    <div class="custom-rule-inputs" id="customRuleInputs">
+                                        <div class="rule-input-group">
+                                            <label for="birthRules">Birth (B):</label>
+                                            <div class="neighbor-checkboxes">
+                                                <span class="rule-description">Dead cells become alive with</span>
+                                                <div class="checkbox-row">
+                                                    <label class="checkbox-label"><input type="checkbox" id="birth0" value="0"> 0</label>
+                                                    <label class="checkbox-label"><input type="checkbox" id="birth1" value="1"> 1</label>
+                                                    <label class="checkbox-label"><input type="checkbox" id="birth2" value="2"> 2</label>
+                                                    <label class="checkbox-label"><input type="checkbox" id="birth3" value="3" checked> 3</label>
+                                                    <label class="checkbox-label"><input type="checkbox" id="birth4" value="4"> 4</label>
+                                                </div>
+                                                <div class="checkbox-row">
+                                                    <label class="checkbox-label"><input type="checkbox" id="birth5" value="5"> 5</label>
+                                                    <label class="checkbox-label"><input type="checkbox" id="birth6" value="6"> 6</label>
+                                                    <label class="checkbox-label"><input type="checkbox" id="birth7" value="7"> 7</label>
+                                                    <label class="checkbox-label"><input type="checkbox" id="birth8" value="8"> 8</label>
+                                                </div>
+                                                <span class="rule-helper">neighbors</span>
+                                            </div>
+                                        </div>
+                                        <div class="rule-input-group">
+                                            <label for="survivalRules">Survival (S):</label>
+                                            <div class="neighbor-checkboxes">
+                                                <span class="rule-description">Live cells survive with</span>
+                                                <div class="checkbox-row">
+                                                    <label class="checkbox-label"><input type="checkbox" id="survive0" value="0"> 0</label>
+                                                    <label class="checkbox-label"><input type="checkbox" id="survive1" value="1"> 1</label>
+                                                    <label class="checkbox-label"><input type="checkbox" id="survive2" value="2" checked> 2</label>
+                                                    <label class="checkbox-label"><input type="checkbox" id="survive3" value="3" checked> 3</label>
+                                                    <label class="checkbox-label"><input type="checkbox" id="survive4" value="4"> 4</label>
+                                                </div>
+                                                <div class="checkbox-row">
+                                                    <label class="checkbox-label"><input type="checkbox" id="survive5" value="5"> 5</label>
+                                                    <label class="checkbox-label"><input type="checkbox" id="survive6" value="6"> 6</label>
+                                                    <label class="checkbox-label"><input type="checkbox" id="survive7" value="7"> 7</label>
+                                                    <label class="checkbox-label"><input type="checkbox" id="survive8" value="8"> 8</label>
+                                                </div>
+                                                <span class="rule-helper">neighbors</span>
+                                            </div>
+                                        </div>
+                                        <div class="rule-display">
+                                            <label>Current Rule:</label>
+                                            <div class="rule-string" id="currentRuleString">B3/S23</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Quick Actions Section -->
+                            <div class="tool-section">
+                                <h3>Quick Actions</h3>
+                                <div class="quick-actions">
+                                    <button id="fillRandomBtn">Fill Random</button>
+                                    <button id="fillEdgesBtn">Fill Edges</button>
+                                    <button id="fillCenterBtn">Fill Center</button>
+                                    <button id="invertBtn">Invert All</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Drawing Tools Tab -->
+                    <div class="sidebar-panel" data-panel="tools">
+                        <div class="sidebar-panel-header"><h2>Drawing Tools</h2></div>
+                        <div class="sidebar-panel-content">
+                            <p class="section-desc">Select a tool, then click on the grid</p>
+                            <div class="drawing-tools">
+                                <button id="cellDrawingBtn" class="tool-btn selected" title="Single Cell Drawing">
+                                    <i data-lucide="pen-tool" class="tool-icon"></i>
+                                    <span>Single Cell</span>
+                                </button>
+                                <button id="cellInspectorBtn" class="tool-btn" title="Cell Inspector">
+                                    <i data-lucide="search" class="tool-icon"></i>
+                                    <span>Cell Inspector</span>
+                                </button>
+                                <button id="patternSelectBtn" class="tool-btn" title="Select Pattern">
+                                    <i data-lucide="mouse-pointer-square-dashed" class="tool-icon"></i>
+                                    <span>Select Pattern</span>
+                                </button>
+                                <button id="eraserBtn" class="tool-btn" title="Eraser">
+                                    <i data-lucide="eraser" class="tool-icon"></i>
+                                    <span>Eraser</span>
+                                </button>
+                            </div>
+                            <div class="eraser-settings panel-settings" id="eraserSettings" style="display: none;">
+                                <h4>Eraser Settings</h4>
+                                <div class="setting-row">
+                                    <label for="eraserSize">Brush Size:</label>
+                                    <div class="slider-group">
+                                        <input type="range" id="eraserSize" min="1" max="10" value="1">
+                                        <span id="eraserSizeValue">1</span>
+                                    </div>
+                                </div>
+                                <div class="setting-row">
+                                    <label for="eraserShape">Brush Shape:</label>
+                                    <select id="eraserShape" class="shape-select">
+                                        <option value="circle">Circle</option>
+                                        <option value="square">Square</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Patterns Tab -->
+                    <div class="sidebar-panel" data-panel="patterns">
+                        <div class="sidebar-panel-header"><h2>Patterns</h2></div>
+                        <div class="sidebar-panel-content sidebar-panel-content--patterns">
+                            <div class="pattern-search">
+                                <input type="text" id="patternSearch" placeholder="Search patterns..." class="search-input">
+                                <i data-lucide="search" class="search-icon"></i>
+                            </div>
+                            <div class="pattern-tree" id="patternTree">
+                                <!-- Tree will be dynamically populated by JavaScript -->
+                            </div>
+                            <div class="search-results" id="searchResults" style="display: none;">
+                                <h4>Search Results</h4>
+                                <div class="search-results-list"></div>
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Quick Actions Section -->
-                <div class="tool-section">
-                    <h3>Quick Actions</h3>
-                    <div class="quick-actions">
-                        <button id="fillRandomBtn">Fill Random</button>
-                        <button id="fillEdgesBtn">Fill Edges</button>
-                        <button id="fillCenterBtn">Fill Center</button>
-                        <button id="invertBtn">Invert All</button>
-                    </div>
-                </div>
-            </div>
             </div>
             
             <!-- Main Content Area -->
@@ -413,7 +407,7 @@
                 </div>
                 
                 <!-- Recording Management -->
-                <div class="tool-section" id="recordingsSection">
+                <div class="tool-section collapsed" id="recordingsSection">
                     <div class="section-header" data-toggle="recordings">
                         <h3>💾 Saved Recordings</h3>
                         <i data-lucide="chevron-down" class="toggle-icon"></i>

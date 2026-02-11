@@ -193,6 +193,9 @@ class GameOfLifeStudio {
     public confirmPatternSave: HTMLElement | null = null;
     public grid: boolean[][] = [];
     
+    // Sidebar tab state
+    public activeTab: string = 'controls';
+
     // Session replay properties
     public sessionHistory: any[] = [];
     public sessionReplayIndex: number = 0;
@@ -531,7 +534,27 @@ class GameOfLifeStudio {
             this.toggleSidebar();
             this.saveSettings();
         });
-        
+
+        // Sidebar tab navigation
+        document.querySelectorAll('.sidebar-nav-btn[data-tab]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = (btn as HTMLElement).dataset.tab;
+                if (tabId) {
+                    // If sidebar is collapsed, expand it first
+                    if (this.sidebar.classList.contains('collapsed')) {
+                        this.sidebar.classList.remove('collapsed');
+                        // Update toggle icon
+                        const icon = this.sidebarToggle?.querySelector('i, svg');
+                        if (icon) {
+                            icon.setAttribute('data-lucide', 'panel-left-close');
+                            if (window.lucide) lucide.createIcons();
+                        }
+                    }
+                    this.switchSidebarTab(tabId);
+                }
+            });
+        });
+
         // Mobile menu button
         this.mobileMenuBtn.addEventListener('click', () => {
             this.openMobileSidebar();
@@ -2852,8 +2875,28 @@ class GameOfLifeStudio {
     }
     
     // Sidebar methods
+    switchSidebarTab(tabId: string) {
+        // Update nav button active states
+        document.querySelectorAll('.sidebar-nav-btn[data-tab]').forEach(btn => {
+            btn.classList.toggle('active', (btn as HTMLElement).dataset.tab === tabId);
+        });
+        // Update panel visibility
+        document.querySelectorAll('.sidebar-panel').forEach(panel => {
+            panel.classList.toggle('active', (panel as HTMLElement).dataset.panel === tabId);
+        });
+        this.activeTab = tabId;
+        this.saveSettings();
+    }
+
     toggleSidebar() {
         this.sidebar.classList.toggle('collapsed');
+        // Update the toggle icon
+        const icon = this.sidebarToggle?.querySelector('i, svg');
+        if (icon) {
+            const isCollapsed = this.sidebar.classList.contains('collapsed');
+            icon.setAttribute('data-lucide', isCollapsed ? 'panel-left-open' : 'panel-left-close');
+            if (window.lucide) lucide.createIcons();
+        }
     }
     
     openMobileSidebar() {
@@ -2936,6 +2979,7 @@ class GameOfLifeStudio {
             
             // Sidebar state
             sidebarCollapsed: this.sidebar.classList.contains('collapsed'),
+            activeTab: this.activeTab,
             
             // Timestamp for data validation
             timestamp: Date.now()
@@ -3183,6 +3227,17 @@ class GameOfLifeStudio {
             // Load sidebar state
             if (settings.sidebarCollapsed) {
                 this.sidebar.classList.add('collapsed');
+                // Update toggle icon for collapsed state
+                const icon = this.sidebarToggle?.querySelector('i, svg');
+                if (icon) {
+                    icon.setAttribute('data-lucide', 'panel-left-open');
+                    if (window.lucide) lucide.createIcons();
+                }
+            }
+
+            // Load active tab
+            if (settings.activeTab) {
+                this.switchSidebarTab(settings.activeTab);
             }
             
         } catch (error) {
