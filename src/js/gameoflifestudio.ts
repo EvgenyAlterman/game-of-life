@@ -9,6 +9,9 @@ import type {
     CanvasRenderingContext2DWithReset,
     CellShape
 } from '../types/game-types.js';
+import { createElement } from 'react';
+import { createRoot } from 'react-dom/client';
+import { VibeKanbanWebCompanion } from 'vibe-kanban-web-companion';
 
 // Make lucide available globally for dynamic icon updates
 window.lucide = { createIcons: () => createIcons({ icons }) };
@@ -4486,4 +4489,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, 100);
     }
+
+    // Mount VibeKanbanWebCompanion at app root
+    const vkRoot = document.createElement('div');
+    vkRoot.id = 'vibe-kanban-web-companion-root';
+    document.body.appendChild(vkRoot);
+    createRoot(vkRoot).render(createElement(VibeKanbanWebCompanion));
 });
