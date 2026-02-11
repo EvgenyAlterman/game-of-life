@@ -547,6 +547,78 @@ body {
     padding: 0 4px 15px 4px;
 }
 
+.slider-label-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 6px;
+}
+
+.slider-label-row label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-sidebar-secondary);
+    margin: 0;
+}
+
+.max-toggle-btn {
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    padding: 2px;
+    cursor: pointer;
+    color: var(--text-sidebar-tertiary);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.max-toggle-btn:hover {
+    color: var(--text-sidebar);
+    background: var(--border-sidebar);
+}
+
+.max-toggle-btn.active {
+    color: var(--accent-primary);
+}
+
+.max-toggle-icon {
+    width: 14px;
+    height: 14px;
+}
+
+.slider-label-row .max-input {
+    display: none;
+    width: 48px;
+    padding: 3px 4px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-sidebar-secondary);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: var(--text-primary);
+    text-align: center;
+    transition: all 0.2s ease;
+    -moz-appearance: textfield;
+}
+
+.slider-label-row .max-input.visible {
+    display: block;
+}
+
+.slider-label-row .max-input::-webkit-outer-spin-button,
+.slider-label-row .max-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.slider-label-row .max-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--shadow-light);
+}
+
 .slider-control label {
     display: block;
     font-size: 0.9rem;
@@ -558,9 +630,9 @@ body {
 .slider-group {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
     background: var(--border-sidebar);
-    padding: 8px 12px;
+    padding: 8px 10px;
     border-radius: 6px;
     border: 1px solid var(--border-sidebar-secondary);
 }
@@ -595,30 +667,12 @@ body {
 }
 
 .slider-group span {
-    min-width: 40px;
+    min-width: 36px;
     font-weight: 600;
     color: var(--text-sidebar);
     text-align: center;
     font-size: 0.85rem;
-}
-
-.max-input {
-    width: 50px;
-    padding: 4px 6px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-sidebar-secondary);
-    border-radius: 4px;
-    font-size: 0.8rem;
-    color: var(--text-primary);
-    text-align: center;
-    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-}
-
-.max-input:focus {
-    outline: none;
-    background: var(--bg-secondary);
-    border-color: var(--accent-primary);
-    box-shadow: 0 0 0 2px var(--shadow-light);
+    flex-shrink: 0;
 }
 
 /* Control Row */

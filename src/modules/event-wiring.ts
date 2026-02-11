@@ -66,6 +66,7 @@ export class EventWiring {
     this.wireCanvasEvents();
     this.wireKeyboardEvents();
     this.wireSavePatternModal();
+    this.wireMaxToggleButtons();
   }
 
   // ─── Simulation Controls ─────────────────────────────────────
@@ -514,6 +515,58 @@ export class EventWiring {
     savePatternModal?.addEventListener('click', (e) => {
       if (e.target === savePatternModal) {
         selection.closeModal();
+      }
+    });
+  }
+
+  // ─── Max Toggle Buttons ──────────────────────────────────────
+
+  private wireMaxToggleButtons(): void {
+    document.querySelectorAll('.max-toggle-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const button = btn as HTMLElement;
+        const targetId = button.dataset.target;
+        if (!targetId) return;
+
+        const maxInput = document.getElementById(targetId);
+        if (!maxInput) return;
+
+        // Toggle visibility
+        const isVisible = maxInput.classList.toggle('visible');
+        button.classList.toggle('active', isVisible);
+
+        // Focus input when shown
+        if (isVisible) {
+          (maxInput as HTMLInputElement).focus();
+          (maxInput as HTMLInputElement).select();
+        }
+      });
+    });
+
+    // Hide max input when clicking outside or pressing Escape
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.slider-label-row')) {
+        document.querySelectorAll('.max-input.visible').forEach(input => {
+          input.classList.remove('visible');
+          const btn = input.previousElementSibling;
+          if (btn?.classList.contains('max-toggle-btn')) {
+            btn.classList.remove('active');
+          }
+        });
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.max-input.visible').forEach(input => {
+          input.classList.remove('visible');
+          const btn = input.previousElementSibling;
+          if (btn?.classList.contains('max-toggle-btn')) {
+            btn.classList.remove('active');
+          }
+        });
       }
     });
   }
