@@ -245,12 +245,21 @@ export class SimulationController {
       btn.classList.toggle('active', this.isRunning);
     }
 
+    this.updateControlsDisabledState();
     if (this.onUpdateFullscreenButton) this.onUpdateFullscreenButton();
 
     if (typeof window !== 'undefined' && (window as any).lucide) {
       setTimeout(() => {
         try { (window as any).lucide.createIcons(); } catch { /* ignore */ }
       }, 0);
+    }
+  }
+
+  updateControlsDisabledState(): void {
+    const buttonIds = ['randomBtn', 'clearBtn'];
+    for (const id of buttonIds) {
+      const btn = this.dom.get<HTMLButtonElement>(id);
+      if (btn) btn.disabled = this.isRunning;
     }
   }
 

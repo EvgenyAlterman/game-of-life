@@ -175,7 +175,16 @@ export class FullscreenManager {
       btn.classList.remove('active');
     }
 
+    this.updateControlsDisabledState();
     this.tryCreateIcons();
+  }
+
+  updateControlsDisabledState(): void {
+    const buttonIds = ['fullscreenShuffleBtn', 'fullscreenClearBtn'];
+    for (const id of buttonIds) {
+      const btn = this.dom.get<HTMLButtonElement>(id);
+      if (btn) btn.disabled = this.isRunning;
+    }
   }
 
   private tryCreateIcons(): void {

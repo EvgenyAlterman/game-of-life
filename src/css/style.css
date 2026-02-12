@@ -1621,6 +1621,17 @@ body {
     height: 18px;
 }
 
+.floating-control-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.floating-control-btn:disabled:hover {
+    transform: none;
+    box-shadow: none;
+    background: rgba(0, 0, 0, 0.7);
+}
+
 /* Hide other elements in fullscreen */
 .fullscreen-active .sidebar,
 .fullscreen-active .app-header,
