@@ -58,6 +58,7 @@ jspm_packages/
 
 # Vite
 dist/
+dist-client/
 dist-ssr/
 *.local
 

@@ -6,6 +6,12 @@ import type {
 import { EventBus } from './core/event-bus';
 import { DomRegistry } from './core/dom-registry';
 import { Modal } from './core/modal';
+import {
+  recordingStorage,
+  downloadJson,
+  readJsonFile,
+  type ExportFormat,
+} from './core/indexeddb-storage';
 
 export interface RecordingEngine {
   grid: boolean[][];
@@ -104,6 +110,8 @@ export class RecordingManager {
     this.el('closePlaybackBtn')?.addEventListener('click', () => this.exitPlaybackMode());
 
     this.el('loadRecordingsBtn')?.addEventListener('click', () => this.loadRecordings());
+    this.el('importRecordingsBtn')?.addEventListener('click', () => this.importRecordings());
+    this.el('exportAllRecordingsBtn')?.addEventListener('click', () => this.exportAllRecordings());
     this.el('modalClose')?.addEventListener('click', () => this.closeModal());
     this.el('cancelSave')?.addEventListener('click', () => this.closeModal());
     this.el('confirmSave')?.addEventListener('click', () => this.saveRecording());
@@ -520,19 +528,9 @@ export class RecordingManager {
     };
 
     try {
-      const resp = await fetch('/api/recordings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, data }),
-      });
-      const result = await resp.json();
-      if (resp.ok) {
-        this.closeModal();
-        this.loadRecordings();
-        // Don't clear recordings - user might want to save another range
-      } else {
-        throw new Error(result.error || 'Failed to save recording');
-      }
+      await recordingStorage.saveRecording(name, data);
+      this.closeModal();
+      this.loadRecordings();
     } catch (err: any) {
       console.error('Error saving recording:', err);
     }
@@ -540,8 +538,7 @@ export class RecordingManager {
 
   async loadRecordings(): Promise<void> {
     try {
-      const resp = await fetch('/api/recordings');
-      const recordings = await resp.json();
+      const recordings = await recordingStorage.getRecordings();
       this.displayRecordings(recordings);
     } catch {
       const list = this.el('recordingsList');
@@ -569,6 +566,7 @@ export class RecordingManager {
         </div>
         <div class="recording-actions">
           <button class="play-recording-btn" title="Play recording" onclick="game.recordingManager.playRecording('${r.id}', '${r.name}', '${r.date}')"><i data-lucide="play" class="btn-icon"></i></button>
+          <button class="export-recording-btn" title="Export recording" onclick="game.recordingManager.exportRecording('${r.id}', '${r.name}')"><i data-lucide="download" class="btn-icon"></i></button>
           <button class="delete-recording-btn" title="Delete recording" onclick="game.recordingManager.deleteRecording('${r.id}', '${r.name}')"><i data-lucide="trash-2" class="btn-icon"></i></button>
         </div>
       </div>`,
@@ -580,9 +578,8 @@ export class RecordingManager {
 
   async playRecording(recordingId: string, name?: string, date?: string): Promise<void> {
     try {
-      const resp = await fetch(`/api/recordings/${recordingId}`);
-      const recording = await resp.json();
-      if (!resp.ok) throw new Error(recording.error || 'Failed to load recording');
+      const recording = await recordingStorage.getRecording(recordingId);
+      if (!recording) throw new Error('Recording not found');
 
       if (this.host.isRunning) this.host.toggleSimulation();
       if (this.isReplaying) this.stopTimeline();
@@ -598,7 +595,7 @@ export class RecordingManager {
       this.replayIndex = 0;
 
       // Enter playback mode with recording info
-      this.enterPlaybackMode(name || recording.name || 'Recording', date || '');
+      this.enterPlaybackMode(name || 'Recording', date || '');
 
       // Setup timeline and start playback
       this.updatePlaybackTimeline();
@@ -706,11 +703,91 @@ export class RecordingManager {
     );
     if (!confirmed) return;
     try {
-      const resp = await fetch(`/api/recordings/${recordingId}`, { method: 'DELETE' });
-      if (resp.ok) this.loadRecordings();
+      await recordingStorage.deleteRecording(recordingId);
+      this.loadRecordings();
     } catch (err: any) {
       console.error('Error deleting recording:', err);
     }
+  }
+
+  // ---- Export/Import ----
+
+  async exportRecording(recordingId: string, name: string): Promise<void> {
+    try {
+      const exported = await recordingStorage.exportRecording(recordingId);
+      if (!exported) {
+        console.error('Recording not found');
+        return;
+      }
+      const safeName = name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      const filename = `recording-${safeName}-${Date.now()}.json`;
+      downloadJson(exported, filename);
+    } catch (err: any) {
+      console.error('Error exporting recording:', err);
+    }
+  }
+
+  async exportAllRecordings(): Promise<void> {
+    try {
+      const exported = await recordingStorage.exportAllRecordings();
+      if (exported.recordings.length === 0) {
+        console.warn('No recordings to export');
+        return;
+      }
+      const filename = `all-recordings-${Date.now()}.json`;
+      downloadJson(exported, filename);
+    } catch (err: any) {
+      console.error('Error exporting recordings:', err);
+    }
+  }
+
+  async importRecordings(): Promise<void> {
+    // Create hidden file input
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.style.display = 'none';
+
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+
+      try {
+        const data = await readJsonFile(file);
+
+        if (!recordingStorage.validateImportData(data)) {
+          await Modal.confirm(
+            'Import Failed',
+            'The selected file is not a valid recording export.',
+            'OK',
+            '',
+          );
+          return;
+        }
+
+        const importedIds = await recordingStorage.importRecording(data as ExportFormat);
+        await Modal.confirm(
+          'Import Successful',
+          `Imported ${importedIds.length} recording(s).`,
+          'OK',
+          '',
+        );
+        this.loadRecordings();
+      } catch (err: any) {
+        console.error('Error importing recordings:', err);
+        await Modal.confirm(
+          'Import Failed',
+          `Error: ${err.message || 'Unknown error'}`,
+          'OK',
+          '',
+        );
+      } finally {
+        document.body.removeChild(input);
+      }
+    };
+
+    document.body.appendChild(input);
+    input.click();
   }
 
   // ---- Lifecycle ----
