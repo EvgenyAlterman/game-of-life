@@ -388,6 +388,15 @@ body {
     font-weight: 600;
     color: var(--text-sidebar);
     margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.section-title-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
 }
 
 /* Collapsible Section Headers */
@@ -685,10 +694,12 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .control-row label {
-    min-width: 60px;
+    flex-shrink: 0;
     font-size: 0.9rem;
     font-weight: 500;
     color: var(--text-sidebar-secondary);
@@ -696,6 +707,7 @@ body {
 
 .control-row input[type="number"] {
     flex: 1;
+    min-width: 0;
     padding: 8px 12px;
     background: var(--border-sidebar);
     border: 1px solid var(--border-sidebar-secondary);
@@ -703,6 +715,7 @@ body {
     color: var(--text-sidebar);
     font-size: 0.85rem;
     transition: background 0.2s ease, border-color 0.2s ease;
+    box-sizing: border-box;
 }
 
 .control-row input[type="number"]::placeholder {
