@@ -288,7 +288,11 @@ export class CanvasRenderer {
         const fadeLevel = this.engine.getCellFadeLevel(row, col);
         const isAlive = this.engine.getCell(row, col);
         if (fadeLevel > 0 && !isAlive) {
-          const opacity = (fadeLevel / this.visual.fadeDuration) * 0.8;
+          // Scale opacity based on fade level
+          // Use min(fadeLevel, 10) / 10 to cap at reasonable max for visual consistency
+          // This ensures cells always start visible and fade out smoothly
+          const normalizedFade = Math.min(fadeLevel, 10) / 10;
+          const opacity = normalizedFade * 0.8;
           this.ctx.fillStyle = CanvasRenderer.hexToRgba(baseCellColor, opacity);
           this.drawSingleCell(row, col);
         }

@@ -201,4 +201,51 @@ describe('CanvasRenderer', () => {
       expect(mockCtx.fillRect).not.toHaveBeenCalled();
     });
   });
+
+  describe('fade/trail duration', () => {
+    it('sets fadeDuration via setVisualFlags', () => {
+      const { renderer } = createRenderer();
+      renderer.setVisualFlags({ fadeDuration: 7 });
+      const flags = renderer.getVisualFlags();
+      expect(flags.fadeDuration).toBe(7);
+    });
+
+    it('includes fadeDuration in visual flags', () => {
+      const { renderer } = createRenderer();
+      const flags = renderer.getVisualFlags();
+      expect(flags).toHaveProperty('fadeDuration');
+      expect(typeof flags.fadeDuration).toBe('number');
+    });
+
+    it('does not draw fading cells when fadeMode is disabled', () => {
+      const { renderer, mockCtx, engine } = createRenderer();
+
+      // Set up a fading cell
+      engine.grid[3][3] = false;
+      engine.fade[3][3] = 4;
+
+      renderer.setVisualFlags({ fadeMode: false, fadeDuration: 5 });
+      renderer.draw();
+
+      // With no live cells and fade mode off, nothing should be drawn
+      expect(mockCtx.fillRect).not.toHaveBeenCalled();
+    });
+
+    it('preserves fadeDuration when updating other flags', () => {
+      const { renderer } = createRenderer();
+
+      renderer.setVisualFlags({ fadeDuration: 10 });
+      renderer.setVisualFlags({ showGrid: true });
+
+      const flags = renderer.getVisualFlags();
+      expect(flags.fadeDuration).toBe(10);
+      expect(flags.showGrid).toBe(true);
+    });
+
+    it('defaults fadeDuration to 1', () => {
+      const { renderer } = createRenderer();
+      const flags = renderer.getVisualFlags();
+      expect(flags.fadeDuration).toBe(1);
+    });
+  });
 });

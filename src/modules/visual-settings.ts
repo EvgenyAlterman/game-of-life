@@ -121,6 +121,7 @@ export class VisualSettingsManager {
 
   setFadeDuration(duration: number): void {
     this.fadeDuration = duration;
+    this.bus.emit('visual:fadeDurationChanged', { duration });
     this.bus.emit('canvas:needsRedraw');
     this.bus.emit('settings:changed');
   }

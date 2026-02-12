@@ -182,4 +182,55 @@ describe('VisualSettingsManager', () => {
       expect(VisualSettingsManager.getColorName('#4C1D95')).toBe('Deep Violet');
     });
   });
+
+  describe('setFadeDuration', () => {
+    it('sets fadeDuration value', () => {
+      vs.setFadeDuration(10);
+      expect(vs.fadeDuration).toBe(10);
+    });
+
+    it('emits visual:fadeDurationChanged', () => {
+      const handler = vi.fn();
+      bus.on('visual:fadeDurationChanged', handler);
+      vs.setFadeDuration(5);
+      expect(handler).toHaveBeenCalledWith({ duration: 5 });
+    });
+
+    it('emits canvas:needsRedraw', () => {
+      const handler = vi.fn();
+      bus.on('canvas:needsRedraw', handler);
+      vs.setFadeDuration(5);
+      expect(handler).toHaveBeenCalled();
+    });
+
+    it('emits settings:changed', () => {
+      const handler = vi.fn();
+      bus.on('settings:changed', handler);
+      vs.setFadeDuration(7);
+      expect(handler).toHaveBeenCalled();
+    });
+
+    it('includes fadeDuration in getState', () => {
+      vs.setFadeDuration(15);
+      const state = vs.getState();
+      expect(state.fadeDuration).toBe(15);
+    });
+  });
+
+  describe('fadeDuration persistence', () => {
+    it('loads fadeDuration from state', () => {
+      vs.loadState({ fadeDuration: 8 });
+      expect(vs.fadeDuration).toBe(8);
+    });
+
+    it('preserves fadeDuration when loading partial state', () => {
+      vs.setFadeDuration(12);
+      vs.loadState({ showGrid: true });
+      expect(vs.fadeDuration).toBe(12);
+    });
+
+    it('defaults fadeDuration to 1', () => {
+      expect(vs.fadeDuration).toBe(1);
+    });
+  });
 });

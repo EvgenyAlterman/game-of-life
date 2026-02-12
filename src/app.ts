@@ -233,6 +233,7 @@ export class App {
     this.bus.on('visual:gridToggled', () => this.syncVisuals());
     this.bus.on('visual:pixelGridToggled', () => this.syncVisuals());
     this.bus.on('visual:fadeToggled', () => this.syncVisuals());
+    this.bus.on('visual:fadeDurationChanged', () => this.syncVisuals());
     this.bus.on('visual:maturityToggled', () => this.syncVisuals());
     this.bus.on('visual:cellShapeChanged', () => this.syncVisuals());
     this.bus.on('visual:maturityColorChanged', () => this.syncVisuals());
@@ -251,6 +252,7 @@ export class App {
       maturityMode: vs.showMaturity,
       cellShape: vs.cellShape,
       maturityEndColor: vs.maturityColor,
+      fadeDuration: vs.fadeDuration,
     });
     this.sim.fadeMode = vs.showFade;
     this.sim.fadeDuration = vs.fadeDuration;
