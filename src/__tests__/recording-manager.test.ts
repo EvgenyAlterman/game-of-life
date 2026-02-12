@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { RecordingManager, RecordingEngine, RecordingHost } from '../recording-manager';
 import { EventBus } from '../core/event-bus';
 import { DomRegistry } from '../core/dom-registry';
@@ -37,17 +37,23 @@ function createMockHost(): RecordingHost {
 
 function setupDOM() {
   document.body.innerHTML = `
-    <button id="recordBtn"><span class="btn-icon" data-lucide="circle"></span></button>
-    <button id="finishBtn" style="display:none"></button>
-    <button id="playTimelineBtn"></button>
-    <button id="pauseTimelineBtn" style="display:none"></button>
-    <button id="stopTimelineBtn"></button>
-    <input id="timelineSlider" type="range" min="0" max="0" value="0" />
-    <input id="playbackSpeed" type="range" min="1" max="10" value="5" />
-    <span id="currentFrame">0</span>
-    <span id="totalFrames">0</span>
-    <span id="speedValue">5x</span>
-    <div id="timelineSection" style="display:none"></div>
+    <button id="timelinePlayBtn"><i class="timeline-bar-icon" data-lucide="play"></i></button>
+    <button id="saveRecordingBtn"></button>
+    <button id="resetTimelineBtn"></button>
+    <button id="closePlaybackBtn" style="display:none"></button>
+    <input id="timelineBarSlider" type="range" min="0" max="0" value="0" />
+    <span id="timelineBarFrame">0 / 0</span>
+    <div id="timelineNormalControls" style="display:flex"></div>
+    <div id="timelineRecordingInfo" style="display:none">
+      <span id="playbackRecordingName"></span>
+      <span id="playbackRecordingDate"></span>
+    </div>
+    <input id="rangeStart" type="number" min="1" value="1" />
+    <input id="rangeEnd" type="number" min="1" value="1" />
+    <input id="rangeSliderStart" type="range" min="1" value="1" />
+    <input id="rangeSliderEnd" type="range" min="1" value="1" />
+    <span id="recordedGenerations">0</span>
+    <span id="recordingDuration">0s</span>
     <button id="loadRecordingsBtn"></button>
     <div id="recordingsList"></div>
     <div id="saveModal" style="display:none">
@@ -56,6 +62,10 @@ function setupDOM() {
       <button id="cancelSave"></button>
       <button id="confirmSave"></button>
     </div>
+    <button id="startStopBtn"></button>
+    <button id="resetBtn"></button>
+    <button id="randomBtn"></button>
+    <button id="clearBtn"></button>
   `;
 }
 
@@ -70,29 +80,18 @@ function setup() {
 }
 
 describe('RecordingManager', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  describe('toggleRecording', () => {
-    it('starts recording when not recording', () => {
-      const { rm } = setup();
-      rm.toggleRecording();
-      expect(rm.isRecording).toBe(true);
-    });
-
-    it('stops recording when already recording', () => {
-      const { rm } = setup();
-      rm.startRecording();
-      rm.toggleRecording();
-      expect(rm.isRecording).toBe(false);
-    });
-  });
-
-  describe('startRecording', () => {
+  describe('startAutoRecording', () => {
     it('sets state and records initial frame', () => {
       const { rm, engine } = setup();
-      rm.startRecording();
+      rm.startAutoRecording();
       expect(rm.isRecording).toBe(true);
       expect(rm.recordedGenerations).toHaveLength(1);
       expect(engine.getGridSnapshot).toHaveBeenCalled();
@@ -102,23 +101,23 @@ describe('RecordingManager', () => {
       const { rm, bus } = setup();
       const handler = vi.fn();
       bus.on('recording:started', handler);
-      rm.startRecording();
+      rm.startAutoRecording();
       expect(handler).toHaveBeenCalled();
     });
 
     it('is idempotent', () => {
       const { rm } = setup();
-      rm.startRecording();
-      rm.startRecording();
+      rm.startAutoRecording();
+      rm.startAutoRecording();
       expect(rm.recordedGenerations).toHaveLength(1);
     });
   });
 
-  describe('stopRecording', () => {
+  describe('stopAutoRecording', () => {
     it('clears recording state', () => {
       const { rm } = setup();
-      rm.startRecording();
-      rm.stopRecording();
+      rm.startAutoRecording();
+      rm.stopAutoRecording();
       expect(rm.isRecording).toBe(false);
       expect(rm.recordingStartTime).toBeNull();
     });
@@ -127,8 +126,8 @@ describe('RecordingManager', () => {
       const { rm, bus } = setup();
       const handler = vi.fn();
       bus.on('recording:stopped', handler);
-      rm.startRecording();
-      rm.stopRecording();
+      rm.startAutoRecording();
+      rm.stopAutoRecording();
       expect(handler).toHaveBeenCalled();
     });
   });
@@ -136,7 +135,7 @@ describe('RecordingManager', () => {
   describe('recordGeneration', () => {
     it('captures frame when recording', () => {
       const { rm } = setup();
-      rm.startRecording();
+      rm.startAutoRecording();
       rm.recordGeneration();
       expect(rm.recordedGenerations).toHaveLength(2); // 1 from start + 1 manual
     });
@@ -151,25 +150,9 @@ describe('RecordingManager', () => {
   describe('onGenerationUpdate', () => {
     it('records when recording', () => {
       const { rm } = setup();
-      rm.startRecording();
+      rm.startAutoRecording();
       rm.onGenerationUpdate();
       expect(rm.recordedGenerations).toHaveLength(2);
-    });
-  });
-
-  describe('finishRecording', () => {
-    it('stops recording and opens save modal', () => {
-      const { rm } = setup();
-      rm.startRecording();
-      rm.finishRecording();
-      expect(rm.isRecording).toBe(false);
-      expect(document.getElementById('saveModal')!.style.display).toBe('flex');
-    });
-
-    it('does nothing when not recording', () => {
-      const { rm } = setup();
-      rm.finishRecording();
-      expect(document.getElementById('saveModal')!.style.display).toBe('none');
     });
   });
 
@@ -181,19 +164,14 @@ describe('RecordingManager', () => {
         { timestamp: 100, generation: 1, grid: [[true]], population: 1 },
         { timestamp: 200, generation: 2, grid: [[false]], population: 0 },
       ];
+      ctx.rm.isInPlaybackMode = true; // Required for updateTimelineState to use replayData
       return ctx;
     }
-
-    it('setupTimeline shows timeline section', () => {
-      const { rm } = setupWithData();
-      rm.setupTimeline();
-      expect(document.getElementById('timelineSection')!.style.display).toBe('block');
-    });
 
     it('setupTimeline configures slider range', () => {
       const { rm } = setupWithData();
       rm.setupTimeline();
-      const slider = document.getElementById('timelineSlider') as HTMLInputElement;
+      const slider = document.getElementById('timelineBarSlider') as HTMLInputElement;
       expect(slider.max).toBe('2');
     });
 
@@ -260,14 +238,14 @@ describe('RecordingManager', () => {
         { id: '1', name: 'Test', date: '2024-01-01', time: '12:00', totalGenerations: 10, ruleString: 'B3/S23' } as any,
       ]);
       expect(document.getElementById('recordingsList')!.textContent).toContain('Test');
-      expect(document.getElementById('recordingsList')!.textContent).toContain('10 generations');
+      expect(document.getElementById('recordingsList')!.textContent).toContain('10 gen');
     });
   });
 
   describe('destroy', () => {
     it('clears all state', () => {
       const { rm } = setup();
-      rm.startRecording();
+      rm.startAutoRecording();
       rm.recordedGenerations.push({ timestamp: 0, generation: 0, grid: [], population: 0 });
       rm.destroy();
       expect(rm.isRecording).toBe(false);
