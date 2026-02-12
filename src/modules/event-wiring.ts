@@ -19,6 +19,7 @@ import type { SelectionManager } from './selection-manager';
 import type { InputHandler } from './input-handler';
 import type { GameOfLifeEngine } from '../js/game-engine';
 import type { GameOfLifePatterns as PatternsLib } from '../js/patterns';
+import type { SettingsPersistence } from './settings-persistence';
 
 declare const lucide: { createIcons: () => void };
 
@@ -40,6 +41,7 @@ export interface EventWiringDeps {
   canvas: HTMLCanvasElement;
   engine: GameOfLifeEngine;
   patternsLib: typeof PatternsLib;
+  persistence: SettingsPersistence;
   onSaveSettings: () => void;
 }
 
@@ -67,6 +69,7 @@ export class EventWiring {
     this.wireKeyboardEvents();
     this.wireSavePatternModal();
     this.wireMaxToggleButtons();
+    this.wireSettingsExportImport();
   }
 
   // ─── Simulation Controls ─────────────────────────────────────
@@ -585,5 +588,17 @@ export class EventWiring {
       slider.value = String(newMax);
       slider.dispatchEvent(new Event('input'));
     }
+  }
+
+  // ─── Settings Export/Import ─────────────────────────────────
+
+  private wireSettingsExportImport(): void {
+    const { dom, persistence } = this.deps;
+
+    const exportBtn = dom.get('exportSettingsBtn');
+    exportBtn?.addEventListener('click', () => persistence.exportToFile());
+
+    const importBtn = dom.get('importSettingsBtn');
+    importBtn?.addEventListener('click', () => persistence.importFromFile());
   }
 }

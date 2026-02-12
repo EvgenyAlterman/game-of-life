@@ -149,6 +149,7 @@ export class App {
       canvas: this.canvas,
       engine: this.engine,
       patternsLib: GameOfLifePatterns,
+      persistence: this.persistence,
       onSaveSettings: () => this.persistence.save(),
     });
 

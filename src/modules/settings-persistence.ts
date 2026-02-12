@@ -1,6 +1,8 @@
 import { EventBus } from '../core/event-bus';
 import { StorageService } from '../core/storage-service';
 import { DomRegistry } from '../core/dom-registry';
+import { getDefaultSettings } from '../core/default-settings';
+import { exportSettings, triggerImport, type ImportResult } from './settings-export';
 
 /**
  * Each module exposes getState() and loadState() — SettingsPersistence
@@ -136,8 +138,9 @@ export class SettingsPersistence {
   }
 
   load(): void {
-    const settings = this.storage.getSettings() as SettingsSnapshot | null;
-    if (!settings) return;
+    const saved = this.storage.getSettings() as SettingsSnapshot | null;
+    const settings = saved || getDefaultSettings();
+    const isDefaults = !saved;
 
     // Distribute to modules
     if (settings.gridSettings && this.modules.gridSettings) {
@@ -216,6 +219,102 @@ export class SettingsPersistence {
     // Active tab
     if (settings.activeTab && this.modules.sidebar) {
       this.modules.sidebar.setActiveTab(settings.activeTab);
+    }
+
+    // Save defaults to localStorage so they persist
+    if (isDefaults) {
+      this.save();
+    }
+
+    this.bus.emit('settings:loaded');
+    if (this.onLoaded) this.onLoaded();
+  }
+
+  /**
+   * Export current settings to a downloadable JSON file.
+   */
+  exportToFile(): void {
+    const snapshot: SettingsSnapshot = { timestamp: Date.now() };
+
+    if (this.modules.gridSettings) snapshot.gridSettings = this.modules.gridSettings.getState();
+    if (this.modules.visualSettings) snapshot.visualSettings = this.modules.visualSettings.getState();
+    if (this.modules.autoStop) snapshot.autoStop = this.modules.autoStop.getState();
+    if (this.modules.customRules) snapshot.customRules = this.modules.customRules.getState();
+    if (this.modules.drawingTools) snapshot.drawingTools = this.modules.drawingTools.getState();
+
+    snapshot.gridSnapshot = this.engine.getGridSnapshot();
+    snapshot.generation = this.engine.generation;
+
+    const speedSlider = this.dom.get<HTMLInputElement>('speedSlider');
+    if (speedSlider) snapshot.speed = parseInt(speedSlider.value, 10);
+
+    const densitySlider = this.dom.get<HTMLInputElement>('randomDensitySlider');
+    if (densitySlider) snapshot.randomDensity = parseInt(densitySlider.value, 10);
+
+    exportSettings(snapshot);
+  }
+
+  /**
+   * Import settings from a file. Opens file picker.
+   */
+  importFromFile(): void {
+    triggerImport((result: ImportResult) => {
+      if (result.success && result.settings) {
+        this.applySettings(result.settings);
+        this.save();
+        this.bus.emit('settings:imported');
+      } else {
+        this.bus.emit('settings:importFailed', result.error || 'Unknown error');
+      }
+    });
+  }
+
+  /**
+   * Apply a settings snapshot (used by import).
+   */
+  private applySettings(settings: SettingsSnapshot): void {
+    if (settings.gridSettings && this.modules.gridSettings) {
+      this.modules.gridSettings.loadState(settings.gridSettings);
+      const gs = settings.gridSettings;
+      if (gs.rows && gs.cols && gs.cellSize) {
+        this.canvas.width = gs.cols * gs.cellSize;
+        this.canvas.height = gs.rows * gs.cellSize;
+        this.engine.resize(gs.rows, gs.cols);
+      }
+    }
+
+    if (settings.gridSnapshot) {
+      this.engine.restoreFromSnapshot(settings.gridSnapshot);
+    }
+
+    if (settings.visualSettings && this.modules.visualSettings) {
+      this.modules.visualSettings.loadState(settings.visualSettings);
+    }
+
+    if (settings.autoStop && this.modules.autoStop) {
+      this.modules.autoStop.loadState(settings.autoStop);
+    }
+
+    if (settings.customRules && this.modules.customRules) {
+      this.modules.customRules.loadState(settings.customRules);
+    }
+
+    if (settings.drawingTools && this.modules.drawingTools) {
+      this.modules.drawingTools.loadState(settings.drawingTools);
+    }
+
+    if (settings.speed !== undefined) {
+      const speedSlider = this.dom.get<HTMLInputElement>('speedSlider');
+      const speedValue = this.dom.get<HTMLElement>('speedValue');
+      if (speedSlider) speedSlider.value = String(settings.speed);
+      if (speedValue) speedValue.textContent = String(settings.speed);
+    }
+
+    if (settings.randomDensity !== undefined) {
+      const slider = this.dom.get<HTMLInputElement>('randomDensitySlider');
+      const display = this.dom.get<HTMLElement>('randomDensityValue');
+      if (slider) slider.value = String(settings.randomDensity);
+      if (display) display.textContent = settings.randomDensity + '%';
     }
 
     this.bus.emit('settings:loaded');

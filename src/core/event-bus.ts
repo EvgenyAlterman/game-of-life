@@ -40,6 +40,8 @@ export interface EventMap {
   // Settings events
   'settings:changed': void;
   'settings:loaded': void;
+  'settings:imported': void;
+  'settings:importFailed': string;
 
   // Auto-stop events
   'autostop:triggered': { generation: number };

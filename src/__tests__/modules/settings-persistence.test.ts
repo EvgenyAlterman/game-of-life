@@ -130,10 +130,11 @@ describe('SettingsPersistence', () => {
       expect(engine.restoreFromSnapshot).toHaveBeenCalled();
     });
 
-    it('does nothing when no saved data', () => {
+    it('loads defaults when no saved data', () => {
       const { sp, modules } = setup();
       sp.load();
-      expect(modules.gridSettings.loadState).not.toHaveBeenCalled();
+      // Now defaults are applied when no saved data exists
+      expect(modules.gridSettings.loadState).toHaveBeenCalled();
     });
 
     it('restores slider max values', () => {
@@ -196,20 +197,22 @@ describe('SettingsPersistence', () => {
   });
 
   describe('handles missing/corrupt data gracefully', () => {
-    it('handles corrupt JSON', () => {
+    it('handles corrupt JSON by loading defaults', () => {
       localStorage.setItem('gameoflife-settings', 'not json');
       const { sp, modules } = setup();
-      sp.load(); // Should not throw
-      expect(modules.gridSettings.loadState).not.toHaveBeenCalled();
+      sp.load(); // Should not throw, loads defaults instead
+      // Now defaults are applied when data is corrupt
+      expect(modules.gridSettings.loadState).toHaveBeenCalled();
     });
 
-    it('handles expired data', () => {
+    it('handles expired data by loading defaults', () => {
       const expired = { timestamp: Date.now() - 31 * 24 * 60 * 60 * 1000, speed: 5 };
       localStorage.setItem('gameoflife-settings', JSON.stringify(expired));
       const { sp, modules } = setup();
       sp.load();
       // StorageService filters by 30-day expiry, so getSettings returns null
-      expect(modules.gridSettings.loadState).not.toHaveBeenCalled();
+      // Now defaults are applied when data is expired
+      expect(modules.gridSettings.loadState).toHaveBeenCalled();
     });
   });
 });
