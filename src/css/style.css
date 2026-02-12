@@ -2013,6 +2013,44 @@ body {
     text-align: right;
 }
 
+/* Timeline playback speed control */
+.timeline-speed-control {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.timeline-speed-input {
+    width: 42px;
+    padding: 4px 6px;
+    border: 1px solid var(--border-primary);
+    border-radius: 4px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+    -moz-appearance: textfield;
+}
+
+.timeline-speed-input::-webkit-outer-spin-button,
+.timeline-speed-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.timeline-speed-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+.timeline-speed-label {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
 /* Timeline button variants */
 .timeline-bar-btn.timeline-save-btn {
     background: linear-gradient(45deg, #10b981, #059669);

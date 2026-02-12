@@ -55,7 +55,7 @@ export class RecordingManager {
   public isReplaying = false;
   public replayData: RecordingFrame[] | null = null;
   public replayIndex = 0;
-  public replaySpeed = 5;
+  public replaySpeed = 40;
   public replayInterval: ReturnType<typeof setInterval> | null = null;
 
   // Playback mode (when playing a saved recording)
@@ -108,6 +108,20 @@ export class RecordingManager {
     this.el('saveRecordingBtn')?.addEventListener('click', () => this.openSaveModal());
     this.el('resetTimelineBtn')?.addEventListener('click', () => this.clearRecording());
     this.el('closePlaybackBtn')?.addEventListener('click', () => this.exitPlaybackMode());
+
+    // Playback speed input
+    const speedInput = this.dom.get<HTMLInputElement>('playbackSpeed');
+    speedInput?.addEventListener('input', (e) => {
+      const target = e.target as HTMLInputElement;
+      const value = parseInt(target.value, 10) || 40;
+      this.replaySpeed = Math.max(1, Math.min(80, value));
+      // Update interval if currently playing
+      if (this.isReplaying && this.replayInterval) {
+        clearInterval(this.replayInterval);
+        const ms = 1000 / this.replaySpeed;
+        this.replayInterval = setInterval(() => this.nextFrame(), ms);
+      }
+    });
 
     this.el('loadRecordingsBtn')?.addEventListener('click', () => this.loadRecordings());
     this.el('importRecordingsBtn')?.addEventListener('click', () => this.importRecordings());
@@ -334,7 +348,7 @@ export class RecordingManager {
     this.updateTimelineUI();
 
     if (this.replayInterval) clearInterval(this.replayInterval);
-    const ms = Math.max(100, 1000 / this.replaySpeed);
+    const ms = 1000 / this.replaySpeed;
     this.replayInterval = setInterval(() => this.nextFrame(), ms);
   }
 
