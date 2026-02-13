@@ -212,6 +212,13 @@ export class InputHandler {
     }
   }
 
+  /** Re-render the pattern preview at the current position (e.g. after rotation change). */
+  refreshPatternPreview(): void {
+    if (!this.tools.selectedPattern || !this.previewPosition) return;
+    const rotated = this.onGetRotatedPattern(this.tools.selectedPattern, this.tools.patternRotation);
+    this.renderer.setPatternPreview({ pattern: rotated, row: this.previewPosition.row, col: this.previewPosition.col });
+  }
+
   private updateSelectionOverlay(): void {
     if (!this.selectionStart || !this.selectionEnd) return;
     const s = this.selectionStart;

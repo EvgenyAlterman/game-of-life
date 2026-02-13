@@ -474,7 +474,7 @@ export class EventWiring {
   // ─── Keyboard Events ─────────────────────────────────────────
 
   private wireKeyboardEvents(): void {
-    const { tools, fullscreen, sim, bus } = this.deps;
+    const { tools, fullscreen, sim, bus, input } = this.deps;
 
     document.addEventListener('keydown', (e) => {
       // Handle ESC key for fullscreen exit
@@ -489,10 +489,12 @@ export class EventWiring {
         if (e.key === '[') {
           e.preventDefault();
           tools.patternRotation = (tools.patternRotation - 90 + 360) % 360;
+          input.refreshPatternPreview();
           bus.emit('canvas:needsRedraw');
         } else if (e.key === ']') {
           e.preventDefault();
           tools.patternRotation = (tools.patternRotation + 90) % 360;
+          input.refreshPatternPreview();
           bus.emit('canvas:needsRedraw');
         }
       }
