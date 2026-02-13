@@ -229,6 +229,18 @@ export class App {
       if (found) this.tools.selectCustomPattern(name, found.pattern);
     };
 
+    // Sync renderer whenever settings are loaded (initial load + import)
+    this.bus.on('settings:loaded', () => {
+      const g = this.gridSettings;
+      this.renderer.resize(g.rows, g.cols, g.cellSize);
+      this.sim.rows = g.rows;
+      this.sim.cols = g.cols;
+      this.fullscreen.rows = g.rows;
+      this.fullscreen.cols = g.cols;
+      this.fullscreen.cellSize = g.cellSize;
+      this.draw();
+    });
+
     // Visual settings → renderer sync
     this.bus.on('visual:gridToggled', () => this.syncVisuals());
     this.bus.on('visual:pixelGridToggled', () => this.syncVisuals());
@@ -304,7 +316,7 @@ export class App {
     // Set up pattern search function
     this.patterns.setSearchFunction((q: string) => GameOfLifePatterns.search(q));
 
-    // Load persisted settings
+    // Load persisted settings (triggers settings:loaded → renderer sync)
     this.persistence.load();
 
     // Sync visual settings to renderer

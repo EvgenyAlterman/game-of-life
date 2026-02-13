@@ -148,5 +148,20 @@ export class GridSettingsManager {
     if (s.rows !== undefined) this.rows = s.rows;
     if (s.cols !== undefined) this.cols = s.cols;
     if (s.cellSize !== undefined) this.cellSize = s.cellSize;
+
+    // Sync slider DOM elements with loaded values
+    const widthSlider = this.dom.get<HTMLInputElement>('gridWidthSlider');
+    const heightSlider = this.dom.get<HTMLInputElement>('gridHeightSlider');
+    const sizeSlider = this.dom.get<HTMLInputElement>('cellSizeSlider');
+    const widthValue = this.dom.get('gridWidthValue');
+    const heightValue = this.dom.get('gridHeightValue');
+    const sizeValue = this.dom.get('cellSizeValue');
+
+    if (widthSlider && s.cols !== undefined) widthSlider.value = String(s.cols);
+    if (heightSlider && s.rows !== undefined) heightSlider.value = String(s.rows);
+    if (sizeSlider && s.cellSize !== undefined) sizeSlider.value = String(s.cellSize);
+    if (widthValue && s.cols !== undefined) widthValue.textContent = String(s.cols);
+    if (heightValue && s.rows !== undefined) heightValue.textContent = String(s.rows);
+    if (sizeValue && s.cellSize !== undefined) sizeValue.textContent = s.cellSize + 'px';
   }
 }
