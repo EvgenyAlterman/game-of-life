@@ -22,6 +22,7 @@ export interface RecordingEngine {
   getRulesAsString(): string;
   setBirthRules(rules: number[]): void;
   setSurvivalRules(rules: number[]): void;
+  clearStateTracking(): void;
 }
 
 export interface RecordingHost {
@@ -399,6 +400,7 @@ export class RecordingManager {
     const frame = this.replayData[idx];
     this.engine.grid = frame.grid.map(row => [...row]);
     this.engine.generation = frame.generation || idx;
+    this.engine.clearStateTracking();
     this.host.draw();
     this.host.updateInfo();
 

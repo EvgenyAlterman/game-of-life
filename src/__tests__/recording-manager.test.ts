@@ -17,6 +17,7 @@ function createMockEngine(): RecordingEngine {
     getRulesAsString: vi.fn(() => 'B3/S23'),
     setBirthRules: vi.fn(),
     setSurvivalRules: vi.fn(),
+    clearStateTracking: vi.fn(),
   };
 }
 
