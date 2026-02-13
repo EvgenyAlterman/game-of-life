@@ -238,6 +238,11 @@ export class App {
       this.fullscreen.rows = g.rows;
       this.fullscreen.cols = g.cols;
       this.fullscreen.cellSize = g.cellSize;
+
+      // Sync speed from slider (persistence updates DOM but not sim)
+      const speedSlider = this.dom.get<HTMLInputElement>('speedSlider');
+      if (speedSlider) this.sim.setSpeed(parseInt(speedSlider.value, 10) || 10);
+
       this.draw();
     });
 
