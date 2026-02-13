@@ -88,6 +88,8 @@ export class SimulationController {
       this.lastTime = currentTime;
     }
 
+    // Re-check: update() may have stopped the simulation (e.g. auto-stop)
+    if (!this.isRunning) return;
     this.animationId = requestAnimationFrame((t) => this.animate(t));
   }
 
