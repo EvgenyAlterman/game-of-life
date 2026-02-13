@@ -1191,6 +1191,67 @@ body {
     color: var(--text-primary);
 }
 
+/* Override sidebar text colors for elements inside panel-settings (light bg) */
+.panel-settings .slider-label-row label,
+.panel-settings .slider-control label,
+.panel-settings .control-row label,
+.panel-settings .speed-control label {
+    color: var(--text-secondary);
+}
+
+.panel-settings .slider-group span,
+.panel-settings .control-row input[type="number"],
+.panel-settings .apply-btn,
+.panel-settings .seed-btn,
+.panel-settings .checkbox-label,
+.panel-settings .checkbox-label-compact,
+.panel-settings .quick-actions button {
+    color: var(--text-primary);
+}
+
+.panel-settings .slider-group {
+    background: var(--bg-quaternary);
+    border: 1px solid var(--border-primary);
+}
+
+.panel-settings .control-row input[type="number"] {
+    background: var(--bg-quaternary);
+    border-color: var(--border-primary);
+}
+
+.panel-settings .control-row input[type="number"]::placeholder {
+    color: var(--text-tertiary);
+}
+
+.panel-settings .checkbox-label-compact {
+    background: var(--bg-quaternary);
+    border-color: var(--border-primary);
+}
+
+.panel-settings .apply-btn,
+.panel-settings .seed-btn {
+    background: var(--bg-quaternary);
+    border-color: var(--border-primary);
+}
+
+.panel-settings .quick-actions button {
+    background: var(--bg-quaternary);
+    border-color: var(--border-primary);
+}
+
+.panel-settings .max-toggle-btn {
+    color: var(--text-tertiary);
+}
+
+.panel-settings .max-toggle-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-quaternary);
+}
+
+.panel-settings .section-desc {
+    color: var(--text-secondary);
+}
+
 .panel-settings h4 {
     margin: 0 0 12px 0;
     font-size: 0.9rem;
