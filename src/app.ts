@@ -175,6 +175,7 @@ export class App {
       this.sim.isRunning = false;
       if (this.sim.animationId != null) cancelAnimationFrame(this.sim.animationId);
       this.sim.updatePlayPauseUI();
+      this.bus.emit('simulation:stop');
     };
 
     // Grid settings
