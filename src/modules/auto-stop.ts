@@ -102,12 +102,14 @@ export class AutoStopManager {
     const current = this.captureCurrentGeneration();
     this.generationHistory.push(current);
 
-    // Keep only last 10 generations
-    if (this.generationHistory.length > 10) {
+    const required = this.delaySetting + 2;
+
+    // Keep enough history for the comparison window (+1 for consecutive match)
+    const maxHistory = required + 1;
+    while (this.generationHistory.length > maxHistory) {
       this.generationHistory.shift();
     }
 
-    const required = this.delaySetting + 2;
     if (this.generationHistory.length < required) return false;
 
     const compareIdx = this.generationHistory.length - required;
@@ -175,6 +177,14 @@ export class AutoStopManager {
     if (s.delaySetting !== undefined) this.delaySetting = s.delaySetting;
     if (s.showNotification !== undefined) this.showNotification = s.showNotification;
     this.updateUI();
+
+    // Sync delay slider and notification checkbox with loaded values
+    const delaySlider = this.dom.get<HTMLInputElement>('autoStopDelay');
+    const delayValue = this.dom.get('autoStopDelayValue');
+    const notifCheckbox = this.dom.get<HTMLInputElement>('autoStopNotification');
+    if (delaySlider && s.delaySetting !== undefined) delaySlider.value = String(s.delaySetting);
+    if (delayValue && s.delaySetting !== undefined) delayValue.textContent = String(s.delaySetting);
+    if (notifCheckbox && s.showNotification !== undefined) notifCheckbox.checked = s.showNotification;
   }
 
   setDelay(value: number): void {
