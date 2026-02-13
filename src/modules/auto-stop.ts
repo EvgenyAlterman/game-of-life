@@ -94,37 +94,39 @@ export class AutoStopManager {
 
   /**
    * Called each tick to check if the grid has stabilised.
+   * Detects static patterns (no change) and oscillators (period up to 10).
    * Returns true if auto-stop was triggered.
    */
   check(): boolean {
     if (!this.enabled) return false;
 
     const current = this.captureCurrentGeneration();
+
+    // Check if current matches any recent generation (static or oscillator)
+    let isStable = false;
+    for (const past of this.generationHistory) {
+      if (AutoStopManager.compareGenerations(current, past)) {
+        isStable = true;
+        break;
+      }
+    }
+
+    // Keep a small window for oscillator period detection (up to period 10)
     this.generationHistory.push(current);
-
-    const required = this.delaySetting + 2;
-
-    // Keep enough history for the comparison window (+1 for consecutive match)
-    const maxHistory = required + 1;
-    while (this.generationHistory.length > maxHistory) {
+    while (this.generationHistory.length > 10) {
       this.generationHistory.shift();
     }
 
-    if (this.generationHistory.length < required) return false;
-
-    const compareIdx = this.generationHistory.length - required;
-    if (compareIdx >= 0) {
-      const older = this.generationHistory[compareIdx];
-      if (AutoStopManager.compareGenerations(current, older)) {
-        this.stableGenerationCount++;
-        if (this.stableGenerationCount >= 2) {
-          this.trigger();
-          return true;
-        }
-      } else {
-        this.stableGenerationCount = 0;
+    if (isStable) {
+      this.stableGenerationCount++;
+      if (this.stableGenerationCount >= this.delaySetting) {
+        this.trigger();
+        return true;
       }
+    } else {
+      this.stableGenerationCount = 0;
     }
+
     return false;
   }
 
