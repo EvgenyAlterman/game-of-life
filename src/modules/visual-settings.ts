@@ -177,6 +177,12 @@ export class VisualSettingsManager {
       if (text) text.textContent = 'Trail';
       if (settings) settings.style.display = 'none';
     }
+
+    // Sync fade duration slider with loaded value
+    const fadeSlider = this.dom.get<HTMLInputElement>('fadeSlider');
+    const fadeValue = this.dom.get('fadeValue');
+    if (fadeSlider) fadeSlider.value = String(this.fadeDuration);
+    if (fadeValue) fadeValue.textContent = String(this.fadeDuration);
   }
 
   private updateMaturityUI(): void {

@@ -889,7 +889,7 @@ body {
 /* Visual Toolbar - Photoshop Style */
 .visual-toolbar {
     margin: 12px 0;
-    background: var(--bg-tertiary);
+    background: rgba(255, 255, 255, 0.1);
     border: 1px solid var(--border-sidebar);
     border-radius: 8px;
     padding: 6px;
@@ -911,10 +911,10 @@ body {
     width: 36px;
     height: 36px;
     padding: 4px;
-    border: 1px solid var(--border-secondary);
+    border: 1px solid var(--border-sidebar-secondary);
     border-radius: 6px;
-    background: var(--bg-secondary);
-    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--text-sidebar);
     cursor: pointer;
     transition: all 0.2s ease;
     font-size: 0.7rem;
@@ -925,7 +925,7 @@ body {
 }
 
 .toolbar-btn:hover {
-    background: var(--bg-quaternary);
+    background: rgba(255, 255, 255, 0.25);
     border-color: var(--accent-primary);
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -1123,7 +1123,7 @@ body {
 /* Custom pattern styles */
 .custom-pattern {
     position: relative;
-    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+    background: rgba(255, 255, 255, 0.08);
     border-left: 3px solid #4a90e2;
 }
 
@@ -1182,21 +1182,21 @@ body {
 }
 
 .panel-settings {
-    background: var(--bg-tertiary);
+    background: rgba(255, 255, 255, 0.1);
     border: 1px solid var(--border-sidebar);
     border-radius: 8px;
     padding: 15px;
     margin-bottom: 10px;
     transition: all 0.3s ease;
-    color: var(--text-primary);
+    color: var(--text-sidebar);
 }
 
-/* Override sidebar text colors for elements inside panel-settings (light bg) */
+/* Panel-settings lives inside the sidebar gradient — use sidebar color tokens */
 .panel-settings .slider-label-row label,
 .panel-settings .slider-control label,
 .panel-settings .control-row label,
 .panel-settings .speed-control label {
-    color: var(--text-secondary);
+    color: var(--text-sidebar-secondary);
 }
 
 .panel-settings .slider-group span,
@@ -1206,57 +1206,58 @@ body {
 .panel-settings .checkbox-label,
 .panel-settings .checkbox-label-compact,
 .panel-settings .quick-actions button {
-    color: var(--text-primary);
+    color: var(--text-sidebar);
 }
 
 .panel-settings .slider-group {
-    background: var(--bg-quaternary);
-    border: 1px solid var(--border-primary);
+    background: var(--border-sidebar);
+    border: 1px solid var(--border-sidebar-secondary);
 }
 
 .panel-settings .control-row input[type="number"] {
-    background: var(--bg-quaternary);
-    border-color: var(--border-primary);
+    background: var(--border-sidebar);
+    border-color: var(--border-sidebar-secondary);
+    color: var(--text-sidebar);
 }
 
 .panel-settings .control-row input[type="number"]::placeholder {
-    color: var(--text-tertiary);
+    color: var(--text-sidebar-secondary);
 }
 
 .panel-settings .checkbox-label-compact {
-    background: var(--bg-quaternary);
-    border-color: var(--border-primary);
+    background: var(--border-sidebar);
+    border-color: var(--border-sidebar-secondary);
 }
 
 .panel-settings .apply-btn,
 .panel-settings .seed-btn {
-    background: var(--bg-quaternary);
-    border-color: var(--border-primary);
+    background: var(--border-sidebar);
+    border-color: var(--border-sidebar-secondary);
 }
 
 .panel-settings .quick-actions button {
-    background: var(--bg-quaternary);
-    border-color: var(--border-primary);
+    background: var(--border-sidebar);
+    border-color: var(--border-sidebar-secondary);
 }
 
 .panel-settings .max-toggle-btn {
-    color: var(--text-tertiary);
+    color: var(--text-sidebar-secondary);
 }
 
 .panel-settings .max-toggle-btn:hover {
-    color: var(--text-primary);
-    background: var(--bg-quaternary);
+    color: var(--text-sidebar);
+    background: var(--border-sidebar);
 }
 
 .panel-settings .section-desc {
-    color: var(--text-secondary);
+    color: var(--text-sidebar-secondary);
 }
 
 .panel-settings h4 {
     margin: 0 0 12px 0;
     font-size: 0.9rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--text-sidebar);
 }
 
 .setting-row {
@@ -1268,14 +1269,14 @@ body {
 .setting-row label {
     font-size: 0.85rem;
     font-weight: 500;
-    color: var(--text-secondary);
+    color: var(--text-sidebar-secondary);
 }
 
 .fade-settings {
     margin-top: 10px;
     padding: 12px;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-primary);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-sidebar);
     border-radius: 6px;
     transition: all 0.3s ease;
 }
@@ -1285,14 +1286,14 @@ body {
     font-size: 0.9rem;
     font-weight: 500;
     margin-bottom: 8px;
-    color: var(--text-secondary);
+    color: var(--text-sidebar-secondary);
 }
 
 .maturity-settings {
     margin-top: 10px;
     padding: 12px;
-    background: var(--border-sidebar);
-    border: 1px solid var(--border-sidebar-secondary);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-sidebar);
     border-radius: 6px;
     transition: all 0.3s ease;
 }
@@ -1302,7 +1303,7 @@ body {
     font-size: 0.9rem;
     font-weight: 500;
     margin-bottom: 8px;
-    color: var(--text-secondary);
+    color: var(--text-sidebar-secondary);
 }
 
 .color-group {
@@ -1344,7 +1345,7 @@ body {
 .color-label {
     flex: 1;
     font-weight: 500;
-    color: var(--text-primary);
+    color: var(--text-sidebar);
     font-size: 0.85rem;
 }
 
@@ -1358,16 +1359,16 @@ body {
     margin-bottom: 6px;
     font-size: 0.8rem;
     font-weight: 500;
-    color: var(--text-primary);
+    color: var(--text-sidebar);
 }
 
 .rule-preset-select {
     width: 100%;
     padding: 6px 10px;
-    border: 1px solid var(--border-secondary);
+    border: 1px solid var(--border-sidebar-secondary);
     border-radius: 6px;
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
+    background: var(--border-sidebar);
+    color: var(--text-sidebar);
     font-size: 0.8rem;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -1390,7 +1391,7 @@ body {
 .rule-input-group {
     margin-bottom: 10px;
     padding: 10px;
-    background: var(--bg-tertiary);
+    background: rgba(255, 255, 255, 0.1);
     border: 1px solid var(--border-sidebar);
     border-radius: 6px;
 }
@@ -1399,7 +1400,7 @@ body {
     display: block;
     font-size: 0.8rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--text-sidebar);
 }
 
 .rule-input-header {
@@ -1414,7 +1415,7 @@ body {
     display: block;
     margin: 0 0 6px 0;
     font-size: 0.7rem;
-    color: var(--text-secondary);
+    color: var(--text-sidebar-secondary);
 }
 
 .neighbor-checkboxes-compact {
@@ -1473,14 +1474,14 @@ body {
 
 .rule-description {
     font-size: 0.8rem;
-    color: var(--text-secondary);
+    color: var(--text-sidebar-secondary);
     margin-bottom: 8px;
     display: block;
 }
 
 .rule-helper {
     font-size: 0.8rem;
-    color: var(--text-secondary);
+    color: var(--text-sidebar-secondary);
     margin-top: 8px;
     display: block;
 }
@@ -1528,8 +1529,8 @@ body {
 .rule-display {
     margin-top: 10px;
     padding: 8px 10px;
-    background: var(--bg-quaternary);
-    border: 1px solid var(--border-sidebar);
+    background: var(--border-sidebar);
+    border: 1px solid var(--border-sidebar-secondary);
     border-radius: 6px;
     display: flex;
     align-items: center;
@@ -1541,7 +1542,7 @@ body {
     margin: 0;
     font-size: 0.8rem;
     font-weight: 500;
-    color: var(--text-secondary);
+    color: var(--text-sidebar-secondary);
 }
 
 .rule-string {
@@ -1549,10 +1550,10 @@ body {
     font-size: 0.9rem;
     font-weight: bold;
     color: var(--accent-primary);
-    background: var(--bg-secondary);
+    background: rgba(255, 255, 255, 0.15);
     padding: 4px 10px;
     border-radius: 4px;
-    border: 1px solid var(--border-sidebar);
+    border: 1px solid var(--border-sidebar-secondary);
     display: inline-block;
     letter-spacing: 1px;
 }
@@ -2274,7 +2275,7 @@ body {
     flex-shrink: 0;
 }
 
-.play-recording-btn, .delete-recording-btn {
+.play-recording-btn, .export-recording-btn, .delete-recording-btn {
     width: 26px;
     height: 26px;
     padding: 0;
@@ -2288,6 +2289,7 @@ body {
 }
 
 .play-recording-btn .btn-icon,
+.export-recording-btn .btn-icon,
 .delete-recording-btn .btn-icon {
     width: 14px;
     height: 14px;
@@ -2300,6 +2302,15 @@ body {
 
 .play-recording-btn:hover {
     background: var(--accent-secondary);
+}
+
+.export-recording-btn {
+    background: #10b981;
+    color: white;
+}
+
+.export-recording-btn:hover {
+    background: #059669;
 }
 
 .delete-recording-btn {

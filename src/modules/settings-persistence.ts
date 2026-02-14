@@ -110,7 +110,7 @@ export class SettingsPersistence {
 
     // Slider max values (read from DOM)
     snapshot.sliderMaxes = {};
-    for (const id of ['speedMax', 'gridWidthMax', 'gridHeightMax', 'cellSizeMax', 'randomDensityMax']) {
+    for (const id of ['speedMax', 'gridWidthMax', 'gridHeightMax', 'cellSizeMax', 'randomDensityMax', 'fadeMax']) {
       const el = this.dom.get<HTMLInputElement>(id);
       if (el) snapshot.sliderMaxes[id] = el.value;
     }

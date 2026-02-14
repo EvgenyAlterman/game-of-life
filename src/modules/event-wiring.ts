@@ -504,22 +504,32 @@ export class EventWiring {
   // ─── Save Pattern Modal ──────────────────────────────────────
 
   private wireSavePatternModal(): void {
-    const { dom, selection } = this.deps;
+    const { dom, selection, input } = this.deps;
 
     const patternModalClose = dom.get('patternModalClose');
-    patternModalClose?.addEventListener('click', () => selection.closeModal());
+    patternModalClose?.addEventListener('click', () => {
+      selection.closeModal();
+      input.clearSelection();
+    });
 
     const cancelPatternSave = dom.get('cancelPatternSave');
-    cancelPatternSave?.addEventListener('click', () => selection.closeModal());
+    cancelPatternSave?.addEventListener('click', () => {
+      selection.closeModal();
+      input.clearSelection();
+    });
 
     const confirmPatternSave = dom.get('confirmPatternSave');
-    confirmPatternSave?.addEventListener('click', () => selection.savePattern());
+    confirmPatternSave?.addEventListener('click', () => {
+      selection.savePattern();
+      input.clearSelection();
+    });
 
     // Close modal when clicking outside
     const savePatternModal = dom.get('savePatternModal');
     savePatternModal?.addEventListener('click', (e) => {
       if (e.target === savePatternModal) {
         selection.closeModal();
+        input.clearSelection();
       }
     });
   }

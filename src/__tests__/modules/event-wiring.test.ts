@@ -88,6 +88,7 @@ function createMockDrawingTools() {
 function createMockInputHandler() {
   return {
     attach: vi.fn(),
+    clearSelection: vi.fn(),
     eraser: {
       brushSize: 1,
       brushShape: 'circle' as const,
@@ -780,6 +781,7 @@ describe('EventWiring', () => {
 
       document.getElementById('patternModalClose')?.click();
       expect(deps.selection.closeModal).toHaveBeenCalled();
+      expect(deps.input.clearSelection).toHaveBeenCalled();
     });
 
     it('wires cancel button', () => {
@@ -789,6 +791,7 @@ describe('EventWiring', () => {
 
       document.getElementById('cancelPatternSave')?.click();
       expect(deps.selection.closeModal).toHaveBeenCalled();
+      expect(deps.input.clearSelection).toHaveBeenCalled();
     });
 
     it('wires confirm save button', () => {
@@ -798,6 +801,7 @@ describe('EventWiring', () => {
 
       document.getElementById('confirmPatternSave')?.click();
       expect(deps.selection.savePattern).toHaveBeenCalled();
+      expect(deps.input.clearSelection).toHaveBeenCalled();
     });
   });
 

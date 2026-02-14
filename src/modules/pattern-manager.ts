@@ -36,6 +36,9 @@ export class PatternManager {
   onSelectDrawingPattern: (name: string) => void = () => {};
   onSelectCustomPattern: (name: string) => void = () => {};
 
+  // Stored reference to pattern library for rebuilding tree
+  private patternsLib: { categories: Record<string, any>; getByCategory: (key: string) => any[] } | null = null;
+
   constructor(bus: EventBus, storage: StorageService, dom: DomRegistry) {
     this.bus = bus;
     this.storage = storage;
@@ -50,7 +53,12 @@ export class PatternManager {
       getByCategory: (key: string) => any[];
     },
   ): void {
+    this.patternsLib = patternsLib;
     this.buildPatternTree(patternsLib);
+  }
+
+  refreshTree(): void {
+    if (this.patternsLib) this.buildPatternTree(this.patternsLib);
   }
 
   buildPatternTree(
@@ -270,6 +278,7 @@ export class PatternManager {
   deleteCustomPattern(name: string): void {
     const patterns = this.storage.getCustomPatterns().filter((p) => p.name !== name);
     this.storage.saveCustomPatterns(patterns);
+    this.refreshTree();
   }
 
   saveCustomPattern(data: CustomPatternData): void {
@@ -281,6 +290,7 @@ export class PatternManager {
       patterns.push(data);
     }
     this.storage.saveCustomPatterns(patterns);
+    this.refreshTree();
   }
 
   // ─── Rotation ───────────────────────────────────────────
