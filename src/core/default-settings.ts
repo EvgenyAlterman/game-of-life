@@ -5,19 +5,19 @@
 import type { SettingsSnapshot } from '../modules/settings-persistence';
 
 export const DEFAULT_GRID_SETTINGS = {
-  rows: 50,
-  cols: 80,
-  cellSize: 10,
+  rows: 150,
+  cols: 200,
+  cellSize: 4,
 };
 
 export const DEFAULT_VISUAL_SETTINGS = {
-  showGrid: true,
+  showGrid: false,
   showPixelGrid: false,
-  showFade: true,
+  showFade: false,
   showMaturity: false,
-  fadeDuration: 500,
-  maturityColor: '#00ff00',
-  cellShape: 'square',
+  fadeDuration: 5,
+  maturityColor: '#4c1d95',
+  cellShape: 'rectangle',
 };
 
 export const DEFAULT_AUTO_STOP = {
@@ -37,7 +37,7 @@ export const DEFAULT_DRAWING_TOOLS = {
 };
 
 export const DEFAULT_SIMULATION = {
-  speed: 10,
+  speed: 20,
   randomDensity: 30,
 };
 

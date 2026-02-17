@@ -612,5 +612,12 @@ export class EventWiring {
 
     const importBtn = dom.get('importSettingsBtn');
     importBtn?.addEventListener('click', () => persistence.importFromFile());
+
+    const resetBtn = dom.get('resetDefaultsBtn');
+    resetBtn?.addEventListener('click', () => {
+      if (confirm('Reset all settings to defaults? This cannot be undone.')) {
+        persistence.resetToDefaults();
+      }
+    });
   }
 }

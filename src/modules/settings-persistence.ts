@@ -57,6 +57,7 @@ export interface PersistenceEngine {
   setSurvivalRules(r: number[]): void;
   getRulesAsString(): string;
   resize(rows: number, cols: number): void;
+  clear(): void;
 }
 
 export class SettingsPersistence {
@@ -252,6 +253,18 @@ export class SettingsPersistence {
     if (densitySlider) snapshot.randomDensity = parseInt(densitySlider.value, 10);
 
     exportSettings(snapshot);
+  }
+
+  /**
+   * Reset all settings to factory defaults.
+   */
+  resetToDefaults(): void {
+    this.storage.clearSettings();
+    const defaults = getDefaultSettings();
+    this.applySettings(defaults);
+    // Defaults have no grid snapshot — clear the engine
+    this.engine.clear();
+    this.save();
   }
 
   /**

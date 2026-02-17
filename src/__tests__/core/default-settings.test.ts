@@ -27,7 +27,7 @@ describe('default-settings', () => {
       expect(typeof DEFAULT_VISUAL_SETTINGS.showMaturity).toBe('boolean');
       expect(DEFAULT_VISUAL_SETTINGS.fadeDuration).toBeGreaterThan(0);
       expect(DEFAULT_VISUAL_SETTINGS.maturityColor).toMatch(/^#[0-9a-f]{6}$/i);
-      expect(['square', 'circle']).toContain(DEFAULT_VISUAL_SETTINGS.cellShape);
+      expect(['rectangle', 'square', 'circle', 'triangle', 'diamond', 'pentagon', 'hexagon', 'star']).toContain(DEFAULT_VISUAL_SETTINGS.cellShape);
     });
   });
 

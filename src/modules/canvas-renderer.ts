@@ -206,12 +206,15 @@ export class CanvasRenderer {
   private drawSingleCell(row: number, col: number): void {
     const centerX = col * this.cellSize + this.cellSize / 2;
     const centerY = row * this.cellSize + this.cellSize / 2;
-    const size = this.cellSize - 2;
+    const gap = this.cellSize <= 3 ? 0 : 2;
+    const size = this.cellSize - gap;
 
     switch (this.visual.cellShape) {
-      case 'rectangle':
-        this.ctx.fillRect(col * this.cellSize + 1, row * this.cellSize + 1, size, size);
+      case 'rectangle': {
+        const offset = gap / 2;
+        this.ctx.fillRect(col * this.cellSize + offset, row * this.cellSize + offset, size, size);
         break;
+      }
       case 'circle': {
         const radius = size / 2;
         this.ctx.beginPath();
@@ -249,8 +252,10 @@ export class CanvasRenderer {
       case 'star':
         this.drawStar(centerX, centerY, size * 0.4, 6);
         break;
-      default:
-        this.ctx.fillRect(col * this.cellSize + 1, row * this.cellSize + 1, size, size);
+      default: {
+        const dOffset = gap / 2;
+        this.ctx.fillRect(col * this.cellSize + dOffset, row * this.cellSize + dOffset, size, size);
+      }
     }
   }
 

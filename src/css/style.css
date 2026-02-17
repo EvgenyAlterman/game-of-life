@@ -758,28 +758,38 @@ body {
 
 /* Quick Actions */
 .quick-actions {
-    padding: 0 4px 20px 4px;
+    padding: 0 4px 12px 4px;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    gap: 5px;
 }
 
 .quick-actions button {
     background: var(--border-sidebar);
     color: var(--text-sidebar);
     border: 1px solid var(--border-sidebar-secondary);
-    padding: 10px 8px;
-    border-radius: 6px;
+    padding: 5px 6px;
+    border-radius: 4px;
     cursor: pointer;
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     font-weight: 500;
     transition: all 0.2s ease;
     backdrop-filter: blur(10px);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
 }
 
 .quick-actions button:hover {
     background: var(--border-sidebar-secondary);
     transform: translateY(-1px);
+}
+
+.btn-icon-inline {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
 }
 
 /* Main Content Area */

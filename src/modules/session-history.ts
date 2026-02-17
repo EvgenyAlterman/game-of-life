@@ -30,6 +30,8 @@ export class SessionHistoryManager {
     this.engine = engine;
   }
 
+  private static readonly MAX_FRAMES = 500;
+
   addFrame(): void {
     if (this.isReplaying) return;
     const frame: SessionFrame = {
@@ -38,6 +40,10 @@ export class SessionHistoryManager {
       grid: this.engine.getGridSnapshot(),
     };
     this.history.push(frame);
+    // Drop oldest frames to prevent unbounded memory growth
+    if (this.history.length > SessionHistoryManager.MAX_FRAMES) {
+      this.history.shift();
+    }
     this.replayIndex = this.history.length - 1;
   }
 

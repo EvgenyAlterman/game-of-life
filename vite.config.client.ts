@@ -13,6 +13,7 @@ import { defineConfig } from 'vite';
  *   npm run preview:release  # Preview the release build
  */
 export default defineConfig({
+  base: './',
   build: {
     outDir: 'dist-client',
     emptyOutDir: true,

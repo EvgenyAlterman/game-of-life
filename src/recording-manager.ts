@@ -216,6 +216,8 @@ export class RecordingManager {
     this.bus.emit('recording:stopped');
   }
 
+  private static readonly MAX_RECORDING_FRAMES = 3000;
+
   recordGeneration(): void {
     if (!this.isRecording) return;
     const snapshot = this.engine.getGridSnapshot();
@@ -225,6 +227,10 @@ export class RecordingManager {
       grid: snapshot.grid.map(row => [...row]),
       population: snapshot.population ?? 0,
     });
+    // Drop oldest frames to prevent unbounded memory growth
+    if (this.recordedGenerations.length > RecordingManager.MAX_RECORDING_FRAMES) {
+      this.recordedGenerations.shift();
+    }
     // Update live counter in timeline
     this.updateLiveFrameCounter();
   }
