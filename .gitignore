@@ -90,6 +90,10 @@ Thumbs.db
 saves/
 *.backup
 
+# Playwright
+playwright-report/
+test-results/
+
 # Temporary files
 tmp/
 temp/

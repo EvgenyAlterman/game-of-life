@@ -16,6 +16,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
     "type-check": "tsc --noEmit",
     "type-check:watch": "tsc --noEmit --watch"
   },
@@ -29,6 +30,7 @@
     "vibe-kanban-web-companion": "^0.0.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.0-alpha-2026-02-05",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/multer": "^1.4.12",
