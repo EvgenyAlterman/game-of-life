@@ -376,14 +376,15 @@ body {
     padding: 0;
 }
 
-/* App Footer Bar (inside main-content, below info bar) */
+/* App Footer Bar (spans sidebar panels + stage, skips icon nav) */
 .app-footer-bar {
     flex-shrink: 0;
     height: 30px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 20px;
+    margin-left: 44px;
+    padding: 0 16px;
     background: var(--bg-secondary);
     border-top: 1px solid var(--border-primary);
     font-size: 0.65rem;
@@ -3133,6 +3134,9 @@ body {
         height: 38px !important;
     }
 
+    .app-footer-bar {
+        margin-left: 0;
+    }
 }
 
 @media (max-width: 768px) {
