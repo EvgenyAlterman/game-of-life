@@ -245,7 +245,12 @@ export class App {
       if (speedSlider) this.sim.setSpeed(parseInt(speedSlider.value, 10) || 10);
 
       this.draw();
+      this.updateSidebarFooter();
     });
+
+    // Sidebar footer stats
+    this.bus.on('grid:resized', () => this.updateSidebarFooter());
+    this.bus.on('settings:changed', () => this.updateSidebarFooter());
 
     // Visual settings → renderer sync
     this.bus.on('visual:gridToggled', () => this.syncVisuals());
@@ -305,6 +310,15 @@ export class App {
     this.customRules.updateRuleDisplay();
   }
 
+  private updateSidebarFooter(): void {
+    const gridEl = this.dom.get<HTMLElement>('sidebarStatGrid');
+    const cellEl = this.dom.get<HTMLElement>('sidebarStatCell');
+    const ruleEl = this.dom.get<HTMLElement>('sidebarStatRule');
+    if (gridEl) gridEl.textContent = `${this.gridSettings.rows}×${this.gridSettings.cols}`;
+    if (cellEl) cellEl.textContent = `${this.gridSettings.cellSize}px`;
+    if (ruleEl) ruleEl.textContent = this.customRules.getState().ruleString;
+  }
+
   updateCheckboxesFromRules(): void {
     this.customRules.updateCheckboxesFromRules();
   }
@@ -340,6 +354,7 @@ export class App {
     this.autoStop.updateUI();
     this.draw();
     this.sim.updateInfo();
+    this.updateSidebarFooter();
 
     // Load existing recordings
     this.recordingManager.loadRecordings();

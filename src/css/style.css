@@ -150,7 +150,8 @@ body {
     width: 44px;
 }
 
-.sidebar.collapsed .sidebar-panels {
+.sidebar.collapsed .sidebar-panels,
+.sidebar.collapsed .sidebar-footer {
     display: none;
 }
 
@@ -236,6 +237,19 @@ body {
 
 .sidebar-nav-btn[title]:hover::after {
     opacity: 1;
+}
+
+/* Sidebar main column (panels + footer) */
+.sidebar-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.sidebar.collapsed .sidebar-main {
+    display: none;
 }
 
 /* Sidebar Tab Panels */
@@ -374,6 +388,42 @@ body {
     overflow-y: auto;
     margin-bottom: 0;
     padding: 0;
+}
+
+/* Sidebar Footer Bar */
+.sidebar-footer {
+    flex-shrink: 0;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    background: rgba(0, 0, 0, 0.15);
+    border-top: 1px solid var(--border-sidebar);
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 0.02em;
+    gap: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.sidebar-footer-stats {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidebar-footer-sep {
+    opacity: 0.4;
+}
+
+.sidebar-footer-version {
+    flex-shrink: 0;
+    opacity: 0.6;
 }
 
 /* Tool Sections */
