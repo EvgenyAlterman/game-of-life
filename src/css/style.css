@@ -376,15 +376,15 @@ body {
     padding: 0;
 }
 
-/* App Footer Bar (full-width, below app-body) */
+/* App Footer Bar (inside main-content, below info bar) */
 .app-footer-bar {
     flex-shrink: 0;
     height: 30px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 16px 0 56px; /* 44px nav + 12px padding */
-    background: var(--bg-primary);
+    padding: 0 20px;
+    background: var(--bg-secondary);
     border-top: 1px solid var(--border-primary);
     font-size: 0.65rem;
     color: var(--text-muted, var(--text-secondary));
@@ -3133,9 +3133,6 @@ body {
         height: 38px !important;
     }
 
-    .app-footer-bar {
-        padding-left: 12px;
-    }
 }
 
 @media (max-width: 768px) {
