@@ -195,8 +195,20 @@ export type DrawingMode =
   | 'inspector'
   | 'selection'
   | 'eraser'
+  | 'line'
+  | 'rectangle'
+  | 'circle'
   | `pattern:${string}`
   | `custom:${string}`;
+
+// Shape preview for line/rectangle/circle tools
+export interface ShapePreviewData {
+  type: 'line' | 'rectangle' | 'circle';
+  startRow: number;
+  startCol: number;
+  endRow: number;
+  endCol: number;
+}
 
 // Module state interfaces — used by SettingsPersistence to gather/distribute state
 export interface VisualSettingsState {

@@ -5,7 +5,8 @@
 
 import type { EventBus } from '../core/event-bus';
 import type { GameOfLifeEngine } from '../js/game-engine';
-import type { CanvasRenderingContext2DWithReset, SelectionBounds, PatternPreviewData } from '../types/game-types';
+import type { CanvasRenderingContext2DWithReset, SelectionBounds, PatternPreviewData, ShapePreviewData } from '../types/game-types';
+import { InputHandler } from './input-handler';
 
 export interface VisualFlags {
   showGrid: boolean;
@@ -41,6 +42,9 @@ export class CanvasRenderer {
 
   // Pattern preview state (set externally by InputHandler)
   private patternPreview: PatternPreviewData | null = null;
+
+  // Shape preview state (set externally by InputHandler for line/rect/circle tools)
+  private shapePreview: ShapePreviewData | null = null;
 
   // Selection state (set externally by SelectionManager)
   private selectionBounds: SelectionBounds | null = null;
@@ -92,6 +96,7 @@ export class CanvasRenderer {
     }
 
     this.drawPatternPreview();
+    this.drawShapePreview();
     this.drawSelection();
   }
 
@@ -113,6 +118,10 @@ export class CanvasRenderer {
 
   setPatternPreview(preview: PatternPreviewData | null): void {
     this.patternPreview = preview;
+  }
+
+  setShapePreview(preview: ShapePreviewData | null): void {
+    this.shapePreview = preview;
   }
 
   setSelection(bounds: SelectionBounds | null, active: boolean): void {
@@ -417,6 +426,22 @@ export class CanvasRenderer {
         if (r >= 0 && r < this.rows && c >= 0 && c < this.cols && pattern[i][j] === 1) {
           this.ctx.fillRect(c * this.cellSize + 1, r * this.cellSize + 1, this.cellSize - 2, this.cellSize - 2);
         }
+      }
+    }
+  }
+
+  private drawShapePreview(): void {
+    if (!this.shapePreview) return;
+    const { type, startRow, startCol, endRow, endCol } = this.shapePreview;
+    const cells = InputHandler.computeShapeCells(type, startRow, startCol, endRow, endCol);
+
+    const rootStyles = getComputedStyle(document.documentElement);
+    const cellColor = rootStyles.getPropertyValue('--canvas-cell').trim();
+    this.ctx.fillStyle = CanvasRenderer.hexToRgba(cellColor, 0.4);
+
+    for (const [r, c] of cells) {
+      if (r >= 0 && r < this.rows && c >= 0 && c < this.cols) {
+        this.ctx.fillRect(c * this.cellSize + 1, r * this.cellSize + 1, this.cellSize - 2, this.cellSize - 2);
       }
     }
   }

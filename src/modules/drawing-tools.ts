@@ -8,7 +8,7 @@ import type { DomRegistry } from '../core/dom-registry';
 
 declare const lucide: { createIcons: () => void };
 
-export type ToolMode = 'cell' | 'inspector' | 'selection' | 'eraser' | string;
+export type ToolMode = 'cell' | 'inspector' | 'selection' | 'eraser' | 'line' | 'rectangle' | 'circle' | string;
 
 export interface DrawingToolsState {
   mode: ToolMode;
@@ -81,6 +81,42 @@ export class DrawingToolsManager {
     this.bus.emit('settings:changed');
   }
 
+  selectLineMode(): void {
+    this.mode = 'line';
+    this.inspectorMode = false;
+    this.selectionMode = false;
+    this.selectedPattern = null;
+    this.patternRotation = 0;
+    this.hideEraserSettings();
+    this.updateUI();
+    this.bus.emit('tool:changed', { mode: 'line' });
+    this.bus.emit('settings:changed');
+  }
+
+  selectRectangleMode(): void {
+    this.mode = 'rectangle';
+    this.inspectorMode = false;
+    this.selectionMode = false;
+    this.selectedPattern = null;
+    this.patternRotation = 0;
+    this.hideEraserSettings();
+    this.updateUI();
+    this.bus.emit('tool:changed', { mode: 'rectangle' });
+    this.bus.emit('settings:changed');
+  }
+
+  selectCircleMode(): void {
+    this.mode = 'circle';
+    this.inspectorMode = false;
+    this.selectionMode = false;
+    this.selectedPattern = null;
+    this.patternRotation = 0;
+    this.hideEraserSettings();
+    this.updateUI();
+    this.bus.emit('tool:changed', { mode: 'circle' });
+    this.bus.emit('settings:changed');
+  }
+
   selectPattern(name: string, pattern: number[][]): void {
     this.mode = name;
     this.inspectorMode = false;
@@ -140,6 +176,12 @@ export class DrawingToolsManager {
       document.getElementById('patternSelectBtn')?.classList.add('selected');
     } else if (this.mode === 'eraser') {
       document.getElementById('eraserBtn')?.classList.add('selected');
+    } else if (this.mode === 'line') {
+      document.getElementById('lineBtn')?.classList.add('selected');
+    } else if (this.mode === 'rectangle') {
+      document.getElementById('rectangleBtn')?.classList.add('selected');
+    } else if (this.mode === 'circle') {
+      document.getElementById('circleBtn')?.classList.add('selected');
     } else {
       document.querySelectorAll('.preset-btn').forEach((btn) => {
         const el = btn as HTMLElement;

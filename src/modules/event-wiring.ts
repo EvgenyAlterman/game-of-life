@@ -446,6 +446,18 @@ export class EventWiring {
     const eraserBtn = document.getElementById('eraserBtn');
     eraserBtn?.addEventListener('click', () => tools.selectEraserMode());
 
+    // Line tool button
+    const lineBtn = document.getElementById('lineBtn');
+    lineBtn?.addEventListener('click', () => tools.selectLineMode());
+
+    // Rectangle tool button
+    const rectangleBtn = document.getElementById('rectangleBtn');
+    rectangleBtn?.addEventListener('click', () => tools.selectRectangleMode());
+
+    // Circle tool button
+    const circleBtn = document.getElementById('circleBtn');
+    circleBtn?.addEventListener('click', () => tools.selectCircleMode());
+
     // Eraser size slider
     const eraserSize = dom.get<HTMLInputElement>('eraserSize');
     const eraserSizeValue = dom.get('eraserSizeValue');
