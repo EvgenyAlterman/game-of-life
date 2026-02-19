@@ -2743,7 +2743,8 @@ body {
 }
 
 .tree-category.expanded .category-content {
-    max-height: 500px;
+    max-height: 2000px;
+    overflow-y: auto;
 }
 
 .subcategory {
@@ -2806,7 +2807,8 @@ body {
 }
 
 .subcategory.expanded .subcategory-content {
-    max-height: 300px;
+    max-height: 1500px;
+    overflow-y: auto;
 }
 
 .pattern-item {
