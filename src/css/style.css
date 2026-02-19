@@ -150,8 +150,7 @@ body {
     width: 44px;
 }
 
-.sidebar.collapsed .sidebar-panels,
-.sidebar.collapsed .sidebar-footer {
+.sidebar.collapsed .sidebar-panels {
     display: none;
 }
 
@@ -237,19 +236,6 @@ body {
 
 .sidebar-nav-btn[title]:hover::after {
     opacity: 1;
-}
-
-/* Sidebar main column (panels + footer) */
-.sidebar-main {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-.sidebar.collapsed .sidebar-main {
-    display: none;
 }
 
 /* Sidebar Tab Panels */
@@ -390,22 +376,23 @@ body {
     padding: 0;
 }
 
-/* Sidebar Footer Bar */
-.sidebar-footer {
+/* App Footer Bar (full-width, below app-body) */
+.app-footer-bar {
     flex-shrink: 0;
     height: 30px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 12px;
-    background: rgba(0, 0, 0, 0.15);
-    border-top: 1px solid var(--border-sidebar);
+    padding: 0 16px 0 56px; /* 44px nav + 12px padding */
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-primary);
     font-size: 0.65rem;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-muted, var(--text-secondary));
     letter-spacing: 0.02em;
     gap: 8px;
     white-space: nowrap;
     overflow: hidden;
+    opacity: 0.6;
 }
 
 .sidebar-footer-stats {
@@ -423,7 +410,6 @@ body {
 
 .sidebar-footer-version {
     flex-shrink: 0;
-    opacity: 0.6;
 }
 
 /* Tool Sections */
@@ -1759,7 +1745,8 @@ body {
 .fullscreen-active .app-header,
 .fullscreen-active .info,
 .fullscreen-active .timeline-section,
-.fullscreen-active .recordings-section {
+.fullscreen-active .recordings-section,
+.fullscreen-active .app-footer-bar {
     display: none !important;
 }
 
@@ -3144,6 +3131,10 @@ body {
     .play-pause-btn {
         width: 38px !important;
         height: 38px !important;
+    }
+
+    .app-footer-bar {
+        padding-left: 12px;
     }
 }
 
