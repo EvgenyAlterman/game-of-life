@@ -15,10 +15,10 @@
                 <h1>Game of Life Studio</h1>
             </div>
             <div class="header-controls">
-                <button id="darkModeToggle" class="dark-mode-toggle" title="Toggle Dark Mode">
+                <button id="darkModeToggle" class="dark-mode-toggle" title="Toggle Dark Mode" data-tooltip="Toggle Theme" data-tooltip-pos="bottom">
                     <i data-lucide="moon" class="toggle-icon"></i>
                 </button>
-                <a href="explanation.html" class="help-btn" title="Learn About the Game of Life">?</a>
+                <a href="explanation.html" class="help-btn" title="Learn About the Game of Life" data-tooltip="Help" data-tooltip-pos="bottom">?</a>
             </div>
         </div>
         
@@ -151,7 +151,7 @@
                                 <div class="slider-control">
                                     <div class="slider-label-row">
                                         <label for="gridWidthSlider">Width:</label>
-                                        <button id="fitWidthBtn" class="fit-btn" title="Fit width to viewport">
+                                        <button id="fitWidthBtn" class="fit-btn" title="Fit width to viewport" data-tooltip="Fit width" data-tooltip-pos="bottom">
                                             <i data-lucide="maximize-2" class="fit-btn-icon"></i>
                                         </button>
                                         <button class="max-toggle-btn" title="Set max value" data-target="gridWidthMax">
@@ -167,7 +167,7 @@
                                 <div class="slider-control">
                                     <div class="slider-label-row">
                                         <label for="gridHeightSlider">Height:</label>
-                                        <button id="fitHeightBtn" class="fit-btn" title="Fit height to viewport">
+                                        <button id="fitHeightBtn" class="fit-btn" title="Fit height to viewport" data-tooltip="Fit height" data-tooltip-pos="bottom">
                                             <i data-lucide="maximize-2" class="fit-btn-icon"></i>
                                         </button>
                                         <button class="max-toggle-btn" title="Set max value" data-target="gridHeightMax">
@@ -213,7 +213,7 @@
                                 <div class="control-row">
                                     <label for="randomSeedInput">Seed:</label>
                                     <input type="number" id="randomSeedInput" value="" placeholder="Random">
-                                    <button id="generateSeedBtn" class="seed-btn">🎲</button>
+                                    <button id="generateSeedBtn" class="seed-btn" data-tooltip="Generate seed">🎲</button>
                                 </div>
                             </div>
                             <!-- Custom Rules Section -->
@@ -282,25 +282,25 @@
                             <div class="tool-section">
                                 <h3>Quick Actions</h3>
                                 <div class="quick-actions">
-                                    <button id="fillRandomBtn">Fill Random</button>
-                                    <button id="fillEdgesBtn">Fill Edges</button>
-                                    <button id="fillCenterBtn">Fill Center</button>
-                                    <button id="invertBtn">Invert All</button>
+                                    <button id="fillRandomBtn" data-tooltip="Fill grid randomly">Fill Random</button>
+                                    <button id="fillEdgesBtn" data-tooltip="Fill edge cells">Fill Edges</button>
+                                    <button id="fillCenterBtn" data-tooltip="Fill center area">Fill Center</button>
+                                    <button id="invertBtn" data-tooltip="Invert all cells">Invert All</button>
                                 </div>
                             </div>
                             <!-- Settings Management Section -->
                             <div class="tool-section">
                                 <h3>Settings</h3>
                                 <div class="quick-actions">
-                                    <button id="exportSettingsBtn" title="Export settings to file">
+                                    <button id="exportSettingsBtn" title="Export settings to file" data-tooltip="Export settings to file">
                                         <i data-lucide="download" class="btn-icon-inline"></i>
                                         Export
                                     </button>
-                                    <button id="importSettingsBtn" title="Import settings from file">
+                                    <button id="importSettingsBtn" title="Import settings from file" data-tooltip="Import settings from file">
                                         <i data-lucide="upload" class="btn-icon-inline"></i>
                                         Import
                                     </button>
-                                    <button id="resetDefaultsBtn" title="Reset all settings to defaults">
+                                    <button id="resetDefaultsBtn" title="Reset all settings to defaults" data-tooltip="Reset all to defaults">
                                         <i data-lucide="rotate-ccw" class="btn-icon-inline"></i>
                                         Reset Defaults
                                     </button>
@@ -375,13 +375,13 @@
                         <div class="sidebar-panel-header sidebar-panel-header--with-actions">
                             <h2>Recordings</h2>
                             <div class="panel-header-actions">
-                                <button id="importRecordingsBtn" class="panel-header-btn" title="Import recordings from file">
+                                <button id="importRecordingsBtn" class="panel-header-btn" title="Import recordings from file" data-tooltip="Import" data-tooltip-pos="bottom">
                                     <i data-lucide="upload" class="panel-header-icon"></i>
                                 </button>
-                                <button id="exportAllRecordingsBtn" class="panel-header-btn" title="Export all recordings">
+                                <button id="exportAllRecordingsBtn" class="panel-header-btn" title="Export all recordings" data-tooltip="Export All" data-tooltip-pos="bottom">
                                     <i data-lucide="download" class="panel-header-icon"></i>
                                 </button>
-                                <button id="loadRecordingsBtn" class="panel-header-btn" title="Refresh recordings">
+                                <button id="loadRecordingsBtn" class="panel-header-btn" title="Refresh recordings" data-tooltip="Refresh" data-tooltip-pos="bottom">
                                     <i data-lucide="refresh-cw" class="panel-header-icon"></i>
                                 </button>
                             </div>
@@ -399,19 +399,19 @@
             <div class="main-content">
                 <div class="game-container">
                     <canvas id="gameCanvas" width="600" height="400"></canvas>
-                    <button id="exitFullscreenBtn" class="exit-fullscreen-btn" style="display: none;" title="Exit Fullscreen (ESC)">
+                    <button id="exitFullscreenBtn" class="exit-fullscreen-btn" style="display: none;" title="Exit Fullscreen (ESC)" data-tooltip="Exit Fullscreen" data-tooltip-pos="left">
                         <i data-lucide="minimize" class="btn-icon"></i>
                     </button>
                     
                     <!-- Floating Controls for Fullscreen -->
                     <div class="fullscreen-floating-controls" id="fullscreenFloatingControls" style="display: none;">
-                        <button id="fullscreenPlayPauseBtn" class="floating-control-btn" title="Play/Pause">
+                        <button id="fullscreenPlayPauseBtn" class="floating-control-btn" title="Play/Pause" data-tooltip="Play/Pause" data-tooltip-pos="left">
                             <i data-lucide="play" class="btn-icon"></i>
                         </button>
-                        <button id="fullscreenShuffleBtn" class="floating-control-btn" title="Generate Random Pattern">
+                        <button id="fullscreenShuffleBtn" class="floating-control-btn" title="Generate Random Pattern" data-tooltip="Random" data-tooltip-pos="left">
                             <i data-lucide="shuffle" class="btn-icon"></i>
                         </button>
-                        <button id="fullscreenClearBtn" class="floating-control-btn" title="Clear All Cells">
+                        <button id="fullscreenClearBtn" class="floating-control-btn" title="Clear All Cells" data-tooltip="Clear" data-tooltip-pos="left">
                             <i data-lucide="trash-2" class="btn-icon"></i>
                         </button>
                     </div>
@@ -425,7 +425,7 @@
                         <span class="recording-date" id="playbackRecordingDate"></span>
                     </div>
 
-                    <button id="timelinePlayBtn" class="timeline-bar-btn" title="Play Recording" disabled>
+                    <button id="timelinePlayBtn" class="timeline-bar-btn" title="Play Recording" data-tooltip="Play" disabled>
                         <i data-lucide="play" class="timeline-bar-icon"></i>
                     </button>
                     <div class="timeline-bar-track">
@@ -441,16 +441,16 @@
 
                     <!-- Normal mode buttons -->
                     <div class="timeline-normal-controls" id="timelineNormalControls">
-                        <button id="saveRecordingBtn" class="timeline-bar-btn timeline-save-btn" title="Save Recording" disabled>
+                        <button id="saveRecordingBtn" class="timeline-bar-btn timeline-save-btn" title="Save Recording" data-tooltip="Save" disabled>
                             <i data-lucide="save" class="timeline-bar-icon"></i>
                         </button>
-                        <button id="resetTimelineBtn" class="timeline-bar-btn timeline-reset-btn" title="Clear Recording" disabled>
+                        <button id="resetTimelineBtn" class="timeline-bar-btn timeline-reset-btn" title="Clear Recording" data-tooltip="Clear" disabled>
                             <i data-lucide="rotate-ccw" class="timeline-bar-icon"></i>
                         </button>
                     </div>
 
                     <!-- Playback mode button -->
-                    <button id="closePlaybackBtn" class="timeline-bar-btn close-btn" title="Close Recording" style="display: none;">
+                    <button id="closePlaybackBtn" class="timeline-bar-btn close-btn" title="Close Recording" data-tooltip="Close" style="display: none;">
                         <i data-lucide="x" class="timeline-bar-icon"></i>
                     </button>
                 </div>
@@ -458,19 +458,19 @@
                 <div class="info">
                                             <div class="info-left">
                             <div class="control-buttons">
-                                <button id="startStopBtn" class="control-btn play-pause-btn" title="Start/Stop Simulation">
+                                <button id="startStopBtn" class="control-btn play-pause-btn" title="Start/Stop Simulation" data-tooltip="Start/Stop">
                                     <i data-lucide="play" class="btn-icon"></i>
                                 </button>
-                                <button id="resetBtn" class="control-btn" title="Reset to Initial State">
+                                <button id="resetBtn" class="control-btn" title="Reset to Initial State" data-tooltip="Reset">
                                     <i data-lucide="refresh-cw" class="btn-icon"></i>
                                 </button>
-                                <button id="randomBtn" class="control-btn" title="Generate Random Pattern">
+                                <button id="randomBtn" class="control-btn" title="Generate Random Pattern" data-tooltip="Random">
                                     <i data-lucide="shuffle" class="btn-icon"></i>
                                 </button>
-                                <button id="clearBtn" class="control-btn" title="Clear All Cells">
+                                <button id="clearBtn" class="control-btn" title="Clear All Cells" data-tooltip="Clear">
                                     <i data-lucide="trash-2" class="btn-icon"></i>
                                 </button>
-                                <button id="fullscreenBtn" class="control-btn" title="Enter Fullscreen">
+                                <button id="fullscreenBtn" class="control-btn" title="Enter Fullscreen" data-tooltip="Fullscreen">
                                     <i data-lucide="maximize" class="btn-icon"></i>
                                 </button>
                             </div>
@@ -502,7 +502,7 @@
         <div class="modal">
             <div class="modal-header">
                 <h3>💾 Save Pattern</h3>
-                <button class="modal-close" id="patternModalClose">
+                <button class="modal-close" id="patternModalClose" data-tooltip="Close">
                     <i data-lucide="x"></i>
                 </button>
             </div>
@@ -538,7 +538,7 @@
         <div class="modal">
             <div class="modal-header">
                 <h3>💾 Save Recording</h3>
-                <button class="modal-close" id="modalClose">
+                <button class="modal-close" id="modalClose" data-tooltip="Close">
                     <i data-lucide="x"></i>
                 </button>
             </div>
@@ -582,7 +582,7 @@
         <div class="modal">
             <div class="modal-header">
                 <h3 id="modalTitle">Notification</h3>
-                <button class="modal-close" id="notificationModalClose">
+                <button class="modal-close" id="notificationModalClose" data-tooltip="Close">
                     <i data-lucide="x"></i>
                 </button>
             </div>

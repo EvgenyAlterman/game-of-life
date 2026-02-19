@@ -385,6 +385,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Re-initialize icons after dynamic content is created
   createIcons({ icons });
 
+  // Suppress native title tooltips on elements using data-tooltip
+  document.querySelectorAll('[data-tooltip]').forEach(el => {
+    if (el.hasAttribute('title')) {
+      el.setAttribute('aria-label', el.getAttribute('title')!);
+      el.removeAttribute('title');
+    }
+  });
+
   // Make lucide available globally for dynamic icon updates
   (window as any).lucide = { createIcons: () => createIcons({ icons }) };
 
