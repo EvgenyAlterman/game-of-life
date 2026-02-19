@@ -607,8 +607,32 @@ body {
     margin: 0;
 }
 
-.max-toggle-btn {
+.fit-btn {
     margin-left: auto;
+    background: transparent;
+    border: none;
+    padding: 2px;
+    cursor: pointer;
+    color: var(--text-sidebar-tertiary);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.fit-btn:hover {
+    color: var(--text-sidebar);
+    background: var(--border-sidebar);
+}
+
+.fit-btn-icon {
+    width: 14px;
+    height: 14px;
+}
+
+.max-toggle-btn {
+    margin-left: 0;
     background: transparent;
     border: none;
     padding: 2px;

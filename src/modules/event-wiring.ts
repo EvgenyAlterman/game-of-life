@@ -308,6 +308,35 @@ export class EventWiring {
       this.updateSliderMax(cellSizeSlider, (e.target as HTMLInputElement).value);
       onSaveSettings();
     });
+
+    // Fit-to-viewport buttons
+    const fitWidthBtn = dom.get('fitWidthBtn');
+    fitWidthBtn?.addEventListener('click', () => {
+      const container = dom.query<HTMLElement>('.game-container');
+      if (!container || !gridWidthSlider || !cellSizeSlider) return;
+      const cellSize = parseInt(cellSizeSlider.value, 10);
+      const availableWidth = container.clientWidth - 20 - 3; // padding (10px each side) minus 3px
+      const fitCols = Math.floor(availableWidth / cellSize);
+      const clamped = Math.max(parseInt(gridWidthSlider.min, 10), Math.min(fitCols, parseInt(gridWidthSlider.max, 10)));
+      gridWidthSlider.value = String(clamped);
+      if (gridWidthValue) gridWidthValue.textContent = String(clamped);
+      gridSettings.liveResize(fullscreen.isFullscreen);
+      onSaveSettings();
+    });
+
+    const fitHeightBtn = dom.get('fitHeightBtn');
+    fitHeightBtn?.addEventListener('click', () => {
+      const container = dom.query<HTMLElement>('.game-container');
+      if (!container || !gridHeightSlider || !cellSizeSlider) return;
+      const cellSize = parseInt(cellSizeSlider.value, 10);
+      const availableHeight = container.clientHeight - 20 - 3; // padding (10px each side) minus 3px
+      const fitRows = Math.floor(availableHeight / cellSize);
+      const clamped = Math.max(parseInt(gridHeightSlider.min, 10), Math.min(fitRows, parseInt(gridHeightSlider.max, 10)));
+      gridHeightSlider.value = String(clamped);
+      if (gridHeightValue) gridHeightValue.textContent = String(clamped);
+      gridSettings.liveResize(fullscreen.isFullscreen);
+      onSaveSettings();
+    });
   }
 
   // ─── Auto-Stop Settings ──────────────────────────────────────
